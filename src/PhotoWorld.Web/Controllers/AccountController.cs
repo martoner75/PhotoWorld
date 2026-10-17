@@ -10,7 +10,10 @@ using PhotoWorld.Web.Services;
 
 namespace PhotoWorld.Web.Controllers;
 
-public class AccountController(IAuthenticationSchemeProvider schemes, IPhotoWorldApiClient api) : Controller
+public class AccountController(
+    IAuthenticationSchemeProvider schemes,
+    IPhotoWorldApiClient api,
+    ILogger<AccountController> logger) : Controller
 {
     [HttpGet]
     public Task<IActionResult> Login(string? returnUrl, string? error) => ShowLogin(isRegister: false, returnUrl, error);
@@ -44,11 +47,17 @@ public class AccountController(IAuthenticationSchemeProvider schemes, IPhotoWorl
         var provider = external.Properties?.Items.TryGetValue(AuthSchemes.ProviderItem, out var p) == true ? p : null;
         var providerToken = external.Properties?.GetTokenValue("access_token");
         if (!external.Succeeded || provider is null || providerToken is null)
+        {
+            logger.LogWarning("External sign-in with {Provider} failed: {Failure}", provider, external.Failure?.Message);
             return RedirectToAction(nameof(Login), new { returnUrl, error = "Sign-in failed. Please try again." });
+        }
 
         var session = await api.ExternalLoginAsync(new ExternalLoginRequest(provider, providerToken), ct);
         if (session is null)
+        {
+            logger.LogWarning("API rejected {Provider} sign-in", provider);
             return RedirectToAction(nameof(Login), new { returnUrl, error = $"We couldn't verify your {provider} account." });
+        }
 
         var user = session.User;
         List<Claim> claims =
@@ -68,6 +77,9 @@ public class AccountController(IAuthenticationSchemeProvider schemes, IPhotoWorl
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)),
             properties);
+
+        logger.LogInformation("User {UserId} signed in with {Provider} (new member: {IsNewUser})",
+            user.Id, provider, session.IsNewUser);
 
         TempData["Flash"] = session.IsNewUser
             ? $"Welcome to PhotoWorld, {user.DisplayName}! Your account is ready."
@@ -93,6 +105,7 @@ public class AccountController(IAuthenticationSchemeProvider schemes, IPhotoWorl
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        logger.LogInformation("User {UserId} signed out", User.FindFirstValue(ClaimTypes.NameIdentifier));
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToAction("Index", "Home");
     }

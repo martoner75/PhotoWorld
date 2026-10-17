@@ -5,6 +5,7 @@ using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Identity;
 using PhotoWorld.Shared.Auth;
+using PhotoWorld.Shared.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +14,17 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.AddDbContext<PhotoWorldDbContext>(o =>
-    o.UseSqlite(builder.Configuration.GetConnectionString("PhotoWorld")));
+// Supabase Postgres. Use the "Session pooler" connection string from the Supabase dashboard (Connect button).
+var connectionString = builder.Configuration.GetConnectionString("PhotoWorld");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException("ConnectionStrings:PhotoWorld is not set. See README → Supabase.");
+// Logs go to photoworld.app_logs. A dedicated insert-only role (ConnectionStrings:Logging) is preferred;
+// otherwise the main connection is used.
+builder.Logging.AddSupabase(builder.Configuration.GetConnectionString("Logging") ?? connectionString, "PhotoWorld.Api");
+
+builder.Services.AddDbContext<PhotoWorldDbContext>(o => o
+    .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", PhotoWorldDbContext.Schema))
+    .UseSnakeCaseNamingConvention());
 
 // Provider credentials live under Authentication:{Provider}, the same shape the Web project uses.
 foreach (var provider in AuthProviders.All)
@@ -44,9 +54,10 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// POC convenience: create the SQLite schema on first run. Switch to EF migrations before production.
+// Apply pending EF migrations on startup. Fine for a single instance; run `dotnet ef database update`
+// (or a migration bundle) from CI instead once the API scales out.
 using (var scope = app.Services.CreateScope())
-    scope.ServiceProvider.GetRequiredService<PhotoWorldDbContext>().Database.EnsureCreated();
+    scope.ServiceProvider.GetRequiredService<PhotoWorldDbContext>().Database.Migrate();
 
 if (app.Environment.IsDevelopment())
 {

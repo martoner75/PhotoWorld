@@ -1,7 +1,11 @@
+using PhotoWorld.Shared.Logging;
 using PhotoWorld.Web.Authentication;
 using PhotoWorld.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// The UI only gets the insert-only logging connection, never the main database credentials.
+builder.Logging.AddSupabase(builder.Configuration.GetConnectionString("Logging"), "PhotoWorld.Web");
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
