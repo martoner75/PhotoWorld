@@ -96,6 +96,32 @@ public class AccountController(
     [HttpGet]
     public IActionResult Profile() => RedirectToAction("Me", "Members");
 
+    [HttpGet]
+    public async Task<IActionResult> Settings(CancellationToken ct)
+    {
+        var me = await api.GetCurrentUserAsync(ct);
+        return me is null ? RedirectToAction(nameof(Login)) : View(me);
+    }
+
+    /// <summary>Permanently deletes the account. The form requires typing DELETE, checked here too.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAccount(string? confirmation, CancellationToken ct)
+    {
+        if (!string.Equals(confirmation?.Trim(), "DELETE", StringComparison.Ordinal))
+        {
+            TempData["Flash"] = "Type DELETE in capitals to confirm.";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        await api.DeleteAccountAsync(ct);
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        logger.LogInformation("User {UserId} deleted their account", userId);
+
+        TempData["Flash"] = "Your account and everything you shared have been deleted.";
+        return RedirectToAction("Index", "Home");
+    }
+
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {

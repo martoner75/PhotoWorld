@@ -1,0 +1,40 @@
+@model PhotoWorld.Shared.Users.UserProfileDto
+@{
+    ViewData["Title"] = "Account settings";
+}
+
+<section class="container page narrow">
+    <h1>Account settings</h1>
+
+    <div class="form-card">
+        <dl class="settings-facts">
+            <dt>Name</dt>
+            <dd>@Model.DisplayName</dd>
+            <dt>Email</dt>
+            <dd>@(Model.Email ?? "Not shared")</dd>
+            <dt>Signs in with</dt>
+            <dd>@string.Join(", ", Model.LinkedProviders)</dd>
+            <dt>Member since</dt>
+            <dd>@Model.MemberSince.ToString("d MMMM yyyy")</dd>
+        </dl>
+        <p class="text-muted small">Your name and picture come from your Google account and update each time you sign in.</p>
+    </div>
+
+    <div class="form-card danger-zone">
+        <h2>Delete account</h2>
+        <p>This permanently deletes, straight away:</p>
+        <ul>
+            <li>your PhotoWorld account,</li>
+            <li>all your photos and their files,</li>
+            <li>your likes and comments, including comments on other members' photos.</li>
+        </ul>
+        <p class="text-muted small">This can't be undone. If you sign in with Google again later, you'll start as a new member.</p>
+
+        <form asp-action="DeleteAccount" method="post" class="danger-form">
+            <label for="delete-confirmation">Type <strong>DELETE</strong> to confirm</label>
+            <input id="delete-confirmation" name="confirmation" autocomplete="off" spellcheck="false"
+                   data-confirm-text="DELETE" data-confirm-target="#delete-account-button" />
+            <button id="delete-account-button" type="submit" class="btn btn-danger" disabled>Delete my account</button>
+        </form>
+    </div>
+</section>

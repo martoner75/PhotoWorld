@@ -114,6 +114,11 @@ has a direct image link can open it.
 
 Run the tests with `dotnet test`.
 
+**Deleting an account.** Members can delete their account from *Account settings* (linked from their member page).
+After typing `DELETE`, the API removes the user row, which cascades to their photos, likes, comments, reports
+and linked Google sign-in, and then deletes their files from the bucket. Log entries keep only the user id and
+expire after 30 days.
+
 ## Run locally
 
 ```bash
@@ -148,4 +153,4 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Notes / next steps
 - The privacy policy is at `/Home/Privacy`. Set `Site:ContactEmail` so it shows a contact address, and use
   that URL for the Google consent screen. Have it reviewed before going live.
-- Possible next steps: deleting your account and all your photos, reporting inappropriate content.
+- Possible next steps: reporting inappropriate photos or comments.

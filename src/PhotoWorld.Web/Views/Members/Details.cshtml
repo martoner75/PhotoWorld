@@ -16,7 +16,10 @@
         </div>
         @if (m.IsMe)
         {
-            <a class="btn btn-accent member-upload" asp-controller="Photos" asp-action="Upload">Upload a photo</a>
+            <div class="member-actions">
+                <a class="btn btn-ghost" asp-controller="Account" asp-action="Settings">Account settings</a>
+                <a class="btn btn-accent" asp-controller="Photos" asp-action="Upload">Upload a photo</a>
+            </div>
         }
     </header>
 

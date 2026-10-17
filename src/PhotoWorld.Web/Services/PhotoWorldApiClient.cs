@@ -23,6 +23,12 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public Task<UserProfileDto?> GetCurrentUserAsync(CancellationToken ct = default) =>
         GetOrNullAsync<UserProfileDto>(ApiRoutes.CurrentUser, ct);
 
+    public async Task<bool> DeleteAccountAsync(CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.CurrentUser, ct);
+        return IsSuccess(res);
+    }
+
     public Task<MemberProfileDto?> GetMemberAsync(Guid id, CancellationToken ct = default) =>
         GetOrNullAsync<MemberProfileDto>(ApiRoutes.Format(ApiRoutes.Member, ("id", id)), ct);
 

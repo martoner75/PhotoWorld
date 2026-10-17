@@ -14,6 +14,7 @@ public interface IPhotoWorldApiClient
     Task<AuthResponse?> ExternalLoginAsync(ExternalLoginRequest request, CancellationToken ct = default);
 
     Task<UserProfileDto?> GetCurrentUserAsync(CancellationToken ct = default);
+    Task<bool> DeleteAccountAsync(CancellationToken ct = default);
     Task<MemberProfileDto?> GetMemberAsync(Guid id, CancellationToken ct = default);
 
     Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, CancellationToken ct = default);
