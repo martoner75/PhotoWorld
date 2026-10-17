@@ -20,7 +20,9 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("ConnectionStrings:PhotoWorld is not set. See README → Supabase.");
 // Logs go to photoworld.app_logs. A dedicated insert-only role (ConnectionStrings:Logging) is preferred;
 // otherwise the main connection is used.
-builder.Logging.AddSupabase(builder.Configuration.GetConnectionString("Logging") ?? connectionString, "PhotoWorld.Api");
+var loggingConnectionString = builder.Configuration.GetConnectionString("Logging");
+builder.Logging.AddSupabase(
+    string.IsNullOrWhiteSpace(loggingConnectionString) ? connectionString : loggingConnectionString, "PhotoWorld.Api");
 
 builder.Services.AddDbContext<PhotoWorldDbContext>(o => o
     .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", PhotoWorldDbContext.Schema))
