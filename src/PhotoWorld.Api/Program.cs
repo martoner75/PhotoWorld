@@ -33,11 +33,7 @@ foreach (var provider in AuthProviders.All)
     builder.Services.Configure<ExternalProviderOptions>(provider, builder.Configuration.GetSection($"Authentication:{provider}"));
 
 builder.Services.AddHttpClient<GoogleIdentityVerifier>();
-builder.Services.AddHttpClient<FacebookIdentityVerifier>();
-builder.Services.AddHttpClient<InstagramIdentityVerifier>();
 builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<GoogleIdentityVerifier>());
-builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<FacebookIdentityVerifier>());
-builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<InstagramIdentityVerifier>());
 
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (jwt.SigningKey.Length < 32)

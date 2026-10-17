@@ -27,15 +27,10 @@
                         disabled="@(!p.IsConfigured)"
                         title="@(p.IsConfigured ? null : $"{p.Name} sign-in is not configured")">
                     <partial name="_ProviderIcon" model="p.Name" />
-                    <span>Continue with @(p.Name == AuthProviders.Google ? "Google" : p.Name)</span>
+                    <span>Continue with @p.Name</span>
                 </button>
             }
         </form>
-
-        @if (Model.Providers.Any(p => p.Name == AuthProviders.Instagram && p.IsConfigured))
-        {
-            <p class="auth-note">Instagram sign-in works with Instagram Business and Creator accounts.</p>
-        }
 
         @if (Env.IsDevelopment() && Model.Providers.Any(p => !p.IsConfigured))
         {
@@ -56,6 +51,6 @@
                 <text>New to PhotoWorld? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a></text>
             }
         </p>
-        <p class="auth-legal">We only use your provider account to identify you. We never post on your behalf.</p>
+        <p class="auth-legal">We only use your Google account to identify you. We never post on your behalf.</p>
     </div>
 </section>

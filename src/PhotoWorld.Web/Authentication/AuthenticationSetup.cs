@@ -8,8 +8,8 @@ namespace PhotoWorld.Web.Authentication;
 public static class AuthenticationSetup
 {
     /// <summary>
-    /// Cookie auth for the site, plus Google / Facebook / Instagram for registration and sign-in.
-    /// A provider is only registered when its ClientId is configured, so the app runs without credentials.
+    /// Cookie auth for the site, plus Google for registration and sign-in.
+    /// Google is only registered when its ClientId is configured, so the app runs without credentials.
     /// </summary>
     public static IServiceCollection AddPhotoWorldAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
@@ -33,23 +33,6 @@ public static class AuthenticationSetup
 
         if (IsConfigured(AuthProviders.Google))
             auth.AddGoogle(AuthProviders.Google, o => Configure(o, section.GetSection(AuthProviders.Google)));
-
-        if (IsConfigured(AuthProviders.Facebook))
-            auth.AddFacebook(AuthProviders.Facebook, o =>
-            {
-                Configure(o, section.GetSection(AuthProviders.Facebook));
-                o.Fields.Add("picture");
-            });
-
-        if (IsConfigured(AuthProviders.Instagram))
-            auth.AddOAuth<OAuthOptions, InstagramAuthenticationHandler>(AuthProviders.Instagram, AuthProviders.Instagram, o =>
-            {
-                Configure(o, section.GetSection(AuthProviders.Instagram));
-                o.AuthorizationEndpoint = "https://www.instagram.com/oauth/authorize";
-                o.TokenEndpoint = "https://api.instagram.com/oauth/access_token";
-                o.CallbackPath = "/signin-instagram";
-                o.Scope.Add("instagram_business_basic");
-            });
 
         return services;
     }

@@ -12,7 +12,7 @@ public class User
     public List<ExternalLogin> ExternalLogins { get; set; } = [];
 }
 
-/// <summary>Links a PhotoWorld user to an account at Google, Facebook or Instagram.</summary>
+/// <summary>Links a PhotoWorld user to an external identity provider account (e.g. Google).</summary>
 public class ExternalLogin
 {
     public int Id { get; set; }
