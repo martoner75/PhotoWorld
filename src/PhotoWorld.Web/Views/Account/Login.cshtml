@@ -1,0 +1,61 @@
+@model LoginViewModel
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@{
+    ViewData["Title"] = Model.IsRegister ? "Join PhotoWorld" : "Sign in";
+}
+
+<section class="auth">
+    <div class="auth-card">
+        <div class="auth-aperture" aria-hidden="true"></div>
+        <h1>@(Model.IsRegister ? "Join PhotoWorld" : "Welcome back")</h1>
+        <p class="auth-lead">
+            @(Model.IsRegister
+                ? "Share your photography with people around the world. Create your account in one click."
+                : "Sign in to share your latest shots and see what the community is capturing.")
+        </p>
+
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert alert-danger" role="alert">@Model.Error</div>
+        }
+
+        <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-providers">
+            @foreach (var p in Model.Providers)
+            {
+                <button type="submit" name="provider" value="@p.Name"
+                        class="btn-provider btn-provider-@p.Name.ToLowerInvariant()"
+                        disabled="@(!p.IsConfigured)"
+                        title="@(p.IsConfigured ? null : $"{p.Name} sign-in is not configured")">
+                    <partial name="_ProviderIcon" model="p.Name" />
+                    <span>Continue with @(p.Name == AuthProviders.Google ? "Google" : p.Name)</span>
+                </button>
+            }
+        </form>
+
+        @if (Model.Providers.Any(p => p.Name == AuthProviders.Instagram && p.IsConfigured))
+        {
+            <p class="auth-note">Instagram sign-in works with Instagram Business and Creator accounts.</p>
+        }
+
+        @if (Env.IsDevelopment() && Model.Providers.Any(p => !p.IsConfigured))
+        {
+            <div class="alert alert-warning auth-dev" role="note">
+                <strong>Developer note:</strong> set client credentials for
+                @string.Join(", ", Model.Providers.Where(p => !p.IsConfigured).Select(p => p.Name))
+                with <code>dotnet user-secrets</code> to enable those buttons. See the README.
+            </div>
+        }
+
+        <p class="auth-switch">
+            @if (Model.IsRegister)
+            {
+                <text>Already a member? <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a></text>
+            }
+            else
+            {
+                <text>New to PhotoWorld? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a></text>
+            }
+        </p>
+        <p class="auth-legal">We only use your provider account to identify you. We never post on your behalf.</p>
+    </div>
+</section>

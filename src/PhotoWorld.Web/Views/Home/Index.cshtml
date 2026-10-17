@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "Share the world through your lens";
+}
+
+<section class="hero">
+    <div class="hero-inner">
+        <p class="hero-eyebrow">A home for photographers everywhere</p>
+        <h1>Share the world<br />through your lens.</h1>
+        <p class="hero-lead">
+            PhotoWorld is a place to show your best shots, follow photographers from every corner
+            of the globe and talk light, gear and places with people who love it as much as you do.
+        </p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="btn btn-accent btn-lg" asp-controller="Account" asp-action="Profile">Go to my profile</a>
+        }
+        else
+        {
+            <div class="hero-actions">
+                <a class="btn btn-accent btn-lg" asp-controller="Account" asp-action="Register">Join PhotoWorld</a>
+                <a class="btn btn-ghost btn-lg" asp-controller="Account" asp-action="Login">Sign in</a>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="features container">
+    <article>
+        <span class="feature-num">01</span>
+        <h2>Share</h2>
+        <p>Publish your photos with the story behind them: where, when and how you took the shot.</p>
+    </article>
+    <article>
+        <span class="feature-num">02</span>
+        <h2>Discover</h2>
+        <p>Browse landscapes, street, portraits and more from photographers in every time zone.</p>
+    </article>
+    <article>
+        <span class="feature-num">03</span>
+        <h2>Connect</h2>
+        <p>Follow the people who inspire you and swap feedback with a friendly global community.</p>
+    </article>
+</section>

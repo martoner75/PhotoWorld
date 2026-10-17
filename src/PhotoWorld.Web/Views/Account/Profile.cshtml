@@ -1,0 +1,34 @@
+@model PhotoWorld.Shared.Users.UserProfileDto
+@{
+    ViewData["Title"] = "My profile";
+}
+
+<section class="profile">
+    <div class="profile-card">
+        @if (Model.AvatarUrl is not null)
+        {
+            <img class="profile-avatar" src="@Model.AvatarUrl" alt="" referrerpolicy="no-referrer" />
+        }
+        else
+        {
+            <div class="profile-avatar profile-avatar-initial">@Model.DisplayName[..1]</div>
+        }
+        <h1>@Model.DisplayName</h1>
+        @if (Model.Email is not null)
+        {
+            <p class="text-muted">@Model.Email</p>
+        }
+
+        <dl class="profile-facts">
+            <dt>Member since</dt>
+            <dd>@Model.MemberSince.ToString("MMMM d, yyyy")</dd>
+            <dt>Signs in with</dt>
+            <dd>
+                @foreach (var p in Model.LinkedProviders)
+                {
+                    <span class="provider-chip provider-chip-@p.ToLowerInvariant()"><partial name="_ProviderIcon" model="p" /> @p</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</section>

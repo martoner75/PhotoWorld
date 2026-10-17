@@ -1,0 +1,14 @@
+@PhotoWorld.Api_HostAddress = https://localhost:7041
+
+### Exchange a provider access token for a PhotoWorld JWT (registers the user on first call)
+POST {{PhotoWorld.Api_HostAddress}}/api/auth/external
+Content-Type: application/json
+
+{
+  "provider": "Google",
+  "accessToken": "<google-access-token>"
+}
+
+### Current user (paste the accessToken returned above)
+GET {{PhotoWorld.Api_HostAddress}}/api/users/me
+Authorization: Bearer <photoworld-jwt>
