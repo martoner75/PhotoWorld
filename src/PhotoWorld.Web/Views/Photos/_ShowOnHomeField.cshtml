@@ -1,0 +1,9 @@
+@model bool
+<label class="check-row">
+    <input type="checkbox" name="ShowOnHome" value="true" @(Model ? "checked" : "") />
+    <span>
+        <strong>Show on the PhotoWorld home page</strong>
+        <span class="text-muted small d-block">Anyone can see it there with your name, even without signing in. You can turn this off at any time.</span>
+    </span>
+</label>
+<input type="hidden" name="ShowOnHome" value="false" />

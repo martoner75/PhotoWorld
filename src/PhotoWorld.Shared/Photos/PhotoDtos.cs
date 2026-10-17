@@ -48,7 +48,11 @@ public sealed record PhotoDetailDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     ModerationState Moderation = ModerationState.Visible,
-    bool CanReport = false);
+    bool CanReport = false,
+    bool ShowOnHome = false);
+
+/// <summary>A photo its owner chose to feature in the public home-page slideshow.</summary>
+public sealed record ShowcasePhotoDto(Guid Id, string Title, string ImageUrl, int Width, int Height, string OwnerName);
 
 public sealed record CommentDto(
     Guid Id,
@@ -78,7 +82,8 @@ public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSi
 
 public sealed record UpdatePhotoRequest(
     [Required, StringLength(PhotoUploadLimits.MaxTitleLength)] string Title,
-    [StringLength(PhotoUploadLimits.MaxDescriptionLength)] string? Description);
+    [StringLength(PhotoUploadLimits.MaxDescriptionLength)] string? Description,
+    bool ShowOnHome = false);
 
 public sealed record CreateCommentRequest(
     [Required, StringLength(PhotoUploadLimits.MaxCommentLength, MinimumLength = 1)] string Text);

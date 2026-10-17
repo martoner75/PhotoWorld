@@ -244,3 +244,24 @@ fieldset.field { border: 0; padding: 0; margin: 0; }
 fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem; }
 .radio-row { display: flex; align-items: center; gap: .6rem; padding: .35rem 0; cursor: pointer; }
 .radio-row input { accent-color: var(--pw-accent); width: 1rem; height: 1rem; }
+
+/* ---------- Home showcase ---------- */
+.showcase { padding: 3rem 0 1rem; }
+.showcase-heading { font-family: var(--pw-serif); font-size: 1.8rem; margin-bottom: 1.25rem; }
+.showcase-carousel { max-width: 1200px; margin: 0 auto; background: #07080a; border-radius: var(--pw-radius); overflow: hidden; }
+/* Tall enough on desktop, but sized to the width on phones so landscape photos don't float in black bands. */
+.showcase-carousel .carousel-item { height: clamp(240px, min(60vh, 66vw), 640px); }
+.showcase-carousel .carousel-item a { display: grid; place-items: center; height: 100%; }
+.showcase-carousel img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.showcase-caption {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 2.5rem 1.5rem 2.75rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, .75)); display: flex; flex-direction: column; gap: .15rem;
+}
+.showcase-caption strong { font-family: var(--pw-serif); font-size: 1.35rem; }
+.showcase-caption span { color: #d0d0cb; font-size: .9rem; }
+.showcase-carousel .carousel-indicators { margin-bottom: .75rem; }
+.showcase-carousel .carousel-indicators [data-bs-target] { width: 8px; height: 8px; border-radius: 50%; }
+@media (max-width: 1240px) { .showcase-carousel { border-radius: 0; } }
+.check-row { display: flex; gap: .7rem; align-items: flex-start; cursor: pointer; }
+.check-row input { accent-color: var(--pw-accent); width: 1.1rem; height: 1.1rem; margin-top: .2rem; flex: none; }
+.home-badge { color: var(--pw-accent); }

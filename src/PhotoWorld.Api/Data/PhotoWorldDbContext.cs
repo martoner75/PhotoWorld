@@ -54,6 +54,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(p => p.Owner).WithMany().HasForeignKey(p => p.OwnerId);
             e.HasIndex(p => p.CreatedAt).IsDescending();
             e.HasIndex(p => new { p.OwnerId, p.CreatedAt }).IsDescending(false, true);
+            e.HasIndex(p => new { p.ShowOnHome, p.CreatedAt }).IsDescending(false, true);
         });
 
         modelBuilder.Entity<PhotoLike>(e =>

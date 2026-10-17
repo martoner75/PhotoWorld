@@ -374,3 +374,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081726_AddHomeShowcase') THEN
+    ALTER TABLE photoworld.photos ADD show_on_home boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081726_AddHomeShowcase') THEN
+    CREATE INDEX ix_photos_show_on_home_created_at ON photoworld.photos (show_on_home, created_at DESC);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081726_AddHomeShowcase') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261017081726_AddHomeShowcase', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -25,7 +25,13 @@
             <partial name="_Avatar" model="p.Owner" />
             <span>@p.Owner.DisplayName</span>
         </a>
-        <p class="text-muted small">Shared @p.CreatedAt.ToString("d MMMM yyyy")</p>
+        <p class="text-muted small">
+            Shared @p.CreatedAt.ToString("d MMMM yyyy")
+            @if (p.CanEdit && p.ShowOnHome)
+            {
+                <span class="home-badge" title="This photo appears in the public home-page slideshow">· On the home page</span>
+            }
+        </p>
 
         @if (p.Description is not null)
         {

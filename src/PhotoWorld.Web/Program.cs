@@ -13,6 +13,7 @@ builder.Services.AddControllersWithViews(o => o.Filters.Add<ApiUnauthorizedFilte
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
 builder.Services.AddPhotoWorldAuthentication(builder.Configuration);
 
 builder.Services.AddTransient<ApiAccessTokenHandler>();

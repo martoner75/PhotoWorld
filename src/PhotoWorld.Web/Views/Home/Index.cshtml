@@ -1,3 +1,4 @@
+@model IReadOnlyList<ShowcasePhotoDto>
 @{
     ViewData["Title"] = "Share the world through your lens";
 }
@@ -12,7 +13,10 @@
         </p>
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <a class="btn btn-accent btn-lg" asp-controller="Account" asp-action="Profile">Go to my profile</a>
+            <div class="hero-actions">
+                <a class="btn btn-accent btn-lg" asp-controller="Photos" asp-action="Index">Open gallery</a>
+                <a class="btn btn-ghost btn-lg" asp-controller="Photos" asp-action="Upload">Upload</a>
+            </div>
         }
         else
         {
@@ -23,6 +27,53 @@
         }
     </div>
 </section>
+
+@if (Model.Count > 0)
+{
+    <section class="showcase" aria-labelledby="showcase-heading">
+        <div class="container">
+            <h2 id="showcase-heading" class="showcase-heading">From our members</h2>
+        </div>
+        <div id="showcase" class="carousel slide carousel-fade showcase-carousel" data-bs-ride="carousel"
+             data-bs-interval="5000" data-bs-pause="hover" data-bs-touch="true" data-bs-keyboard="true">
+            <div class="carousel-indicators">
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    <button type="button" data-bs-target="#showcase" data-bs-slide-to="@i"
+                            class="@(i == 0 ? "active" : "")" aria-current="@(i == 0 ? "true" : "false")"
+                            aria-label="Photo @(i + 1): @Model[i].Title"></button>
+                }
+            </div>
+            <div class="carousel-inner">
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    var photo = Model[i];
+                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                        <a asp-controller="Photos" asp-action="Details" asp-route-id="@photo.Id">
+                            <img src="@photo.ImageUrl" alt="@photo.Title" width="@photo.Width" height="@photo.Height"
+                                 loading="@(i == 0 ? "eager" : "lazy")" />
+                        </a>
+                        <div class="showcase-caption">
+                            <strong>@photo.Title</strong>
+                            <span>by @photo.OwnerName</span>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (Model.Count > 1)
+            {
+                <button class="carousel-control-prev" type="button" data-bs-target="#showcase" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous photo</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#showcase" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next photo</span>
+                </button>
+            }
+        </div>
+    </section>
+}
 
 <section class="features container">
     <article>
@@ -41,3 +92,13 @@
         <p>Follow the people who inspire you and swap feedback with a friendly global community.</p>
     </article>
 </section>
+
+@section Scripts {
+    <script>
+        // Respect "reduce motion": keep the slideshow still unless the visitor moves it.
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            const el = document.getElementById("showcase");
+            if (el) bootstrap.Carousel.getOrCreateInstance(el, { ride: false, interval: false }).pause();
+        }
+    </script>
+}

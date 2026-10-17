@@ -19,7 +19,10 @@ public interface IPhotoWorldApiClient
 
     Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, CancellationToken ct = default);
     Task<PhotoDetailDto?> GetPhotoAsync(Guid id, CancellationToken ct = default);
-    Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, CancellationToken ct = default);
+    Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, CancellationToken ct = default);
+
+    /// <summary>Photos featured on the public home page. Works without signing in.</summary>
+    Task<IReadOnlyList<ShowcasePhotoDto>> GetShowcaseAsync(CancellationToken ct = default);
     Task<ApiResult<PhotoDetailDto>> UpdatePhotoAsync(Guid id, UpdatePhotoRequest request, CancellationToken ct = default);
     Task<bool> DeletePhotoAsync(Guid id, CancellationToken ct = default);
 

@@ -18,6 +18,8 @@ public sealed class UploadPhotoViewModel
 
     [StringLength(PhotoUploadLimits.MaxDescriptionLength)]
     public string? Description { get; set; }
+
+    public bool ShowOnHome { get; set; }
 }
 
 public sealed class EditPhotoViewModel
@@ -31,6 +33,8 @@ public sealed class EditPhotoViewModel
 
     [StringLength(PhotoUploadLimits.MaxDescriptionLength)]
     public string? Description { get; set; }
+
+    public bool ShowOnHome { get; set; }
 }
 
 /// <summary>One comment plus the photo it belongs to (needed for the delete form).</summary>

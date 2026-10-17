@@ -62,7 +62,8 @@ public class PhotosController(
     [RequestSizeLimit(PhotoUploadLimits.MaxBytes + 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
     public async Task<ActionResult<PhotoDetailDto>> Upload(
-        [FromForm] IFormFile? file, [FromForm] string? title, [FromForm] string? description, CancellationToken ct)
+        [FromForm] IFormFile? file, [FromForm] string? title, [FromForm] string? description,
+        [FromForm] bool showOnHome, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId || !await db.Users.AnyAsync(u => u.Id == userId, ct)) return Unauthorized();
 
@@ -106,6 +107,7 @@ public class PhotosController(
             ExposureTime = processed.Camera.ExposureTime,
             Iso = processed.Camera.Iso,
             TakenAt = processed.Camera.TakenAt,
+            ShowOnHome = showOnHome,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -140,6 +142,7 @@ public class PhotosController(
 
         photo.Title = request.Title.Trim();
         photo.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
+        photo.ShowOnHome = request.ShowOnHome;
         photo.UpdatedAt = clock.GetUtcNow();
         await db.SaveChangesAsync(ct);
 
@@ -353,7 +356,8 @@ public class PhotosController(
             new CameraDetailsDto(p.CameraMake, p.CameraModel, p.Lens, p.FocalLengthMm, p.Aperture, p.ExposureTime, p.Iso, p.TakenAt),
             row.Likes, row.Comments, row.LikedByMe, p.OwnerId == me, p.CreatedAt, p.UpdatedAt,
             Moderation.State(row.Upheld, row.OpenReports),
-            CanReport: p.OwnerId != me && !row.ReportedByMe);
+            CanReport: p.OwnerId != me && !row.ReportedByMe,
+            ShowOnHome: p.ShowOnHome);
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(

@@ -41,7 +41,10 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public Task<PhotoDetailDto?> GetPhotoAsync(Guid id, CancellationToken ct = default) =>
         GetOrNullAsync<PhotoDetailDto>(ApiRoutes.Format(ApiRoutes.Photo, ("id", id)), ct);
 
-    public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ShowcasePhotoDto>> GetShowcaseAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<List<ShowcasePhotoDto>>(ApiRoutes.Showcase, ct) ?? [];
+
+    public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var fileContent = new StreamContent(file.OpenReadStream());
@@ -50,6 +53,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         form.Add(fileContent, "file", file.FileName);
         form.Add(new StringContent(title), "title");
         if (description is not null) form.Add(new StringContent(description), "description");
+        form.Add(new StringContent(showOnHome ? "true" : "false"), "showOnHome");
 
         using var res = await http.PostAsync(ApiRoutes.Photos, form, ct);
         return await ReadResultAsync<PhotoDetailDto>(res, ct);

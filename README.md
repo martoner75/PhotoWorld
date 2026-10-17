@@ -120,6 +120,13 @@ After typing `DELETE`, the API removes the user row, which cascades to their pho
 and linked Google sign-in, and then deletes their files from the bucket. Log entries keep only the user id and
 expire after 30 days.
 
+## Home-page slideshow
+
+The home page is the one public page with member content: a slideshow of photos their owners chose to feature.
+Members tick **Show on the PhotoWorld home page** when uploading or editing a photo (off by default). The
+public `GET api/showcase` endpoint returns the 12 newest featured photos (title, image and owner name),
+leaving out anything hidden by reports. The website caches it for 60 seconds.
+
 ## Reports and moderation
 
 Members can report a photo or comment (spam, nudity, harassment, violence, copyright, other), once per item, but

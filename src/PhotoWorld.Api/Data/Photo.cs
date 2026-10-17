@@ -26,6 +26,9 @@ public class Photo
     public int? Iso { get; set; }
     public DateTimeOffset? TakenAt { get; set; }
 
+    /// <summary>The owner opted in to the public home-page slideshow.</summary>
+    public bool ShowOnHome { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 

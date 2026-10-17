@@ -28,6 +28,8 @@
             <span asp-validation-for="Description" class="field-error"></span>
         </div>
 
+        <partial name="_ShowOnHomeField" model="Model.ShowOnHome" />
+
         <div class="form-actions">
             <a class="btn btn-ghost" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
             <button type="submit" class="btn btn-accent">Save changes</button>

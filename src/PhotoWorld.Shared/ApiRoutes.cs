@@ -7,6 +7,7 @@ public static class ApiRoutes
     public const string CurrentUser = "api/users/me";
     public const string Member = "api/users/{id:guid}";
 
+    public const string Showcase = "api/showcase";
     public const string Photos = "api/photos";
     public const string Photo = "api/photos/{id:guid}";
     public const string PhotoLike = "api/photos/{id:guid}/like";

@@ -216,6 +216,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("owner_id");
 
+                    b.Property<bool>("ShowOnHome")
+                        .HasColumnType("boolean")
+                        .HasColumnName("show_on_home");
+
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint")
                         .HasColumnName("size_bytes");
@@ -254,6 +258,10 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasIndex("OwnerId", "CreatedAt")
                         .IsDescending(false, true)
                         .HasDatabaseName("ix_photos_owner_id_created_at");
+
+                    b.HasIndex("ShowOnHome", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_photos_show_on_home_created_at");
 
                     b.ToTable("photos", "photoworld");
                 });

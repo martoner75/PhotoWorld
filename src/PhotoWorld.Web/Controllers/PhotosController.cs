@@ -38,7 +38,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             ModelState.AddModelError(nameof(model.Photo), $"Photos can be up to {PhotoUploadLimits.MaxBytes / (1024 * 1024)} MB.");
         if (!ModelState.IsValid) return View(model);
 
-        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, ct);
+        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
@@ -58,6 +58,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         return View(new EditPhotoViewModel
         {
             Id = photo.Id, ThumbnailUrl = photo.ThumbnailUrl, Title = photo.Title, Description = photo.Description,
+            ShowOnHome = photo.ShowOnHome,
         });
     }
 
@@ -66,7 +67,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description), ct);
+        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome), ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
