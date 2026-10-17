@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!-- PhotoWorld's palette, matching the website's CSS colour variables. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    <Color x:Key="Ink">#0E0F12</Color>
+    <Color x:Key="Ink2">#17191E</Color>
+    <Color x:Key="Line">#2A2D35</Color>
+    <Color x:Key="Text">#ECEBE7</Color>
+    <Color x:Key="Muted">#9A9CA4</Color>
+    <Color x:Key="Accent">#F2A541</Color>
+    <Color x:Key="AccentInk">#1A1206</Color>
+    <Color x:Key="Danger">#F19999</Color>
+    <Color x:Key="PhotoBackground">#07080A</Color>
+</ResourceDictionary>

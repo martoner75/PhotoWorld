@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.PlaceEditorPage"
+             x:DataType="vm:PlaceEditorViewModel"
+             Title="{Binding Heading}">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="12" MaximumWidthRequest="560">
+                <Label Text="{Binding Coordinates, StringFormat='Pinned at {0}'}" Style="{StaticResource MutedText}" />
+
+                <Label Text="Name" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Name}" Placeholder="e.g. Kyoto, Japan" MaxLength="{Binding NameMaxLength}" />
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="I know when I went" Style="{StaticResource Strong}" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding HasDate}" />
+                </Grid>
+                <Border Style="{StaticResource Field}" IsVisible="{Binding HasDate}">
+                    <DatePicker Date="{Binding VisitedOn}" MaximumDate="{Binding Today}" Format="d MMMM yyyy" />
+                </Border>
+
+                <Label Text="Notes (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Note}" Placeholder="Best light, where you stayed, what to shoot next time…"
+                            AutoSize="TextChanges" MinimumHeightRequest="110" MaxLength="{Binding NoteMaxLength}" />
+                </Border>
+
+                <Button Text="Save place" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+                <Button Text="Remove from my map" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}"
+                        IsVisible="{Binding IsExisting}" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

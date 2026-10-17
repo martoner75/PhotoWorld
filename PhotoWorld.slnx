@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/PhotoWorld.Api/PhotoWorld.Api.csproj" />
+    <Project Path="src/PhotoWorld.App/PhotoWorld.App.csproj" />
     <Project Path="src/PhotoWorld.Shared/PhotoWorld.Shared.csproj" />
     <Project Path="src/PhotoWorld.Web/PhotoWorld.Web.csproj" />
   </Folder>

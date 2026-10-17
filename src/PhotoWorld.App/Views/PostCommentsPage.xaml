@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Blogs"
+             x:Class="PhotoWorld.App.Views.PostCommentsPage"
+             x:DataType="vm:PostCommentsViewModel"
+             Title="Comments">
+    <Grid RowDefinitions="*,Auto">
+        <CollectionView ItemsSource="{Binding Comments}" SelectionMode="None" Margin="14,10">
+            <CollectionView.Header>
+                <Label Text="{Binding Title}" Style="{StaticResource Subheading}" Margin="0,4,0,12" />
+            </CollectionView.Header>
+            <CollectionView.EmptyView>
+                <Label Text="No comments yet. Start the conversation." Style="{StaticResource MutedText}" Margin="0,8" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dto:BlogCommentDto">
+                    <Border Padding="12,10" Margin="0,0,0,8">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8">
+                            <Label Style="{StaticResource MutedText}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding Author.DisplayName}" TextColor="{StaticResource Text}" FontFamily="OpenSansSemibold" />
+                                        <Span Text="{Binding CreatedAt, StringFormat='  {0:d MMM yyyy}'}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Grid.Row="1" Text="{Binding Text}" />
+                            <HorizontalStackLayout Grid.Column="1" Grid.RowSpan="2" VerticalOptions="Start">
+                                <Button Text="Delete" Style="{StaticResource LinkButton}" TextColor="{StaticResource Danger}"
+                                        IsVisible="{Binding CanDelete}" CommandParameter="{Binding .}"
+                                        Command="{Binding DeleteCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PostCommentsViewModel}}, x:DataType=vm:PostCommentsViewModel}" />
+                                <Button Text="Report" Style="{StaticResource LinkButton}" TextColor="{StaticResource Muted}"
+                                        IsVisible="{Binding CanReport}" CommandParameter="{Binding .}"
+                                        Command="{Binding ReportCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PostCommentsViewModel}}, x:DataType=vm:PostCommentsViewModel}" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border Grid.Row="1" StrokeShape="Rectangle" StrokeThickness="0" Padding="14,10">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding NewComment}" Placeholder="Add a comment…" AutoSize="TextChanges"
+                            MaxLength="{Binding CommentMaxLength}" MinimumHeightRequest="44" />
+                </Border>
+                <Button Grid.Column="1" Text="Post" Command="{Binding AddCommentCommand}" VerticalOptions="End" />
+            </Grid>
+        </Border>
+        <ActivityIndicator Grid.RowSpan="2" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

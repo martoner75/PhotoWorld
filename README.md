@@ -1,13 +1,15 @@
 # PhotoWorld
 
 A portal for sharing a passion for photography with people around the world.
-ASP.NET Core MVC on **.NET 10**, split into an API, a UI and a shared library.
+ASP.NET Core MVC on **.NET 10**, split into an API, a UI and a shared library, plus a .NET MAUI app for
+iPhone and iPad.
 
 ```
 PhotoWorld.slnx
 ├── src/PhotoWorld.Shared   Class library: DTOs, API routes, provider names, claim types, Supabase logger (used by both)
 ├── src/PhotoWorld.Api      Web API: users, photos, likes, comments (Supabase Postgres + Storage), JWT issuing
 ├── src/PhotoWorld.Web      MVC UI: members-only pages, cookie auth, Google sign-in, gallery and upload
+├── src/PhotoWorld.App      .NET MAUI app for iPhone and iPad (talks to the API; signs in through Web)
 └── tests/PhotoWorld.Api.Tests  xUnit tests for image processing
 ```
 
@@ -89,8 +91,9 @@ New EF migrations: `dotnet ef migrations add <Name> --project src/PhotoWorld.Api
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds every push and pull request. On `main`, once the
-build is green, it applies any pending EF migrations to Supabase. It needs one repository secret,
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds every push and pull request: the server projects
+and tests on Linux, and the iPhone/iPad app for the iOS Simulator on a macOS runner. On `main`, once the
+server build is green, it applies any pending EF migrations to Supabase. It needs one repository secret,
 `SUPABASE_DB_CONNECTION_STRING`, holding the Session pooler connection string for the `postgres` user
 (GitHub → Settings → Secrets and variables → Actions).
 
@@ -219,7 +222,54 @@ dotnet user-secrets set "Authentication:Google:ClientSecret" "<secret>" --projec
 dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/PhotoWorld.Api
 ```
 
+## iPhone and iPad app
+
+`src/PhotoWorld.App` is a .NET MAUI app (native XAML, CommunityToolkit.Mvvm) for iPhone and iPad, in
+PhotoWorld's dark look. Tabs: **Gallery** (photos, likes, comments, reporting), **Blogs** (read posts, comment),
+**Upload** (from Photos or the camera, with the home-page toggle), **Places** (the private map on Apple Maps;
+search with Apple's geocoder or tap the map) and **Me** (sign out, delete account). It calls the same API as the
+website and compiles the DTOs and routes from `PhotoWorld.Shared` as source (not a project reference, so the app
+doesn't ship the Supabase logger's Npgsql).
+
+**Sign-in** goes through the website, so the app needs no Google client of its own and the API is unchanged.
+The app opens `Web /Account/AppLogin` in Apple's secure sign-in sheet with a PKCE-style challenge; after Google
+sign-in the website parks the session under a one-time code (2 minutes, in memory) and redirects to
+`photoworld://auth?code=…`; the app redeems the code at `/Account/AppToken` with its verifier
+(`AppSignIn` in Shared, tested in `AppSignInTests`). An app that intercepts the redirect gets a useless code. The
+PhotoWorld token is kept in the Keychain and lasts as long as on the website (8 hours). Because codes live in
+memory, run a single Web instance or move them to a shared cache.
+
+**Run it.** Needs a Mac with Xcode and the MAUI workload (`dotnet workload install maui`). The iOS target is only
+built when `/Applications/Xcode.app` exists, so the solution still builds without it (as plain `net10.0`).
+
+```bash
+# Start the API and Web as in "Run locally", then build and launch in the iOS Simulator
+# (-t:Run alone launches the last build without rebuilding):
+dotnet build src/PhotoWorld.App "-t:Build;Run" -f net10.0-ios
+# Pick a Simulator: xcrun simctl list devices available, then add
+#   "-p:_DeviceName=:v2:udid=<UDID>"
+```
+
+Tested on Xcode 27.1 with .NET for iOS 27.0 (`ValidateXcodeVersion` is off in the project for that minor-version
+gap) on the iPhone 18 Pro Simulator, iOS 27.0. The iOS 27.1 "iPhone Duo" Simulator shows only a black screen, even
+for a blank MAUI template app, so use another device. If an `Info.plist` change doesn't seem to apply, delete
+`bin/Debug/net10.0-ios` and `obj/Debug/net10.0-ios`: incremental builds can keep the old app manifest.
+
+Gotcha: resource keys are shared across `Colors.xaml` and `Styles.xaml`. A style and a colour with the same key
+make `{StaticResource …}` resolve to the wrong one at runtime (it once left the app stuck on the splash screen),
+so muted label text uses the style `MutedText` and the colour `Muted`.
+
+Debug builds talk to `https://localhost:7041` / `:7211` and trust the dev certificate on localhost only. For the
+sign-in sheet, also trust it in the Simulator: `dotnet dev-certs https -ep ~/pw-dev.crt --format PEM`, then drag
+the file onto the Simulator and enable it under Settings → General → About → Certificate Trust Settings. On a
+real iPhone, point `AppConfig` at a deployed PhotoWorld.
+
+**Before the App Store:** set `ApplicationId` (bundle id) and the release URLs in `AppConfig.cs`; sign with your
+Apple developer account. Apple also expects: *Sign in with Apple* alongside Google sign-in (guideline 4.8, not
+built yet); a way to block abusive members (1.2; reporting and in-app account deletion are built); and the App
+Privacy answers in App Store Connect to match the privacy policy.
+
 ## Notes / next steps
-- The privacy policy is at `/Home/Privacy`. Set `Site:ContactEmail` so it shows a contact address, and use
-  that URL for the Google consent screen. Have it reviewed before going live.
+- The privacy policy is at `/Home/Privacy`; its contact address comes from `Site:ContactEmail` in the Web's
+  `appsettings.json`. Use that URL for the Google consent screen. Have it reviewed before going live.
 - Possible next steps: an in-app moderation page, email notifications for new reports.

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.ProfilePage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Me">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="14" MaximumWidthRequest="560">
+                <HorizontalStackLayout Spacing="14">
+                    <Border WidthRequest="64" HeightRequest="64" StrokeShape="RoundRectangle 32" Padding="0" StrokeThickness="0">
+                        <Image Source="{Binding User.AvatarUrl}" Aspect="AspectFill" />
+                    </Border>
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="{Binding User.DisplayName}" Style="{StaticResource Subheading}" />
+                        <Label Text="{Binding User.Email}" Style="{StaticResource MutedText}" />
+                        <Label Text="{Binding MemberSince}" Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+
+                <Border Padding="4">
+                    <VerticalStackLayout>
+                        <Button Text="Open PhotoWorld on the web" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenWebsiteCommand}" />
+                        <Button Text="Privacy policy" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenPrivacyCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Button Text="Sign out" Command="{Binding SignOutCommand}" Style="{StaticResource GhostButton}" />
+
+                <Border Padding="16" Stroke="#6B2A2A" Margin="0,18,0,0">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Delete account" Style="{StaticResource Subheading}" />
+                        <Label Text="Permanently deletes your account, all your photos, your blog, your places, likes and comments, straight away. This can't be undone."
+                               Style="{StaticResource MutedText}" FontSize="14" />
+                        <Button Text="Delete my account" Command="{Binding DeleteAccountCommand}" Style="{StaticResource DangerButton}" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

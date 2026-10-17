@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.UploadPage"
+             x:DataType="vm:UploadViewModel"
+             Title="Upload">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="14" MaximumWidthRequest="640">
+                <!-- Step 1: choose a photo. -->
+                <Border Padding="0" HeightRequest="{OnIdiom Phone=280, Tablet=420, Default=360}" BackgroundColor="{StaticResource PhotoBackground}">
+                    <Grid>
+                        <Image Source="{Binding Preview}" Aspect="AspectFit" IsVisible="{Binding HasPhoto}" />
+                        <VerticalStackLayout VerticalOptions="Center" Spacing="12" Padding="24" IsVisible="{Binding HasPhoto, Converter={StaticResource Not}}">
+                            <Label Text="Share a photo" Style="{StaticResource Subheading}" HorizontalTextAlignment="Center" />
+                            <Label Text="JPEG, PNG, WebP or iPhone HEIC, up to 25 MB. Location data is removed before it's stored."
+                                   Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Button Text="Choose from Photos" Command="{Binding PickCommand}" Style="{StaticResource GhostButton}" />
+                    <Button Grid.Column="1" Text="Take a photo" Command="{Binding TakeCommand}" Style="{StaticResource GhostButton}"
+                            IsEnabled="{Binding CanTakePhoto}" />
+                </Grid>
+
+                <!-- Step 2: describe it. -->
+                <Label Text="Title" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Title}" Placeholder="What did you capture?" MaxLength="{Binding TitleMaxLength}" />
+                </Border>
+                <Label Text="Description (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Description}" Placeholder="Where, when, the story behind the shot…"
+                            AutoSize="TextChanges" MinimumHeightRequest="90" MaxLength="{Binding DescriptionMaxLength}" />
+                </Border>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Show on the PhotoWorld home page" Style="{StaticResource Strong}" />
+                        <Label Text="Anyone can see it in the public slideshow, with your name. Off by default."
+                               Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding ShowOnHome}" VerticalOptions="Center" />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,8,0,0">
+                    <Button Text="Clear" Command="{Binding ResetCommand}" Style="{StaticResource GhostButton}" />
+                    <Button Grid.Column="1" Text="Upload" Command="{Binding UploadCommand}" />
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

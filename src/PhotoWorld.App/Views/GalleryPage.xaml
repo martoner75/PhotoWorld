@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             x:Class="PhotoWorld.App.Views.GalleryPage"
+             x:DataType="vm:GalleryViewModel"
+             Title="Gallery">
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8"
+                        RemainingItemsThreshold="6" RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemsLayout>
+                <!-- Two columns on iPhone, four on iPad. -->
+                <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=2, Tablet=4, Default=3}"
+                                 HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.EmptyView>
+                <Label Text="No photos yet. Be the first to share one from the Upload tab."
+                       Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center" Margin="32,80"
+                       IsVisible="{Binding IsEmpty}" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dto:PhotoSummaryDto">
+                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                            SemanticProperties.Description="{Binding Title}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:GalleryViewModel}}, x:DataType=vm:GalleryViewModel}"
+                                                  CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid HeightRequest="{OnIdiom Phone=190, Tablet=240, Default=220}">
+                            <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill" />
+                            <Grid VerticalOptions="End" Padding="10,24,10,8">
+                                <Grid.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="Transparent" Offset="0" />
+                                        <GradientStop Color="#C0000000" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Grid.Background>
+                                <VerticalStackLayout Spacing="0">
+                                    <Label Text="{Binding Title}" Style="{StaticResource Strong}" FontSize="14" LineBreakMode="TailTruncation" />
+                                    <Label Style="{StaticResource MutedText}" FontSize="12" LineBreakMode="TailTruncation">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{Binding Owner.DisplayName}" />
+                                                <Span Text="  ♥ " />
+                                                <Span Text="{Binding LikeCount}" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

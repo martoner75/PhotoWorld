@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             x:Class="PhotoWorld.App.Views.PhotoDetailPage"
+             x:DataType="vm:PhotoDetailViewModel"
+             Title="{Binding Photo.Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Report" Command="{Binding ReportPhotoCommand}" IsVisible="{Binding Photo.CanReport}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="0" Padding="0,0,0,24">
+                <Image Source="{Binding Photo.ImageUrl}" Aspect="AspectFit" HeightRequest="{Binding AspectHeight}"
+                       BackgroundColor="{StaticResource PhotoBackground}" SemanticProperties.Description="{Binding Photo.Title}" />
+
+                <VerticalStackLayout Padding="18,16" Spacing="10" MaximumWidthRequest="760">
+                    <Border Padding="12,8" BackgroundColor="#3A2A10" Stroke="{StaticResource Accent}" IsVisible="{Binding IsUnderReview}">
+                        <Label Text="This photo is hidden from other members while it's reviewed." FontSize="13" />
+                    </Border>
+
+                    <Label Text="{Binding Photo.Title}" Style="{StaticResource Heading}" />
+                    <Label Text="{Binding Byline}" Style="{StaticResource MutedText}" FontSize="14" />
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Button Command="{Binding ToggleLikeCommand}" Style="{StaticResource GhostButton}" Padding="14,8"
+                                Text="{Binding LikeCount, StringFormat='♥ {0}'}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding LikedByMe}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Accent}" />
+                                    <Setter Property="BorderColor" Value="{StaticResource Accent}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Label VerticalOptions="Center" Style="{StaticResource MutedText}"
+                               Text="{Binding Comments.Count, StringFormat='{0} comments'}" />
+                    </HorizontalStackLayout>
+
+                    <Label Text="{Binding Photo.Description}" FontSize="16"
+                           IsVisible="{Binding Photo.Description, Converter={StaticResource HasValue}}" />
+                    <Label Text="{Binding CameraSummary}" Style="{StaticResource MutedText}"
+                           IsVisible="{Binding CameraSummary, Converter={StaticResource HasValue}}" />
+
+                    <Label Text="Comments" Style="{StaticResource Subheading}" Margin="0,14,0,0" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Comments}" Spacing="8">
+                        <BindableLayout.EmptyView>
+                            <Label Text="No comments yet. Say something nice." Style="{StaticResource MutedText}" />
+                        </BindableLayout.EmptyView>
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="dto:CommentDto">
+                                <Border Padding="12,10">
+                                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8">
+                                        <Label Grid.Row="0" Style="{StaticResource MutedText}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding Author.DisplayName}" TextColor="{StaticResource Text}" FontFamily="OpenSansSemibold" />
+                                                    <Span Text="{Binding CreatedAt, StringFormat='  {0:d MMM yyyy}'}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <Label Grid.Row="1" Text="{Binding Text}" />
+                                        <HorizontalStackLayout Grid.Column="1" Grid.RowSpan="2" VerticalOptions="Start">
+                                            <Button Text="Delete" Style="{StaticResource LinkButton}" TextColor="{StaticResource Danger}"
+                                                    IsVisible="{Binding CanDelete}" CommandParameter="{Binding .}"
+                                                    Command="{Binding DeleteCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoDetailViewModel}}, x:DataType=vm:PhotoDetailViewModel}" />
+                                            <Button Text="Report" Style="{StaticResource LinkButton}" TextColor="{StaticResource Muted}"
+                                                    IsVisible="{Binding CanReport}" CommandParameter="{Binding .}"
+                                                    Command="{Binding ReportCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoDetailViewModel}}, x:DataType=vm:PhotoDetailViewModel}" />
+                                        </HorizontalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Border Style="{StaticResource Field}" Margin="0,6,0,0">
+                        <Editor Text="{Binding NewComment}" Placeholder="Add a comment…" AutoSize="TextChanges"
+                                MaxLength="{Binding CommentMaxLength}" MinimumHeightRequest="44" />
+                    </Border>
+                    <Button Text="Post comment" Command="{Binding AddCommentCommand}" HorizontalOptions="End" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

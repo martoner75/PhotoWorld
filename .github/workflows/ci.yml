@@ -14,8 +14,21 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
-      - run: dotnet build PhotoWorld.slnx --configuration Release
-      - run: dotnet test PhotoWorld.slnx --configuration Release --no-build
+      # The server projects only: the iPhone/iPad app needs the MAUI workload and Xcode (see the ios job).
+      - run: dotnet build src/PhotoWorld.Web --configuration Release
+      - run: dotnet build tests/PhotoWorld.Api.Tests --configuration Release
+      - run: dotnet test tests/PhotoWorld.Api.Tests --configuration Release --no-build
+
+  # Builds the iPhone/iPad app for the iOS Simulator (no signing needed). macOS runners come with Xcode.
+  ios:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet workload install maui-ios
+      - run: dotnet build src/PhotoWorld.App --configuration Release -f net10.0-ios -r iossimulator-arm64
 
   # Applies EF migrations to Supabase. Runs only for main, after a green build; a no-op when nothing is pending.
   migrate:

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Web.Authentication;
 using PhotoWorld.Web.Models;
@@ -13,8 +14,10 @@ namespace PhotoWorld.Web.Controllers;
 public class AccountController(
     IAuthenticationSchemeProvider schemes,
     IPhotoWorldApiClient api,
+    IMemoryCache cache,
     ILogger<AccountController> logger) : Controller
 {
+    private const string AppChallengeItem = "app_challenge";
     [AllowAnonymous]
     [HttpGet]
     public Task<IActionResult> Login(string? returnUrl, string? error) => ShowLogin(isRegister: false, returnUrl, error);
@@ -45,30 +48,15 @@ public class AccountController(
     [HttpGet]
     public async Task<IActionResult> ExternalLoginCallback(string? returnUrl, CancellationToken ct)
     {
-        var external = await HttpContext.AuthenticateAsync(AuthSchemes.External);
-        await HttpContext.SignOutAsync(AuthSchemes.External);
-
-        var provider = external.Properties?.Items.TryGetValue(AuthSchemes.ProviderItem, out var p) == true ? p : null;
-        var providerToken = external.Properties?.GetTokenValue("access_token");
-        if (!external.Succeeded || provider is null || providerToken is null)
-        {
-            logger.LogWarning("External sign-in with {Provider} failed: {Failure}", provider, external.Failure?.Message);
-            return RedirectToAction(nameof(Login), new { returnUrl, error = "Sign-in failed. Please try again." });
-        }
-
-        var session = await api.ExternalLoginAsync(new ExternalLoginRequest(provider, providerToken), ct);
-        if (session is null)
-        {
-            logger.LogWarning("API rejected {Provider} sign-in", provider);
-            return RedirectToAction(nameof(Login), new { returnUrl, error = $"We couldn't verify your {provider} account." });
-        }
+        var (session, provider, error) = await CompleteExternalSignInAsync(ct);
+        if (session is null) return RedirectToAction(nameof(Login), new { returnUrl, error });
 
         var user = session.User;
         List<Claim> claims =
         [
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.DisplayName),
-            new(PhotoWorldClaimTypes.Provider, provider),
+            new(PhotoWorldClaimTypes.Provider, provider!),
         ];
         if (user.Email is not null) claims.Add(new Claim(ClaimTypes.Email, user.Email));
         if (user.AvatarUrl is not null) claims.Add(new Claim(PhotoWorldClaimTypes.AvatarUrl, user.AvatarUrl));
@@ -90,6 +78,90 @@ public class AccountController(
             : $"Welcome back, {user.DisplayName}!";
 
         return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
+    }
+
+    // ----- Sign-in for the iPhone/iPad app (see AppSignIn) -----
+
+    /// <summary>The app opens this in a secure browser sheet. Starts the provider sign-in for the app.</summary>
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> AppLogin(string? provider, string? challenge)
+    {
+        if (!AppSignIn.IsWellFormedChallenge(challenge)) return BadRequest("Missing or malformed challenge.");
+        provider = AuthProviders.IsSupported(provider ?? "") ? AuthProviders.Normalize(provider!) : AuthProviders.Google;
+        if (await schemes.GetSchemeAsync(provider) is null) return AppRedirect(("error", $"{provider} sign-in is not available yet."));
+
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = Url.Action(nameof(AppLoginCallback)),
+            Items = { [AuthSchemes.ProviderItem] = provider, [AppChallengeItem] = challenge },
+        };
+        return Challenge(properties, provider);
+    }
+
+    /// <summary>Back from the provider: park the session under a one-time code and hand the code to the app.</summary>
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> AppLoginCallback(CancellationToken ct)
+    {
+        var external = await HttpContext.AuthenticateAsync(AuthSchemes.External);
+        var challenge = external.Properties?.Items.TryGetValue(AppChallengeItem, out var c) == true ? c : null;
+        var (session, provider, error) = await CompleteExternalSignInAsync(ct, external);
+        if (session is null || !AppSignIn.IsWellFormedChallenge(challenge)) return AppRedirect(("error", error ?? "Sign-in failed."));
+
+        var code = AppSignIn.NewCode();
+        cache.Set(AppCodeKey(code), new PendingAppSignIn(session, challenge!), AppSignIn.CodeLifetime);
+        logger.LogInformation("User {UserId} signed in to the app with {Provider} (new member: {IsNewUser})",
+            session.User.Id, provider, session.IsNewUser);
+        return AppRedirect(("code", code));
+    }
+
+    /// <summary>The app redeems its code (once) with the verifier it kept; only then does it get the token.</summary>
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    [HttpPost]
+    public IActionResult AppToken([FromBody] AppTokenRequest request)
+    {
+        var key = AppCodeKey(request.Code ?? "");
+        if (!cache.TryGetValue(key, out PendingAppSignIn? pending) || pending is null) return BadRequest();
+        cache.Remove(key); // one attempt per code, right or wrong
+        if (!AppSignIn.VerifierMatches(request.Verifier, pending.Challenge))
+        {
+            logger.LogWarning("App sign-in code for user {UserId} presented with the wrong verifier", pending.Session.User.Id);
+            return BadRequest();
+        }
+        return Ok(pending.Session);
+    }
+
+    private static string AppCodeKey(string code) => "app-signin:" + code;
+
+    private RedirectResult AppRedirect(params (string Name, string Value)[] query) =>
+        Redirect(AppSignIn.CallbackUri + QueryString.Create(query.Select(q => KeyValuePair.Create(q.Name, (string?)q.Value))));
+
+    private sealed record PendingAppSignIn(AuthResponse Session, string Challenge);
+
+    /// <summary>Reads the provider's result and exchanges its token for a PhotoWorld session with the API.</summary>
+    private async Task<(AuthResponse? Session, string? Provider, string? Error)> CompleteExternalSignInAsync(
+        CancellationToken ct, AuthenticateResult? external = null)
+    {
+        external ??= await HttpContext.AuthenticateAsync(AuthSchemes.External);
+        await HttpContext.SignOutAsync(AuthSchemes.External);
+
+        var provider = external.Properties?.Items.TryGetValue(AuthSchemes.ProviderItem, out var p) == true ? p : null;
+        var providerToken = external.Properties?.GetTokenValue("access_token");
+        if (!external.Succeeded || provider is null || providerToken is null)
+        {
+            logger.LogWarning("External sign-in with {Provider} failed: {Failure}", provider, external.Failure?.Message);
+            return (null, provider, "Sign-in failed. Please try again.");
+        }
+
+        var session = await api.ExternalLoginAsync(new ExternalLoginRequest(provider, providerToken), ct);
+        if (session is null)
+        {
+            logger.LogWarning("API rejected {Provider} sign-in", provider);
+            return (null, provider, $"We couldn't verify your {provider} account.");
+        }
+        return (session, provider, null);
     }
 
     /// <summary>Kept for old links: your profile is now your member page.</summary>

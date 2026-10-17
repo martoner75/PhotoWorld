@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.LoginPage"
+             x:DataType="vm:LoginViewModel">
+    <Grid RowDefinitions="*,Auto,Auto" Padding="28,0,28,24">
+        <VerticalStackLayout Grid.Row="0" VerticalOptions="Center" Spacing="16" MaximumWidthRequest="460">
+            <Image Source="brand_mark.png" HeightRequest="72" WidthRequest="72" HorizontalOptions="Start"
+                   SemanticProperties.Description="PhotoWorld" />
+            <Label Text="A HOME FOR PHOTOGRAPHERS EVERYWHERE" TextColor="{StaticResource Accent}" FontSize="12"
+                   FontFamily="OpenSansSemibold" CharacterSpacing="1.5" />
+            <Label Text="Share the world through your lens." Style="{StaticResource Heading}" FontSize="38" />
+            <Label Text="Show your best shots, follow photographers from every corner of the globe and keep a map of the places you've been."
+                   TextColor="{StaticResource Muted}" FontSize="16" />
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="12" MaximumWidthRequest="460">
+            <Label Text="{Binding Error}" TextColor="{StaticResource Danger}" HorizontalTextAlignment="Center"
+                   IsVisible="{Binding Error, Converter={StaticResource HasValue}}" />
+            <Button Text="Continue with Google" Command="{Binding SignInCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label Text="New here? Signing in for the first time creates your PhotoWorld account."
+                   Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <Button Grid.Row="2" Text="Privacy policy" Style="{StaticResource LinkButton}" HorizontalOptions="Center"
+                Command="{Binding OpenPrivacyCommand}" />
+    </Grid>
+</ContentPage>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell x:Class="PhotoWorld.App.AppShell"
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:PhotoWorld.App.Views"
+       FlyoutBehavior="Disabled"
+       Title="PhotoWorld">
+
+    <!-- Shown until the member signs in; AppShell switches to the tabs once a session exists. -->
+    <ShellContent Route="login" ContentTemplate="{DataTemplate views:LoginPage}" Shell.NavBarIsVisible="False" />
+
+    <TabBar Route="main">
+        <Tab Title="Gallery" Icon="tab_gallery.png" Route="gallery">
+            <ShellContent ContentTemplate="{DataTemplate views:GalleryPage}" />
+        </Tab>
+        <Tab Title="Blogs" Icon="tab_blogs.png" Route="blogs">
+            <ShellContent ContentTemplate="{DataTemplate views:BlogsPage}" />
+        </Tab>
+        <Tab Title="Upload" Icon="tab_upload.png" Route="upload">
+            <ShellContent ContentTemplate="{DataTemplate views:UploadPage}" />
+        </Tab>
+        <Tab Title="Places" Icon="tab_places.png" Route="places">
+            <ShellContent ContentTemplate="{DataTemplate views:PlacesPage}" />
+        </Tab>
+        <Tab Title="Me" Icon="tab_me.png" Route="me">
+            <ShellContent ContentTemplate="{DataTemplate views:ProfilePage}" />
+        </Tab>
+    </TabBar>
+</Shell>
