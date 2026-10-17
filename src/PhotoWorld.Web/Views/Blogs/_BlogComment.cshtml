@@ -1,0 +1,31 @@
+@model BlogCommentItemViewModel
+<li class="comment" id="comment-@Model.Comment.Id">
+    <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Comment.Author.Id">
+        <partial name="_Avatar" model="Model.Comment.Author" />
+    </a>
+    <div class="comment-body">
+        <div class="comment-head">
+            <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Comment.Author.Id">@Model.Comment.Author.DisplayName</a>
+            <time datetime="@Model.Comment.CreatedAt.ToString("o")">@Model.Comment.CreatedAt.ToString("d MMM yyyy")</time>
+            @if (Model.Comment.Moderation != ModerationState.Visible)
+            {
+                <span class="moderation-badge" title="Only you can see this comment">
+                    @(Model.Comment.Moderation == ModerationState.Removed ? "Removed" : "Hidden for review")
+                </span>
+            }
+            @if (Model.Comment.CanReport)
+            {
+                <a class="btn-link-muted comment-report" asp-controller="Blogs" asp-action="Report" asp-route-id="@Model.PostId"
+                   asp-route-commentId="@Model.Comment.Id">Report</a>
+            }
+            @if (Model.Comment.CanDelete)
+            {
+                <form asp-controller="Blogs" asp-action="DeleteComment" asp-route-id="@Model.PostId" asp-route-commentId="@Model.Comment.Id"
+                      method="post" data-ajax="delete-comment" class="comment-delete">
+                    <button type="submit" class="btn-link-muted" aria-label="Delete comment">Delete</button>
+                </form>
+            }
+        </div>
+        <p>@Model.Comment.Text</p>
+    </div>
+</li>

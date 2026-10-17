@@ -1,0 +1,30 @@
+@model BlogSettingsViewModel
+@{
+    ViewData["Title"] = "Blog settings";
+}
+
+<section class="container page narrow">
+    <h1>Blog settings</h1>
+    <form asp-action="Settings" method="post" class="form-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="field">
+            <label asp-for="Title">Blog title</label>
+            <input asp-for="Title" maxlength="@BlogLimits.BlogTitleMax" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Intro">Introduction <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Intro" rows="4" maxlength="@BlogLimits.IntroMax"
+                      placeholder="What do you photograph? What will people find here?"></textarea>
+            <span asp-validation-for="Intro" class="field-error"></span>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="Mine">Cancel</a>
+            <button type="submit" class="btn btn-accent">Save</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

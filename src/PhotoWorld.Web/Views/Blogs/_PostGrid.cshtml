@@ -1,0 +1,8 @@
+@model PagedResult<BlogPostSummaryDto>
+<div class="post-grid">
+    @foreach (var post in Model.Items)
+    {
+        <partial name="_PostCard" model="post" />
+    }
+</div>
+<partial name="_Pager" model="new PagerViewModel(Model.Page, Model.TotalPages)" />

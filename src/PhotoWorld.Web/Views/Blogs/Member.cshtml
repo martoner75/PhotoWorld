@@ -1,0 +1,49 @@
+@model BlogPageViewModel
+@{
+    var b = Model.Blog;
+    ViewData["Title"] = b.Title;
+}
+
+<section class="container page">
+    <header class="member-header">
+        <partial name="_Avatar" model="b.Author" />
+        <div>
+            <h1>@b.Title</h1>
+            <p class="text-muted">
+                by <a asp-controller="Members" asp-action="Details" asp-route-id="@b.Author.Id">@b.Author.DisplayName</a> ·
+                @b.PostCount @(b.PostCount == 1 ? "post" : "posts")
+            </p>
+        </div>
+        @if (b.IsMine)
+        {
+            <div class="member-actions">
+                <a class="btn btn-ghost" asp-action="Settings">Blog settings</a>
+                <a class="btn btn-accent" asp-action="New">Write a post</a>
+            </div>
+        }
+    </header>
+
+    @if (b.Intro is not null)
+    {
+        <p class="blog-intro">@b.Intro</p>
+    }
+
+    @if (Model.Posts.TotalCount == 0)
+    {
+        <div class="empty-state">
+            @if (b.IsMine)
+            {
+                <p>Your blog is empty. Share the story behind a photo, a trip or a technique.</p>
+                <a class="btn btn-accent" asp-action="New">Write your first post</a>
+            }
+            else
+            {
+                <p>@b.Author.DisplayName hasn't published any posts yet.</p>
+            }
+        </div>
+    }
+    else
+    {
+        <partial name="_PostGrid" model="Model.Posts" />
+    }
+</section>

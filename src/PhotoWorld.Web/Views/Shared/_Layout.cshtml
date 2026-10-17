@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @await RenderSectionAsync("Head", required: false)
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -27,6 +28,7 @@
                         {
                             var avatar = User.FindFirstValue(PhotoWorldClaimTypes.AvatarUrl);
                             <li class="nav-item"><a class="nav-link" asp-controller="Photos" asp-action="Index">Gallery</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Blogs" asp-action="Index">Blogs</a></li>
                             <li class="nav-item"><a class="btn btn-accent btn-sm" asp-controller="Photos" asp-action="Upload">Upload</a></li>
                             <li class="nav-item">
                                 <a class="nav-link nav-user" asp-controller="Members" asp-action="Me">

@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
+using PhotoWorld.Api.Services.Blogs;
 using PhotoWorld.Api.Services.Identity;
+using PhotoWorld.Api.Services.Moderation;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Logging;
@@ -39,6 +41,8 @@ builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredSer
 builder.Services.Configure<SupabaseStorageOptions>(builder.Configuration.GetSection(SupabaseStorageOptions.Section));
 builder.Services.AddHttpClient<SupabaseStorage>();
 builder.Services.AddSingleton<ImageProcessor>();
+builder.Services.AddScoped<ReportService>();
+builder.Services.AddSingleton<BlogHtml>();
 
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (jwt.SigningKey.Length < 32)

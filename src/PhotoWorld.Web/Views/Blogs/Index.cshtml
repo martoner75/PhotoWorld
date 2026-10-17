@@ -1,0 +1,29 @@
+@model PagedResult<BlogPostSummaryDto>
+@{
+    ViewData["Title"] = "Blogs";
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Blogs</h1>
+            <p class="text-muted">Stories behind the shots, from PhotoWorld members.</p>
+        </div>
+        <div class="member-actions">
+            <a class="btn btn-ghost" asp-action="Mine">My blog</a>
+            <a class="btn btn-accent" asp-action="New">Write a post</a>
+        </div>
+    </header>
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="empty-state">
+            <p>No posts yet. Tell the story behind one of your photos!</p>
+            <a class="btn btn-accent" asp-action="New">Write the first post</a>
+        </div>
+    }
+    else
+    {
+        <partial name="_PostGrid" model="Model" />
+    }
+</section>

@@ -1,0 +1,36 @@
+@model BlogPostSummaryDto
+<article class="post-card">
+    <a asp-controller="Blogs" asp-action="Post" asp-route-id="@Model.Id" class="post-card-cover" tabindex="-1" aria-hidden="true">
+        @if (Model.CoverUrl is not null)
+        {
+            <img src="@Model.CoverUrl" alt="" loading="lazy" />
+        }
+        else
+        {
+            <span class="post-card-cover-empty"></span>
+        }
+        @if (Model.Status == BlogPostStatus.Draft)
+        {
+            <span class="moderation-badge photo-card-badge draft-badge">Draft</span>
+        }
+        else if (Model.Moderation != ModerationState.Visible)
+        {
+            <span class="moderation-badge photo-card-badge">@(Model.Moderation == ModerationState.Removed ? "Removed" : "Hidden for review")</span>
+        }
+    </a>
+    <div class="post-card-body">
+        <h3><a asp-controller="Blogs" asp-action="Post" asp-route-id="@Model.Id">@Model.Title</a></h3>
+        @if (!string.IsNullOrEmpty(Model.Excerpt))
+        {
+            <p class="post-card-excerpt">@Model.Excerpt</p>
+        }
+        <div class="post-card-meta">
+            <a asp-controller="Blogs" asp-action="Member" asp-route-id="@Model.Author.Id" class="photo-card-owner">
+                <partial name="_Avatar" model="Model.Author" /> @Model.Author.DisplayName
+            </a>
+            <span>
+                @((Model.PublishedAt ?? Model.UpdatedAt).ToString("d MMM yyyy")) · 💬 @Model.CommentCount
+            </span>
+        </div>
+    </div>
+</article>

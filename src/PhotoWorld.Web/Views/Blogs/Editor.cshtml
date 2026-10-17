@@ -1,0 +1,89 @@
+@model PostEditorViewModel
+@{
+    var isNew = Model.Id is null;
+    ViewData["Title"] = isNew ? "Write a post" : "Edit post";
+    var isPublished = Model.Status == BlogPostStatus.Published;
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/lib/quill/quill.snow.css" />
+}
+
+<section class="container page editor-page">
+    <h1>@ViewData["Title"]</h1>
+
+    <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" class="form-card" id="post-form">
+        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+        <div class="field">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" maxlength="@BlogLimits.PostTitleMax" placeholder="Three days chasing fog in the Dolomites" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+
+        <div class="field">
+            <label id="editor-label">Your post</label>
+            <div id="editor" aria-labelledby="editor-label"></div>
+            <input type="hidden" asp-for="BodyHtml" id="body-html" />
+            <p class="text-muted small">Use the <strong>photo</strong> button to add photos from your gallery or upload new ones.
+                The first photo becomes the post's cover.</p>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="@(isNew ? "Index" : "Post")" asp-route-id="@Model.Id">Cancel</a>
+            <button type="submit" name="Publish" value="false" class="btn btn-ghost">
+                @(isPublished ? "Unpublish and save as draft" : "Save draft")
+            </button>
+            <button type="submit" name="Publish" value="true" class="btn btn-accent">@(isPublished ? "Update" : "Publish")</button>
+        </div>
+    </form>
+</section>
+
+<div class="modal fade" id="photo-picker" tabindex="-1" aria-labelledby="photo-picker-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content picker">
+            <div class="modal-header">
+                <h2 class="modal-title" id="photo-picker-title">Add a photo</h2>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav picker-tabs" role="tablist">
+                    <li><button type="button" class="active" data-bs-toggle="tab" data-bs-target="#picker-gallery" role="tab">Your photos</button></li>
+                    <li><button type="button" data-bs-toggle="tab" data-bs-target="#picker-upload" role="tab">Upload new</button></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="picker-gallery" role="tabpanel">
+                        <div class="picker-grid" data-picker-grid></div>
+                        <p class="text-muted small" data-picker-empty hidden>You haven't uploaded any photos yet. Use "Upload new".</p>
+                        <button type="button" class="btn btn-ghost btn-sm" data-picker-more hidden>Load more</button>
+                    </div>
+                    <div class="tab-pane fade" id="picker-upload" role="tabpanel">
+                        <form class="picker-upload" data-picker-upload>
+                            <div class="field">
+                                <label for="picker-file">Photo</label>
+                                <input id="picker-file" name="photo" type="file" accept="@PhotoUploadLimits.AcceptAttribute" required />
+                            </div>
+                            <div class="field">
+                                <label for="picker-title">Title</label>
+                                <input id="picker-title" name="title" maxlength="@PhotoUploadLimits.MaxTitleLength" required />
+                            </div>
+                            <p class="text-muted small">It's also added to your gallery.</p>
+                            <p class="field-error" data-picker-error hidden></p>
+                            <button type="submit" class="btn btn-accent btn-sm">Upload and add</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="field picker-caption">
+                    <label for="picker-caption">Caption <span class="text-muted">(optional)</span></label>
+                    <input id="picker-caption" maxlength="200" placeholder="Shown under the photo" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/quill/quill.js"></script>
+    <script src="~/js/editor.js" asp-append-version="true"
+            data-photos-url="@Url.Action("MyPhotos")" data-upload-url="@Url.Action("UploadPhoto")"></script>
+}

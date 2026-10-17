@@ -62,13 +62,16 @@ public static class CameraDetailsDisplay
 
 public sealed class ReportViewModel
 {
-    public Guid PhotoId { get; set; }
+    /// <summary>The photo or blog post; with <see cref="CommentId"/>, the comment on it being reported.</summary>
+    public Guid Id { get; set; }
     public Guid? CommentId { get; set; }
 
-    // What's being reported, shown at the top of the form.
-    public string? PhotoTitle { get; set; }
+    // What's being reported, shown at the top of the form (filled in by the controller).
+    public string Subject { get; set; } = "photo";
+    public string? Title { get; set; }
     public string? ThumbnailUrl { get; set; }
-    public string? CommentText { get; set; }
+    public string? QuotedText { get; set; }
+    public string? CancelUrl { get; set; }
 
     [Required(ErrorMessage = "Choose a reason.")]
     public string? Reason { get; set; }
@@ -76,3 +79,6 @@ public sealed class ReportViewModel
     [StringLength(ReportRules.MaxNoteLength)]
     public string? Note { get; set; }
 }
+
+/// <summary>Banner shown to the owner of content that moderation is hiding from everyone else.</summary>
+public sealed record ModerationBannerModel(ModerationState State, string Noun);

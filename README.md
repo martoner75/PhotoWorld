@@ -30,7 +30,8 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 |---|---|---|
 | `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members and their linked Google accounts |
 | `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
-| `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos and comments, and the moderation queue |
+| `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, and comments |
+| `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
 | `photoworld.app_logs` | API **and** Web (`SupabaseLoggerProvider`) | Application logs, tagged with `application` = `PhotoWorld.Api` / `PhotoWorld.Web` |
 | `photoworld.__ef_migrations_history` | API | Applied EF migrations |
@@ -127,10 +128,24 @@ Members tick **Show on the PhotoWorld home page** when uploading or editing a ph
 public `GET api/showcase` endpoint returns the 12 newest featured photos (title, image and owner name),
 leaving out anything hidden by reports. The website caches it for 60 seconds.
 
+## Blogs
+
+Every member has a blog (**Blogs** in the menu, or *Blog* on a member page) with a title and intro, set under
+*Blog settings*. Posts are written in a Quill 2 editor (`wwwroot/lib/quill`) with headings, bold, italic,
+lists, quotes, links and a **photo** button. That button picks from your gallery or uploads a new photo, which
+also lands in your gallery. Posts can be saved as drafts (visible only to you) or published. Members comment on
+published posts; comment authors and post authors can delete comments.
+
+**Safety.** The API never trusts post HTML. `BlogHtml` runs every body through HtmlSanitizer, which keeps
+only basic formatting, http(s)/mailto links (opened with `rel="nofollow noopener"`) and the author's own
+photos, re-pointed at their real storage URL. Scripts, styles, event handlers and foreign images are removed.
+When a post is shown, photos that were since deleted or hidden by moderation are dropped from it. The first
+photo is the post's cover on cards.
+
 ## Reports and moderation
 
-Members can report a photo or comment (spam, nudity, harassment, violence, copyright, other), once per item, but
-not their own. Content is **hidden** from everyone except its owner when:
+Members can report a photo, a photo comment, a blog post or a blog comment (spam, nudity, harassment, violence,
+copyright, other), once per item, but not their own. Content is **hidden** from everyone except its owner when:
 
 - it has **3 or more open reports** from different members (pending review), or
 - a moderator marked one of its reports **upheld** (removed).
@@ -149,6 +164,9 @@ update photoworld.reports set status = 'upheld' where photo_id = '<photo id>' an
 
 -- Nothing wrong: dismiss the reports (auto-hidden content reappears)
 update photoworld.reports set status = 'dismissed' where comment_id = '<comment id>' and status = 'open';
+
+-- Blog posts and blog comments work the same way, with blog_post_id / blog_comment_id
+update photoworld.reports set status = 'upheld' where blog_post_id = '<post id>' and status = 'open';
 ```
 
 Upheld photos stay in the bucket until their owner deletes them or their account. Every report and every

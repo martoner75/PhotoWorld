@@ -114,18 +114,18 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     [HttpGet]
     public async Task<IActionResult> Report(Guid id, Guid? commentId, CancellationToken ct)
     {
-        var model = await LoadReportTargetAsync(new ReportViewModel { PhotoId = id, CommentId = commentId }, ct);
-        return model is null ? NotFound() : View(model);
+        var model = await LoadReportTargetAsync(new ReportViewModel { Id = id, CommentId = commentId }, ct);
+        return model is null ? NotFound() : View("Report", model);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Report(Guid id, ReportViewModel model, CancellationToken ct)
     {
-        model.PhotoId = id;
+        model.Id = id;
         if (!ModelState.IsValid)
         {
             var reloaded = await LoadReportTargetAsync(model, ct);
-            return reloaded is null ? NotFound() : View(reloaded);
+            return reloaded is null ? NotFound() : View("Report", reloaded);
         }
 
         var outcome = await api.ReportAsync(id, model.CommentId, new CreateReportRequest(model.Reason!, model.Note), ct);
@@ -151,16 +151,19 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     /// <summary>Fills in what's being reported; null if the photo or comment isn't visible any more.</summary>
     private async Task<ReportViewModel?> LoadReportTargetAsync(ReportViewModel model, CancellationToken ct)
     {
-        var photo = await api.GetPhotoAsync(model.PhotoId, ct);
+        var photo = await api.GetPhotoAsync(model.Id, ct);
         if (photo is null) return null;
-        model.PhotoTitle = photo.Title;
+        model.Subject = "photo";
+        model.Title = photo.Title;
         model.ThumbnailUrl = photo.ThumbnailUrl;
+        model.CancelUrl = Url.Action(nameof(Details), new { id = model.Id });
 
         if (model.CommentId is { } commentId)
         {
-            var comment = (await api.GetCommentsAsync(model.PhotoId, ct)).FirstOrDefault(c => c.Id == commentId);
+            var comment = (await api.GetCommentsAsync(model.Id, ct)).FirstOrDefault(c => c.Id == commentId);
             if (comment is null) return null;
-            model.CommentText = comment.Text;
+            model.Subject = "comment";
+            model.QuotedText = comment.Text;
         }
         return model;
     }

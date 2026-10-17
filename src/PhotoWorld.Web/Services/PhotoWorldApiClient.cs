@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Auth;
+using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Users;
 
@@ -95,11 +96,71 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res);
     }
 
-    public async Task<ReportOutcome> ReportAsync(Guid id, Guid? commentId, CreateReportRequest request, CancellationToken ct = default)
-    {
-        var url = commentId is null
+    public Task<ReportOutcome> ReportAsync(Guid id, Guid? commentId, CreateReportRequest request, CancellationToken ct = default) =>
+        SendReportAsync(commentId is null
             ? ApiRoutes.Format(ApiRoutes.PhotoReports, ("id", id))
-            : ApiRoutes.Format(ApiRoutes.CommentReports, ("id", id), ("commentId", commentId));
+            : ApiRoutes.Format(ApiRoutes.CommentReports, ("id", id), ("commentId", commentId)), request, ct);
+
+    public Task<ReportOutcome> ReportBlogAsync(Guid postId, Guid? commentId, CreateReportRequest request, CancellationToken ct = default) =>
+        SendReportAsync(commentId is null
+            ? ApiRoutes.Format(ApiRoutes.BlogPostReports, ("id", postId))
+            : ApiRoutes.Format(ApiRoutes.BlogCommentReports, ("id", postId), ("commentId", commentId)), request, ct);
+
+    public Task<BlogDto?> GetBlogAsync(Guid userId, CancellationToken ct = default) =>
+        GetOrNullAsync<BlogDto>(ApiRoutes.Format(ApiRoutes.Blog, ("userId", userId)), ct);
+
+    public async Task<ApiResult<BlogDto>> SaveBlogAsync(Guid userId, SaveBlogRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Blog, ("userId", userId)), request, ct);
+        return await ReadResultAsync<BlogDto>(res, ct);
+    }
+
+    public async Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, Guid? authorId = null, CancellationToken ct = default)
+    {
+        var url = $"{ApiRoutes.BlogPosts}?page={page}" + (authorId is null ? "" : $"&authorId={authorId}");
+        return (await GetOrNullAsync<PagedResult<BlogPostSummaryDto>>(url, ct))!;
+    }
+
+    public Task<BlogPostDto?> GetPostAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<BlogPostDto>(ApiRoutes.Format(ApiRoutes.BlogPost, ("id", id)), ct);
+
+    public async Task<ApiResult<BlogPostDto>> CreatePostAsync(SavePostRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.BlogPosts, request, ct);
+        return await ReadResultAsync<BlogPostDto>(res, ct);
+    }
+
+    public async Task<ApiResult<BlogPostDto>> UpdatePostAsync(Guid id, SavePostRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.BlogPost, ("id", id)), request, ct);
+        return await ReadResultAsync<BlogPostDto>(res, ct);
+    }
+
+    public async Task<bool> DeletePostAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.BlogPost, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<IReadOnlyList<BlogCommentDto>> GetBlogCommentsAsync(Guid postId, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<BlogCommentDto>>(ApiRoutes.Format(ApiRoutes.BlogPostComments, ("id", postId)), ct) ?? [];
+
+    public async Task<ApiResult<BlogCommentDto>> AddBlogCommentAsync(Guid postId, string text, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.BlogPostComments, ("id", postId)),
+            new CreateBlogCommentRequest(text), ct);
+        return await ReadResultAsync<BlogCommentDto>(res, ct);
+    }
+
+    public async Task<bool> DeleteBlogCommentAsync(Guid postId, Guid commentId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(
+            ApiRoutes.Format(ApiRoutes.BlogPostComment, ("id", postId), ("commentId", commentId)), ct);
+        return IsSuccess(res);
+    }
+
+    private async Task<ReportOutcome> SendReportAsync(string url, CreateReportRequest request, CancellationToken ct)
+    {
         using var res = await http.PostAsJsonAsync(url, request, ct);
         return res.StatusCode switch
         {

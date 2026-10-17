@@ -23,6 +23,164 @@ namespace PhotoWorld.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Blog", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Intro")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("intro");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_blogs");
+
+                    b.ToTable("blogs", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id")
+                        .HasName("pk_blog_comments");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_blog_comments_author_id");
+
+                    b.HasIndex("PostId", "CreatedAt")
+                        .HasDatabaseName("ix_blog_comments_post_id_created_at");
+
+                    b.ToTable("blog_comments", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogPost", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("BodyHtml")
+                        .IsRequired()
+                        .HasMaxLength(100000)
+                        .HasColumnType("character varying(100000)")
+                        .HasColumnName("body_html");
+
+                    b.Property<Guid?>("CoverPhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cover_photo_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Excerpt")
+                        .IsRequired()
+                        .HasMaxLength(290)
+                        .HasColumnType("character varying(290)")
+                        .HasColumnName("excerpt");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_blog_posts");
+
+                    b.HasIndex("CoverPhotoId")
+                        .HasDatabaseName("ix_blog_posts_cover_photo_id");
+
+                    b.HasIndex("AuthorId", "UpdatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_blog_posts_author_id_updated_at");
+
+                    b.HasIndex("Status", "PublishedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_blog_posts_status_published_at");
+
+                    b.ToTable("blog_posts", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_blog_posts_status", "status in ('draft', 'published')");
+                        });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogPostPhoto", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.HasKey("PostId", "PhotoId")
+                        .HasName("pk_blog_post_photos");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_blog_post_photos_photo_id");
+
+                    b.ToTable("blog_post_photos", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.ExternalLogin", b =>
                 {
                     b.Property<int>("Id")
@@ -333,6 +491,14 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid?>("BlogCommentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("blog_comment_id");
+
+                    b.Property<Guid?>("BlogPostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("blog_post_id");
+
                     b.Property<Guid?>("CommentId")
                         .HasColumnType("uuid")
                         .HasColumnName("comment_id");
@@ -375,11 +541,25 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_reports");
 
+                    b.HasIndex("BlogCommentId", "Status")
+                        .HasDatabaseName("ix_reports_blog_comment_id_status");
+
+                    b.HasIndex("BlogPostId", "Status")
+                        .HasDatabaseName("ix_reports_blog_post_id_status");
+
                     b.HasIndex("CommentId", "Status")
                         .HasDatabaseName("ix_reports_comment_id_status");
 
                     b.HasIndex("PhotoId", "Status")
                         .HasDatabaseName("ix_reports_photo_id_status");
+
+                    b.HasIndex("ReporterId", "BlogCommentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reports_reporter_id_blog_comment_id");
+
+                    b.HasIndex("ReporterId", "BlogPostId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reports_reporter_id_blog_post_id");
 
                     b.HasIndex("ReporterId", "CommentId")
                         .IsUnique()
@@ -391,7 +571,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("reports", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_reports_one_target", "(photo_id is null) <> (comment_id is null)");
+                            t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id) = 1");
 
                             t.HasCheckConstraint("ck_reports_reason", "reason in ('spam', 'nudity', 'harassment', 'violence', 'copyright', 'other')");
 
@@ -437,6 +617,80 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasDatabaseName("ix_users_email");
 
                     b.ToTable("users", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Blog", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithOne()
+                        .HasForeignKey("PhotoWorld.Api.Data.Blog", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blogs_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogComment", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blog_comments_users_author_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.BlogPost", "Post")
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blog_comments_blog_posts_post_id");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogPost", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blog_posts_users_author_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "CoverPhoto")
+                        .WithMany()
+                        .HasForeignKey("CoverPhotoId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_blog_posts_photos_cover_photo_id");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("CoverPhoto");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogPostPhoto", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blog_post_photos_photos_photo_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.BlogPost", "Post")
+                        .WithMany("Photos")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blog_post_photos_blog_posts_post_id");
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.ExternalLogin", b =>
@@ -507,6 +761,18 @@ namespace PhotoWorld.Api.Data.Migrations
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Report", b =>
                 {
+                    b.HasOne("PhotoWorld.Api.Data.BlogComment", "BlogComment")
+                        .WithMany("Reports")
+                        .HasForeignKey("BlogCommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_reports_blog_comments_blog_comment_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.BlogPost", "BlogPost")
+                        .WithMany("Reports")
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_reports_blog_posts_blog_post_id");
+
                     b.HasOne("PhotoWorld.Api.Data.PhotoComment", "Comment")
                         .WithMany("Reports")
                         .HasForeignKey("CommentId")
@@ -526,11 +792,29 @@ namespace PhotoWorld.Api.Data.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_reports_users_reporter_id");
 
+                    b.Navigation("BlogComment");
+
+                    b.Navigation("BlogPost");
+
                     b.Navigation("Comment");
 
                     b.Navigation("Photo");
 
                     b.Navigation("Reporter");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogComment", b =>
+                {
+                    b.Navigation("Reports");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogPost", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Photos");
+
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>

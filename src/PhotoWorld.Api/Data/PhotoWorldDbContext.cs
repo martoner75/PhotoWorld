@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Api.Data;
@@ -12,6 +13,10 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<PhotoLike> PhotoLikes => Set<PhotoLike>();
     public DbSet<PhotoComment> PhotoComments => Set<PhotoComment>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<Blog> Blogs => Set<Blog>();
+    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    public DbSet<BlogPostPhoto> BlogPostPhotos => Set<BlogPostPhoto>();
+    public DbSet<BlogComment> BlogComments => Set<BlogComment>();
 
     /// <summary>
     /// PhotoWorld's own schema in the Supabase database. Keeping it out of <c>public</c> means
@@ -76,7 +81,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
         {
             e.ToTable(t =>
             {
-                t.HasCheckConstraint("ck_reports_one_target", "(photo_id is null) <> (comment_id is null)");
+                t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id) = 1");
                 t.HasCheckConstraint("ck_reports_status",
                     $"status in ('{ReportStatus.Open}', '{ReportStatus.Dismissed}', '{ReportStatus.Upheld}')");
                 t.HasCheckConstraint("ck_reports_reason",
@@ -90,10 +95,53 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(r => r.Photo).WithMany(p => p.Reports).HasForeignKey(r => r.PhotoId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(r => r.Comment).WithMany(c => c.Reports).HasForeignKey(r => r.CommentId).OnDelete(DeleteBehavior.Cascade);
             // One report per member per item. (Postgres treats NULLs as distinct, so each index only bites on its own target.)
+            e.HasOne(r => r.BlogPost).WithMany(p => p.Reports).HasForeignKey(r => r.BlogPostId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.BlogComment).WithMany(c => c.Reports).HasForeignKey(r => r.BlogCommentId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(r => new { r.ReporterId, r.PhotoId }).IsUnique();
             e.HasIndex(r => new { r.ReporterId, r.CommentId }).IsUnique();
+            e.HasIndex(r => new { r.ReporterId, r.BlogPostId }).IsUnique();
+            e.HasIndex(r => new { r.ReporterId, r.BlogCommentId }).IsUnique();
             e.HasIndex(r => new { r.PhotoId, r.Status });
             e.HasIndex(r => new { r.CommentId, r.Status });
+            e.HasIndex(r => new { r.BlogPostId, r.Status });
+            e.HasIndex(r => new { r.BlogCommentId, r.Status });
+        });
+
+        modelBuilder.Entity<Blog>(e =>
+        {
+            e.HasKey(b => b.UserId);
+            e.Property(b => b.Title).HasMaxLength(BlogLimits.BlogTitleMax);
+            e.Property(b => b.Intro).HasMaxLength(BlogLimits.IntroMax);
+            e.HasOne(b => b.User).WithOne().HasForeignKey<Blog>(b => b.UserId);
+        });
+
+        modelBuilder.Entity<BlogPost>(e =>
+        {
+            e.ToTable(t => t.HasCheckConstraint("ck_blog_posts_status",
+                $"status in ('{BlogPostStatus.Draft}', '{BlogPostStatus.Published}')"));
+            e.Property(p => p.Title).HasMaxLength(BlogLimits.PostTitleMax);
+            e.Property(p => p.BodyHtml).HasMaxLength(BlogLimits.BodyMax);
+            e.Property(p => p.Excerpt).HasMaxLength(BlogLimits.ExcerptLength + 10);
+            e.Property(p => p.Status).HasMaxLength(16);
+            e.HasOne(p => p.Author).WithMany().HasForeignKey(p => p.AuthorId);
+            e.HasOne(p => p.CoverPhoto).WithMany().HasForeignKey(p => p.CoverPhotoId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(p => new { p.Status, p.PublishedAt }).IsDescending(false, true);
+            e.HasIndex(p => new { p.AuthorId, p.UpdatedAt }).IsDescending(false, true);
+        });
+
+        modelBuilder.Entity<BlogPostPhoto>(e =>
+        {
+            e.HasKey(p => new { p.PostId, p.PhotoId });
+            e.HasOne(p => p.Post).WithMany(p => p.Photos).HasForeignKey(p => p.PostId);
+            e.HasOne(p => p.Photo).WithMany().HasForeignKey(p => p.PhotoId);
+        });
+
+        modelBuilder.Entity<BlogComment>(e =>
+        {
+            e.Property(c => c.Text).HasMaxLength(BlogLimits.CommentMax);
+            e.HasOne(c => c.Post).WithMany(p => p.Comments).HasForeignKey(c => c.PostId);
+            e.HasOne(c => c.Author).WithMany().HasForeignKey(c => c.AuthorId);
+            e.HasIndex(c => new { c.PostId, c.CreatedAt });
         });
 
         modelBuilder.Entity<LogEntry>(e =>

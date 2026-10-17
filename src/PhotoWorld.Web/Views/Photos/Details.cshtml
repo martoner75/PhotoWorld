@@ -8,7 +8,7 @@
 @if (p.Moderation != ModerationState.Visible)
 {
     <div class="container">
-        <partial name="_ModerationBanner" model="p.Moderation" />
+        <partial name="_ModerationBanner" model='new ModerationBannerModel(p.Moderation, "photo")' />
     </div>
 }
 

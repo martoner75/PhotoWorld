@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
+using PhotoWorld.Api.Services.Moderation;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Photos;
@@ -15,6 +16,7 @@ public class PhotosController(
     PhotoWorldDbContext db,
     ImageProcessor images,
     SupabaseStorage storage,
+    ReportService reports,
     TimeProvider clock,
     ILogger<PhotosController> logger) : ControllerBase
 {
@@ -264,7 +266,7 @@ public class PhotosController(
         if (ownerId is null) return NotFound();
         if (ownerId == me) return Problem("You can't report your own photo.", statusCode: StatusCodes.Status400BadRequest);
 
-        return await SaveReportAsync(photoId: id, commentId: null, request, me, ct);
+        return this.ToResponse(await reports.SaveAsync(ReportTarget.Photo(id), me, request, ct));
     }
 
     [HttpPost(ApiRoutes.CommentReports)]
@@ -279,7 +281,7 @@ public class PhotosController(
         if (authorId is null) return NotFound();
         if (authorId == me) return Problem("You can't report your own comment.", statusCode: StatusCodes.Status400BadRequest);
 
-        return await SaveReportAsync(photoId: null, commentId: commentId, request, me, ct);
+        return this.ToResponse(await reports.SaveAsync(ReportTarget.PhotoComment(commentId), me, request, ct));
     }
 
     private Guid? CurrentUserId() => User.GetUserId();
@@ -287,48 +289,6 @@ public class PhotosController(
     /// <summary>Photos this user may see: everything that isn't hidden by moderation, plus their own.</summary>
     private IQueryable<Photo> VisiblePhotos(Guid? userId) =>
         db.Photos.AsNoTracking().Where(Moderation.PhotoVisibleTo(userId));
-
-    /// <summary>Records a report on a photo or (exactly one of) a comment, at most once per member.</summary>
-    private async Task<IActionResult> SaveReportAsync(Guid? photoId, Guid? commentId, CreateReportRequest request,
-        Guid reporterId, CancellationToken ct)
-    {
-        var (kind, targetId) = photoId is { } p ? ("Photo", p) : ("Comment", commentId!.Value);
-        var reportsOnTarget = db.Reports.Where(r => r.PhotoId == photoId && r.CommentId == commentId);
-
-        if (!ReportRules.Reasons.ContainsKey(request.Reason))
-        {
-            ModelState.AddModelError(nameof(request.Reason), "Choose a reason.");
-            return ValidationProblem(ModelState);
-        }
-        if (await reportsOnTarget.AnyAsync(r => r.ReporterId == reporterId, ct))
-            return Problem("You've already reported this.", statusCode: StatusCodes.Status409Conflict);
-
-        var report = new Report
-        {
-            PhotoId = photoId,
-            CommentId = commentId,
-            ReporterId = reporterId,
-            Reason = request.Reason,
-            Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim(),
-            CreatedAt = clock.GetUtcNow(),
-        };
-        db.Reports.Add(report);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateException)
-        {
-            // Two reports from the same member at the same moment: the unique index kept just one.
-            return Problem("You've already reported this.", statusCode: StatusCodes.Status409Conflict);
-        }
-
-        logger.LogInformation("{Kind} {TargetId} reported for {Reason} by {ReporterId}", kind, targetId, report.Reason, reporterId);
-        var open = await reportsOnTarget.CountAsync(r => r.Status == ReportStatus.Open, ct);
-        if (open == ReportRules.AutoHideThreshold)
-            logger.LogWarning("{Kind} {TargetId} auto-hidden after {Count} reports, pending review", kind, targetId, open);
-        return NoContent();
-    }
 
     private async Task<PhotoDetailDto?> LoadDetailAsync(Guid id, CancellationToken ct)
     {

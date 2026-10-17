@@ -11,7 +11,8 @@
             <h1>@m.DisplayName</h1>
             <p class="text-muted">
                 Member since @m.MemberSince.ToString("MMMM yyyy") ·
-                @m.PhotoCount @(m.PhotoCount == 1 ? "photo" : "photos")
+                @m.PhotoCount @(m.PhotoCount == 1 ? "photo" : "photos") ·
+                <a asp-controller="Blogs" asp-action="Member" asp-route-id="@m.Id">@(m.IsMe ? "My blog" : "Blog")</a>
             </p>
         </div>
         @if (m.IsMe)

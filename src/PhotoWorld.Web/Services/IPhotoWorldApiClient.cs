@@ -1,4 +1,5 @@
 using PhotoWorld.Shared.Auth;
+using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Users;
 
@@ -33,4 +34,19 @@ public interface IPhotoWorldApiClient
 
     /// <summary>Reports a photo, or one of its comments when <paramref name="commentId"/> is set.</summary>
     Task<ReportOutcome> ReportAsync(Guid id, Guid? commentId, CreateReportRequest request, CancellationToken ct = default);
+
+    // Blogs
+    Task<BlogDto?> GetBlogAsync(Guid userId, CancellationToken ct = default);
+    Task<ApiResult<BlogDto>> SaveBlogAsync(Guid userId, SaveBlogRequest request, CancellationToken ct = default);
+    Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, Guid? authorId = null, CancellationToken ct = default);
+    Task<BlogPostDto?> GetPostAsync(Guid id, CancellationToken ct = default);
+    Task<ApiResult<BlogPostDto>> CreatePostAsync(SavePostRequest request, CancellationToken ct = default);
+    Task<ApiResult<BlogPostDto>> UpdatePostAsync(Guid id, SavePostRequest request, CancellationToken ct = default);
+    Task<bool> DeletePostAsync(Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<BlogCommentDto>> GetBlogCommentsAsync(Guid postId, CancellationToken ct = default);
+    Task<ApiResult<BlogCommentDto>> AddBlogCommentAsync(Guid postId, string text, CancellationToken ct = default);
+    Task<bool> DeleteBlogCommentAsync(Guid postId, Guid commentId, CancellationToken ct = default);
+
+    /// <summary>Reports a blog post, or one of its comments when <paramref name="commentId"/> is set.</summary>
+    Task<ReportOutcome> ReportBlogAsync(Guid postId, Guid? commentId, CreateReportRequest request, CancellationToken ct = default);
 }

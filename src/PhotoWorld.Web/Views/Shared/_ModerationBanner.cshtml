@@ -1,13 +1,13 @@
-@model ModerationState
+@model ModerationBannerModel
 <div class="alert moderation-banner" role="status">
-    @if (Model == ModerationState.Removed)
+    @if (Model.State == ModerationState.Removed)
     {
         <strong>Removed by a moderator.</strong>
-        <span>Only you can see this photo now. You can still delete it.</span>
+        <span>Only you can see this @Model.Noun now. You can still delete it.</span>
     }
     else
     {
         <strong>Hidden while we review reports.</strong>
-        <span>Several members reported this photo, so only you can see it until a moderator has looked at it.</span>
+        <span>Several members reported this @Model.Noun, so only you can see it until a moderator has looked at it.</span>
     }
 </div>

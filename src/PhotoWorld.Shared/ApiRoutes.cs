@@ -16,6 +16,14 @@ public static class ApiRoutes
     public const string PhotoReports = "api/photos/{id:guid}/reports";
     public const string CommentReports = "api/photos/{id:guid}/comments/{commentId:guid}/reports";
 
+    public const string Blog = "api/blogs/{userId:guid}";
+    public const string BlogPosts = "api/blog-posts";
+    public const string BlogPost = "api/blog-posts/{id:guid}";
+    public const string BlogPostComments = "api/blog-posts/{id:guid}/comments";
+    public const string BlogPostComment = "api/blog-posts/{id:guid}/comments/{commentId:guid}";
+    public const string BlogPostReports = "api/blog-posts/{id:guid}/reports";
+    public const string BlogCommentReports = "api/blog-posts/{id:guid}/comments/{commentId:guid}/reports";
+
     /// <summary>Fills in a route template's <c>{name:constraint}</c> placeholders, for use by API clients.</summary>
     public static string Format(string template, params (string Name, object Value)[] values)
     {

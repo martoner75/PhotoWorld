@@ -1,4 +1,5 @@
 using PhotoWorld.Api.Data;
+using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Api.Tests;
@@ -65,6 +66,40 @@ public class ModerationTests
 
         Assert.False(visible(comment));
         Assert.True(visibleToAuthor(comment));
+    }
+
+    private static BlogPost PostWith(string status, params string[] reportStatuses) => new()
+    {
+        AuthorId = Owner,
+        Title = "t",
+        BodyHtml = "<p>x</p>",
+        Excerpt = "x",
+        Status = status,
+        Reports = reportStatuses.Select(s => new Report { Reason = "spam", Status = s }).ToList(),
+    };
+
+    [Fact]
+    public void Drafts_are_visible_only_to_their_author()
+    {
+        var visible = Moderation.PostVisibleTo(Viewer).Compile();
+        var visibleToAuthor = Moderation.PostVisibleTo(Owner).Compile();
+
+        Assert.False(visible(PostWith(BlogPostStatus.Draft)));
+        Assert.True(visibleToAuthor(PostWith(BlogPostStatus.Draft)));
+        Assert.True(visible(PostWith(BlogPostStatus.Published)));
+    }
+
+    [Fact]
+    public void Posts_and_blog_comments_follow_the_same_hide_rule()
+    {
+        var post = PostWith(BlogPostStatus.Published, ReportStatus.Open, ReportStatus.Open, ReportStatus.Open);
+        Assert.False(Moderation.PostVisibleTo(Viewer).Compile()(post));
+        Assert.True(Moderation.PostVisibleTo(Owner).Compile()(post));
+        Assert.False(Moderation.PostVisibleTo(Viewer).Compile()(PostWith(BlogPostStatus.Published, ReportStatus.Upheld)));
+
+        var comment = new BlogComment { AuthorId = Owner, Text = "x", Reports = [new Report { Reason = "spam", Status = ReportStatus.Upheld }] };
+        Assert.False(Moderation.BlogCommentVisibleTo(Viewer).Compile()(comment));
+        Assert.True(Moderation.BlogCommentVisibleTo(Owner).Compile()(comment));
     }
 
     [Theory]

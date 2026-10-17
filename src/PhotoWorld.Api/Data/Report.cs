@@ -1,7 +1,7 @@
 namespace PhotoWorld.Api.Data;
 
 /// <summary>
-/// A member's report about a photo or a comment (exactly one is set). Moderators review reports in Supabase
+/// A member's report about a photo, photo comment, blog post or blog comment (exactly one is set). Moderators review reports in Supabase
 /// by changing <see cref="Status"/>; see README → Reports.
 /// </summary>
 public class Report
@@ -14,6 +14,10 @@ public class Report
     public Photo? Photo { get; set; }
     public Guid? CommentId { get; set; }
     public PhotoComment? Comment { get; set; }
+    public Guid? BlogPostId { get; set; }
+    public BlogPost? BlogPost { get; set; }
+    public Guid? BlogCommentId { get; set; }
+    public BlogComment? BlogComment { get; set; }
 
     public required string Reason { get; set; }
     public string? Note { get; set; }

@@ -399,3 +399,228 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    ALTER TABLE photoworld.reports DROP CONSTRAINT ck_reports_one_target;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    ALTER TABLE photoworld.reports ADD blog_comment_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    ALTER TABLE photoworld.reports ADD blog_post_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE TABLE photoworld.blog_posts (
+        id uuid NOT NULL,
+        author_id uuid NOT NULL,
+        title character varying(150) NOT NULL,
+        body_html character varying(100000) NOT NULL,
+        excerpt character varying(290) NOT NULL,
+        cover_photo_id uuid,
+        status character varying(16) NOT NULL,
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        published_at timestamp with time zone,
+        CONSTRAINT pk_blog_posts PRIMARY KEY (id),
+        CONSTRAINT ck_blog_posts_status CHECK (status in ('draft', 'published')),
+        CONSTRAINT fk_blog_posts_photos_cover_photo_id FOREIGN KEY (cover_photo_id) REFERENCES photoworld.photos (id) ON DELETE SET NULL,
+        CONSTRAINT fk_blog_posts_users_author_id FOREIGN KEY (author_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE TABLE photoworld.blogs (
+        user_id uuid NOT NULL,
+        title character varying(100) NOT NULL,
+        intro character varying(500),
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_blogs PRIMARY KEY (user_id),
+        CONSTRAINT fk_blogs_users_user_id FOREIGN KEY (user_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE TABLE photoworld.blog_comments (
+        id uuid NOT NULL,
+        post_id uuid NOT NULL,
+        author_id uuid NOT NULL,
+        text character varying(2000) NOT NULL,
+        created_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_blog_comments PRIMARY KEY (id),
+        CONSTRAINT fk_blog_comments_blog_posts_post_id FOREIGN KEY (post_id) REFERENCES photoworld.blog_posts (id) ON DELETE CASCADE,
+        CONSTRAINT fk_blog_comments_users_author_id FOREIGN KEY (author_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE TABLE photoworld.blog_post_photos (
+        post_id uuid NOT NULL,
+        photo_id uuid NOT NULL,
+        CONSTRAINT pk_blog_post_photos PRIMARY KEY (post_id, photo_id),
+        CONSTRAINT fk_blog_post_photos_blog_posts_post_id FOREIGN KEY (post_id) REFERENCES photoworld.blog_posts (id) ON DELETE CASCADE,
+        CONSTRAINT fk_blog_post_photos_photos_photo_id FOREIGN KEY (photo_id) REFERENCES photoworld.photos (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_reports_blog_comment_id_status ON photoworld.reports (blog_comment_id, status);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_reports_blog_post_id_status ON photoworld.reports (blog_post_id, status);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE UNIQUE INDEX ix_reports_reporter_id_blog_comment_id ON photoworld.reports (reporter_id, blog_comment_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE UNIQUE INDEX ix_reports_reporter_id_blog_post_id ON photoworld.reports (reporter_id, blog_post_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    ALTER TABLE photoworld.reports ADD CONSTRAINT ck_reports_one_target CHECK (num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id) = 1);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_blog_comments_author_id ON photoworld.blog_comments (author_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_blog_comments_post_id_created_at ON photoworld.blog_comments (post_id, created_at);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_blog_post_photos_photo_id ON photoworld.blog_post_photos (photo_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_blog_posts_author_id_updated_at ON photoworld.blog_posts (author_id, updated_at DESC);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_blog_posts_cover_photo_id ON photoworld.blog_posts (cover_photo_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    CREATE INDEX ix_blog_posts_status_published_at ON photoworld.blog_posts (status, published_at DESC);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    ALTER TABLE photoworld.reports ADD CONSTRAINT fk_reports_blog_comments_blog_comment_id FOREIGN KEY (blog_comment_id) REFERENCES photoworld.blog_comments (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    ALTER TABLE photoworld.reports ADD CONSTRAINT fk_reports_blog_posts_blog_post_id FOREIGN KEY (blog_post_id) REFERENCES photoworld.blog_posts (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    drop view if exists photoworld.open_reports;
+    create view photoworld.open_reports with (security_invoker = true) as
+    select r.id as report_id,
+           r.created_at,
+           case when r.photo_id is not null then 'photo'
+                when r.comment_id is not null then 'photo_comment'
+                when r.blog_post_id is not null then 'blog_post'
+                else 'blog_comment' end as content_type,
+           coalesce(r.photo_id, c.photo_id) as photo_id,
+           r.comment_id,
+           coalesce(r.blog_post_id, bc.post_id) as blog_post_id,
+           r.blog_comment_id,
+           coalesce(p.title, c.text, bp.title, bc.text) as content,
+           owner.display_name as content_owner,
+           r.reason,
+           r.note,
+           reporter.display_name as reporter,
+           (select count(*) from photoworld.reports o
+             where o.status = 'open'
+               and (o.photo_id = r.photo_id or o.comment_id = r.comment_id
+                    or o.blog_post_id = r.blog_post_id or o.blog_comment_id = r.blog_comment_id)) as open_reports_on_item
+    from photoworld.reports r
+    left join photoworld.photos p on p.id = r.photo_id
+    left join photoworld.photo_comments c on c.id = r.comment_id
+    left join photoworld.blog_posts bp on bp.id = r.blog_post_id
+    left join photoworld.blog_comments bc on bc.id = r.blog_comment_id
+    left join photoworld.users owner on owner.id = coalesce(p.owner_id, c.author_id, bp.author_id, bc.author_id)
+    join photoworld.users reporter on reporter.id = r.reporter_id
+    where r.status = 'open'
+    order by r.created_at desc;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017081934_AddBlogs') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261017081934_AddBlogs', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -1,14 +1,13 @@
 @model ReportViewModel
 @{
-    var isComment = Model.CommentId is not null;
-    ViewData["Title"] = isComment ? "Report comment" : "Report photo";
+    ViewData["Title"] = $"Report {Model.Subject}";
 }
 
 <section class="container page narrow">
     <h1>@ViewData["Title"]</h1>
     <p class="text-muted">Reports are private: the member won't know who reported them.</p>
 
-    <form asp-action="Report" asp-route-id="@Model.PhotoId" method="post" class="form-card">
+    <form asp-action="Report" asp-route-id="@Model.Id" method="post" class="form-card">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         <input type="hidden" asp-for="CommentId" />
 
@@ -18,16 +17,16 @@
                 <img src="@Model.ThumbnailUrl" alt="" />
             }
             <div>
-                <strong>@Model.PhotoTitle</strong>
-                @if (isComment)
+                <strong>@Model.Title</strong>
+                @if (Model.QuotedText is not null)
                 {
-                    <blockquote>@Model.CommentText</blockquote>
+                    <blockquote>@Model.QuotedText</blockquote>
                 }
             </div>
         </div>
 
         <fieldset class="field">
-            <legend>What's wrong with this @(isComment ? "comment" : "photo")?</legend>
+            <legend>What's wrong with this @Model.Subject?</legend>
             @foreach (var (value, label) in ReportRules.Reasons)
             {
                 <label class="radio-row">
@@ -45,7 +44,7 @@
         </div>
 
         <div class="form-actions">
-            <a class="btn btn-ghost" asp-action="Details" asp-route-id="@Model.PhotoId">Cancel</a>
+            <a class="btn btn-ghost" href="@Model.CancelUrl">Cancel</a>
             <button type="submit" class="btn btn-accent">Send report</button>
         </div>
     </form>
