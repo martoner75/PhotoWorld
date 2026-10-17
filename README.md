@@ -39,8 +39,16 @@ pooler doesn't support the bulk COPY the logger uses.)
 dotnet user-secrets set "ConnectionStrings:PhotoWorld" "User Id=postgres.<project-ref>;Password=<db-password>;Server=aws-0-<region>.pooler.supabase.com;Port=5432;Database=postgres;SSL Mode=Require" --project src/PhotoWorld.Api
 ```
 
-Start the API once. It applies the EF migrations, which create the schema and all tables.
-To create them by hand instead, run [`docs/supabase-schema.sql`](docs/supabase-schema.sql) in the SQL editor.
+Create the schema and tables by applying the EF migrations (`dotnet ef` picks up the connection string
+from the API's user-secrets):
+
+```bash
+dotnet tool restore
+dotnet ef database update --project src/PhotoWorld.Api
+```
+
+Or run [`docs/supabase-schema.sql`](docs/supabase-schema.sql) in the SQL editor. The API doesn't migrate on
+startup. If the database is behind the code, it logs a warning listing the missing migrations.
 
 **2. Logging connection.** The UI must not hold the main database password, so it logs through an
 insert-only role. Run [`docs/supabase-logging-role.sql`](docs/supabase-logging-role.sql) in the SQL editor
@@ -55,6 +63,9 @@ connection string, Web still runs and logs to the console only.
 
 Logs are batched in memory and bulk-inserted every ~2 seconds, so logging never slows down a request.
 If Supabase is unreachable, that batch is dropped and a `[SupabaseLogger]` line goes to stderr.
+A nightly `pg_cron` job (03:15 UTC, created by the `LogRetention` migration) deletes log rows older than
+30 days. Check it with `select * from cron.job;`.
+
 What gets stored is controlled by `Logging:Supabase:LogLevel` in each `appsettings.json` (default: Information,
 framework noise at Warning).
 
@@ -68,8 +79,14 @@ select timestamp, application, message, properties from photoworld.app_logs
 where trace_id = '<trace id>' order by timestamp;
 ```
 
-New EF migrations: `dotnet ef migrations add <Name> --project src/PhotoWorld.Api --output-dir Data/Migrations`
-(`dotnet tool restore` first installs the repo's `dotnet-ef`).
+New EF migrations: `dotnet ef migrations add <Name> --project src/PhotoWorld.Api --output-dir Data/Migrations`.
+
+## CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds every push and pull request. On `main`, once the
+build is green, it applies any pending EF migrations to Supabase. It needs one repository secret,
+`SUPABASE_DB_CONNECTION_STRING`, holding the Session pooler connection string for the `postgres` user
+(GitHub → Settings → Secrets and variables → Actions).
 
 ## Run locally
 
@@ -103,7 +120,6 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ```
 
 ## Notes / next steps
-- The API applies migrations on startup. Once it runs on several instances, apply them from CI instead.
-- `app_logs` grows forever. Add a retention job (e.g. `pg_cron` deleting rows older than 30 days).
-- Google requires a privacy policy URL before the consent screen can be published. Fill in `Views/Home/Privacy.cshtml`.
+- The privacy policy is at `/Home/Privacy`. Set `Site:ContactEmail` so it shows a contact address, and use
+  that URL for the Google consent screen. Have it reviewed before going live.
 - Photos (upload, gallery, profiles) are the next feature to build on top of this skeleton.

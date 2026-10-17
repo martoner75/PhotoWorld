@@ -116,3 +116,11 @@ a:hover { color: #ffc070; }
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--pw-line); color: var(--pw-muted); padding: 1.5rem 0; font-size: .9rem; }
 .site-footer a { color: var(--pw-muted); }
+
+/* ---------- Legal pages ---------- */
+.legal { max-width: 760px; padding: 3.5rem 1rem 4rem; line-height: 1.65; }
+.legal h1 { font-family: var(--pw-serif); font-size: 2.4rem; }
+.legal h2 { font-family: var(--pw-serif); font-size: 1.45rem; margin-top: 2.25rem; }
+.legal h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.25rem; }
+.legal p, .legal li { color: #c9c9c4; }
+.legal-updated { color: var(--pw-muted) !important; font-size: .9rem; }

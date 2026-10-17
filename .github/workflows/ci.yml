@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build PhotoWorld.slnx --configuration Release
+
+  # Applies EF migrations to Supabase. Runs only for main, after a green build; a no-op when nothing is pending.
+  migrate:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency: supabase-migrations
+    env:
+      ConnectionStrings__PhotoWorld: ${{ secrets.SUPABASE_DB_CONNECTION_STRING }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Check secret
+        run: |
+          if [ -z "$ConnectionStrings__PhotoWorld" ]; then
+            echo "::error::Set the SUPABASE_DB_CONNECTION_STRING repository secret (Session pooler connection string)."
+            exit 1
+          fi
+      - run: dotnet tool restore
+      - run: dotnet ef database update --project src/PhotoWorld.Api

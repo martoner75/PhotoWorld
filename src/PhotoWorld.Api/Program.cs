@@ -52,10 +52,15 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Apply pending EF migrations on startup. Fine for a single instance; run `dotnet ef database update`
-// (or a migration bundle) from CI instead once the API scales out.
+// Migrations are applied by CI (.github/workflows/ci.yml) or `dotnet ef database update`, never here,
+// so several API instances can't race each other. Just warn if the database is behind the code.
 using (var scope = app.Services.CreateScope())
-    scope.ServiceProvider.GetRequiredService<PhotoWorldDbContext>().Database.Migrate();
+{
+    var pending = (await scope.ServiceProvider.GetRequiredService<PhotoWorldDbContext>().Database.GetPendingMigrationsAsync()).ToList();
+    if (pending.Count > 0)
+        app.Logger.LogWarning("Database is missing {Count} migration(s): {Migrations}. Run `dotnet ef database update`.",
+            pending.Count, string.Join(", ", pending));
+}
 
 if (app.Environment.IsDevelopment())
 {
