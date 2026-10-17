@@ -5,6 +5,7 @@ using PhotoWorld.Shared;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
+using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
 
 namespace PhotoWorld.Web.Services;
@@ -159,6 +160,27 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res);
     }
 
+    public async Task<IReadOnlyList<PlaceDto>> GetPlacesAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<List<PlaceDto>>(ApiRoutes.Places, ct) ?? [];
+
+    public async Task<ApiResult<PlaceDto>> CreatePlaceAsync(SavePlaceRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Places, request, ct);
+        return await ReadResultAsync<PlaceDto>(res, ct);
+    }
+
+    public async Task<ApiResult<PlaceDto>> UpdatePlaceAsync(Guid id, SavePlaceRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Place, ("id", id)), request, ct);
+        return await ReadResultAsync<PlaceDto>(res, ct, "That place no longer exists.");
+    }
+
+    public async Task<bool> DeletePlaceAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Place, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
     private async Task<ReportOutcome> SendReportAsync(string url, CreateReportRequest request, CancellationToken ct)
     {
         using var res = await http.PostAsJsonAsync(url, request, ct);
@@ -185,7 +207,8 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return true;
     }
 
-    private static async Task<ApiResult<T>> ReadResultAsync<T>(HttpResponseMessage res, CancellationToken ct)
+    private static async Task<ApiResult<T>> ReadResultAsync<T>(HttpResponseMessage res, CancellationToken ct,
+        string notFound = "That photo no longer exists, or you can't change it.")
     {
         if (res.StatusCode == HttpStatusCode.BadRequest)
         {
@@ -194,7 +217,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
                 ? ApiResult<T>.Failure(problem.Errors.AsReadOnly())
                 : ApiResult<T>.Failure(problem?.Detail ?? "The request was not valid.");
         }
-        if (!IsSuccess(res)) return ApiResult<T>.Failure("That photo no longer exists, or you can't change it.");
+        if (!IsSuccess(res)) return ApiResult<T>.Failure(notFound);
         return ApiResult<T>.Success((await res.Content.ReadFromJsonAsync<T>(ct))!);
     }
 }

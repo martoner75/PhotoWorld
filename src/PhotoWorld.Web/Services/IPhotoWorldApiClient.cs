@@ -1,6 +1,7 @@
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
+using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
 
 namespace PhotoWorld.Web.Services;
@@ -49,4 +50,10 @@ public interface IPhotoWorldApiClient
 
     /// <summary>Reports a blog post, or one of its comments when <paramref name="commentId"/> is set.</summary>
     Task<ReportOutcome> ReportBlogAsync(Guid postId, Guid? commentId, CreateReportRequest request, CancellationToken ct = default);
+
+    // Places (always the signed-in member's own)
+    Task<IReadOnlyList<PlaceDto>> GetPlacesAsync(CancellationToken ct = default);
+    Task<ApiResult<PlaceDto>> CreatePlaceAsync(SavePlaceRequest request, CancellationToken ct = default);
+    Task<ApiResult<PlaceDto>> UpdatePlaceAsync(Guid id, SavePlaceRequest request, CancellationToken ct = default);
+    Task<bool> DeletePlaceAsync(Guid id, CancellationToken ct = default);
 }

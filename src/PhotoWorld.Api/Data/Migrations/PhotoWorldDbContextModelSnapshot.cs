@@ -484,6 +484,62 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("photo_likes", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Place", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("latitude");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("longitude");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("note");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateOnly?>("VisitedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("visited_on");
+
+                    b.HasKey("Id")
+                        .HasName("pk_places");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_places_user_id_created_at");
+
+                    b.ToTable("places", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_places_latitude", "latitude between -90 and 90");
+
+                            t.HasCheckConstraint("ck_places_longitude", "longitude between -180 and 180");
+                        });
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Report", b =>
                 {
                     b.Property<Guid>("Id")
@@ -755,6 +811,18 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasConstraintName("fk_photo_likes_users_user_id");
 
                     b.Navigation("Photo");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Place", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_places_users_user_id");
 
                     b.Navigation("User");
                 });

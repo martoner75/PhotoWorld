@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
+using PhotoWorld.Shared.Places;
 
 namespace PhotoWorld.Api.Data;
 
@@ -17,6 +18,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
     public DbSet<BlogPostPhoto> BlogPostPhotos => Set<BlogPostPhoto>();
     public DbSet<BlogComment> BlogComments => Set<BlogComment>();
+    public DbSet<Place> Places => Set<Place>();
 
     /// <summary>
     /// PhotoWorld's own schema in the Supabase database. Keeping it out of <c>public</c> means
@@ -142,6 +144,20 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(c => c.Post).WithMany(p => p.Comments).HasForeignKey(c => c.PostId);
             e.HasOne(c => c.Author).WithMany().HasForeignKey(c => c.AuthorId);
             e.HasIndex(c => new { c.PostId, c.CreatedAt });
+        });
+
+        modelBuilder.Entity<Place>(e =>
+        {
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_places_latitude", "latitude between -90 and 90");
+                t.HasCheckConstraint("ck_places_longitude", "longitude between -180 and 180");
+            });
+            e.Property(p => p.Name).HasMaxLength(PlaceLimits.NameMax);
+            e.Property(p => p.Note).HasMaxLength(PlaceLimits.NoteMax);
+            // Goes with the account (cascade), like everything else a member creates.
+            e.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId);
+            e.HasIndex(p => new { p.UserId, p.CreatedAt });
         });
 
         modelBuilder.Entity<LogEntry>(e =>

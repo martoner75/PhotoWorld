@@ -13,6 +13,10 @@
                 Member since @m.MemberSince.ToString("MMMM yyyy") ·
                 @m.PhotoCount @(m.PhotoCount == 1 ? "photo" : "photos") ·
                 <a asp-controller="Blogs" asp-action="Member" asp-route-id="@m.Id">@(m.IsMe ? "My blog" : "Blog")</a>
+                @if (m.IsMe)
+                {
+                    @:· <a asp-controller="Places" asp-action="Index">My places</a>
+                }
             </p>
         </div>
         @if (m.IsMe)

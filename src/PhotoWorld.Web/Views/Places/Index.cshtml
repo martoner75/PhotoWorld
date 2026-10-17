@@ -1,0 +1,89 @@
+@model PlacesPageViewModel
+@{
+    ViewData["Title"] = "My places";
+    var form = Model.Form;
+    var count = Model.Places.Count;
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+}
+
+<section class="container page places-page">
+    <header class="page-header">
+        <div>
+            <h1>My places</h1>
+            <p class="text-muted">
+                @(count == 0 ? "No places yet" : $"{count} {(count == 1 ? "place" : "places")}") ·
+                Only you can see this map.
+            </p>
+        </div>
+        <button type="button" class="btn btn-accent" data-place-add hidden="@Model.FormOpen">Add a place</button>
+    </header>
+
+    <div class="places-layout">
+        <div id="places-map" class="places-map" aria-label="Map of the places you've been"></div>
+
+        <aside class="places-panel">
+            <form asp-action="Save" method="post" class="form-card place-form" id="place-form"
+                  hidden="@(!Model.FormOpen)" aria-labelledby="place-form-title">
+                <h2 id="place-form-title">@(form.Id is null ? "Add a place" : "Edit place")</h2>
+                <partial name="_PlaceForm" model="form" />
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost" data-place-cancel>Cancel</button>
+                    <button type="submit" class="btn btn-accent">Save place</button>
+                </div>
+            </form>
+
+            @if (count == 0)
+            {
+                <div class="empty-state" data-place-empty>
+                    <p>Pin the places you've been: search for a city or click anywhere on the map.</p>
+                </div>
+            }
+            else
+            {
+                <ul class="place-list" aria-label="Your places">
+                    @foreach (var place in Model.Places.OrderByDescending(p => p.VisitedOn ?? DateOnly.FromDateTime(p.CreatedAt.Date)))
+                    {
+                        <li class="place-item" data-place-id="@place.Id">
+                            <button type="button" class="place-item-main" data-place-show>
+                                <strong>@place.Name</strong>
+                                @if (place.VisitedOn is { } visited)
+                                {
+                                    <span class="text-muted">@visited.ToString("d MMMM yyyy")</span>
+                                }
+                                @if (place.Note is not null)
+                                {
+                                    <span class="place-item-note">@place.Note</span>
+                                }
+                            </button>
+                            <div class="place-item-actions">
+                                <button type="button" class="btn btn-ghost btn-sm" data-place-edit>Edit</button>
+                                <form asp-action="Delete" asp-route-id="@place.Id" method="post"
+                                      onsubmit="return confirm('Remove this place from your map?');">
+                                    <button type="submit" class="btn btn-danger-ghost btn-sm">Remove</button>
+                                </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </aside>
+    </div>
+
+    <p class="places-credit text-muted">
+        Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors.
+        Place search by <a href="https://nominatim.org" rel="noopener">Nominatim</a>.
+    </p>
+</section>
+
+@* Read by places.js. Json.Serialize escapes '<', so a place name can't close this tag. *@
+<script type="application/json" id="places-data">@Json.Serialize(Model.Places)</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/leaflet/leaflet.js"></script>
+    <script src="~/js/places.js" asp-append-version="true"></script>
+}

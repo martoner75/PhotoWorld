@@ -624,3 +624,42 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017112734_AddPlaces') THEN
+    CREATE TABLE photoworld.places (
+        id uuid NOT NULL,
+        user_id uuid NOT NULL,
+        name character varying(150) NOT NULL,
+        note character varying(1000),
+        latitude double precision NOT NULL,
+        longitude double precision NOT NULL,
+        visited_on date,
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_places PRIMARY KEY (id),
+        CONSTRAINT ck_places_latitude CHECK (latitude between -90 and 90),
+        CONSTRAINT ck_places_longitude CHECK (longitude between -180 and 180),
+        CONSTRAINT fk_places_users_user_id FOREIGN KEY (user_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017112734_AddPlaces') THEN
+    CREATE INDEX ix_places_user_id_created_at ON photoworld.places (user_id, created_at);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017112734_AddPlaces') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261017112734_AddPlaces', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

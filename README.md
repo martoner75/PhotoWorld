@@ -31,6 +31,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members and their linked Google accounts |
 | `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
 | `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, and comments |
+| `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates) |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
 | `photoworld.app_logs` | API **and** Web (`SupabaseLoggerProvider`) | Application logs, tagged with `application` = `PhotoWorld.Api` / `PhotoWorld.Web` |
@@ -141,6 +142,21 @@ only basic formatting, http(s)/mailto links (opened with `rel="nofollow noopener
 photos, re-pointed at their real storage URL. Scripts, styles, event handlers and foreign images are removed.
 When a post is shown, photos that were since deleted or hidden by moderation are dropped from it. The first
 photo is the post's cover on cards.
+
+## My places
+
+**My places** (in the menu) is a private map of the places a member has been. They search for a place or click
+the map to drop a pin (draggable to adjust), then add a name, an optional visit date and notes. Clicking a place in
+the list flies the map to it.
+
+- **Private by design.** `api/places` only ever works on the caller's own places; there is no route to anyone
+  else's, and another member's place id answers 404. Places go with the account.
+- **Not from photos.** Locations are typed or picked by the member. Uploads still strip GPS (see above).
+- **Map and search.** Leaflet 1.9.4 (`wwwroot/lib/leaflet`) with OpenStreetMap tiles. Search and the suggested
+  name after a click call [Nominatim](https://nominatim.org) from the browser, only when the member acts (no
+  autocomplete, per its [usage policy](https://operations.osmfoundation.org/policies/nominatim/)). Both
+  are fine for a small site; with heavy traffic, switch the tile URL in `wwwroot/js/places.js` to a commercial
+  OSM tile provider and run or rent a geocoder.
 
 ## Reports and moderation
 

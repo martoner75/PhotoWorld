@@ -24,6 +24,10 @@ public static class ApiRoutes
     public const string BlogPostReports = "api/blog-posts/{id:guid}/reports";
     public const string BlogCommentReports = "api/blog-posts/{id:guid}/comments/{commentId:guid}/reports";
 
+    // Always the signed-in member's own places; there is deliberately no route to anyone else's.
+    public const string Places = "api/places";
+    public const string Place = "api/places/{id:guid}";
+
     /// <summary>Fills in a route template's <c>{name:constraint}</c> placeholders, for use by API clients.</summary>
     public static string Format(string template, params (string Name, object Value)[] values)
     {

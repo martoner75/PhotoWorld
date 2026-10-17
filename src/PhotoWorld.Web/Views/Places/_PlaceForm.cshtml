@@ -1,0 +1,38 @@
+@model PlaceFormViewModel
+@* The add/edit fields, bound to the form model so asp-for names match what Save binds. *@
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="field">
+    <label for="place-search">Find it</label>
+    <div class="place-search">
+        <input id="place-search" type="search" placeholder="City, landmark or address" autocomplete="off" />
+        <button type="button" class="btn btn-ghost" data-place-search>Search</button>
+    </div>
+    <ul class="place-results" data-place-results hidden></ul>
+    <p class="place-hint" data-place-coords>
+        @(Model.Latitude is null ? "…or click the map to drop a pin. You can drag it to adjust." : $"Pinned at {Model.Latitude}, {Model.Longitude}. Drag the pin to adjust.")
+    </p>
+    <span asp-validation-for="Latitude" class="field-error"></span>
+</div>
+
+<div class="field">
+    <label asp-for="Name">Name</label>
+    <input asp-for="Name" maxlength="@PlaceLimits.NameMax" placeholder="e.g. Kyoto, Japan" />
+    <span asp-validation-for="Name" class="field-error"></span>
+</div>
+<div class="field">
+    <label asp-for="VisitedOn">When did you go? <span class="text-muted">(optional)</span></label>
+    <input asp-for="VisitedOn" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+    <span asp-validation-for="VisitedOn" class="field-error"></span>
+</div>
+<div class="field">
+    <label asp-for="Note">Notes <span class="text-muted">(optional)</span></label>
+    <textarea asp-for="Note" rows="3" maxlength="@PlaceLimits.NoteMax"
+              placeholder="Best light, where you stayed, what to shoot next time…"></textarea>
+    <span asp-validation-for="Note" class="field-error"></span>
+</div>
+
+<input asp-for="Id" type="hidden" />
+<input asp-for="Latitude" type="hidden" />
+<input asp-for="Longitude" type="hidden" />
