@@ -1,6 +1,10 @@
 @model PhotoSummaryDto
 <figure class="photo-card">
     <a asp-controller="Photos" asp-action="Details" asp-route-id="@Model.Id" class="photo-card-image">
+        @if (Model.Moderation != ModerationState.Visible)
+        {
+            <span class="moderation-badge photo-card-badge">@(Model.Moderation == ModerationState.Removed ? "Removed" : "Hidden for review")</span>
+        }
         <img src="@Model.ThumbnailUrl" alt="@Model.Title" width="@Model.Width" height="@Model.Height" loading="lazy" />
     </a>
     <figcaption>

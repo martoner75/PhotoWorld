@@ -110,11 +110,57 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         return Redirect(Url.Action(nameof(Details), new { id }) + "#comments");
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Report(Guid id, Guid? commentId, CancellationToken ct)
+    {
+        var model = await LoadReportTargetAsync(new ReportViewModel { PhotoId = id, CommentId = commentId }, ct);
+        return model is null ? NotFound() : View(model);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Report(Guid id, ReportViewModel model, CancellationToken ct)
+    {
+        model.PhotoId = id;
+        if (!ModelState.IsValid)
+        {
+            var reloaded = await LoadReportTargetAsync(model, ct);
+            return reloaded is null ? NotFound() : View(reloaded);
+        }
+
+        var outcome = await api.ReportAsync(id, model.CommentId, new CreateReportRequest(model.Reason!, model.Note), ct);
+        TempData["Flash"] = outcome switch
+        {
+            ReportOutcome.Reported => "Thanks for letting us know. We'll take a look.",
+            ReportOutcome.AlreadyReported => "You've already reported this.",
+            ReportOutcome.NotAllowed => "You can't report your own photos or comments.",
+            _ => "That photo or comment is no longer available.",
+        };
+        if (outcome == ReportOutcome.NotFound) return RedirectToAction(nameof(Index));
+        return Redirect(Url.Action(nameof(Details), new { id }) + (model.CommentId is null ? "" : "#comments"));
+    }
+
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteComment(Guid id, Guid commentId, CancellationToken ct)
     {
         var deleted = await api.DeleteCommentAsync(id, commentId, ct);
         if (Request.IsFetchRequest()) return deleted ? NoContent() : NotFound();
         return Redirect(Url.Action(nameof(Details), new { id }) + "#comments");
+    }
+
+    /// <summary>Fills in what's being reported; null if the photo or comment isn't visible any more.</summary>
+    private async Task<ReportViewModel?> LoadReportTargetAsync(ReportViewModel model, CancellationToken ct)
+    {
+        var photo = await api.GetPhotoAsync(model.PhotoId, ct);
+        if (photo is null) return null;
+        model.PhotoTitle = photo.Title;
+        model.ThumbnailUrl = photo.ThumbnailUrl;
+
+        if (model.CommentId is { } commentId)
+        {
+            var comment = (await api.GetCommentsAsync(model.PhotoId, ct)).FirstOrDefault(c => c.Id == commentId);
+            if (comment is null) return null;
+            model.CommentText = comment.Text;
+        }
+        return model;
     }
 }

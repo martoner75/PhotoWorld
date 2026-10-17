@@ -91,6 +91,20 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res);
     }
 
+    public async Task<ReportOutcome> ReportAsync(Guid id, Guid? commentId, CreateReportRequest request, CancellationToken ct = default)
+    {
+        var url = commentId is null
+            ? ApiRoutes.Format(ApiRoutes.PhotoReports, ("id", id))
+            : ApiRoutes.Format(ApiRoutes.CommentReports, ("id", id), ("commentId", commentId));
+        using var res = await http.PostAsJsonAsync(url, request, ct);
+        return res.StatusCode switch
+        {
+            HttpStatusCode.Conflict => ReportOutcome.AlreadyReported,
+            HttpStatusCode.BadRequest => ReportOutcome.NotAllowed,
+            _ => IsSuccess(res) ? ReportOutcome.Reported : ReportOutcome.NotFound,
+        };
+    }
+
     private async Task<T?> GetOrNullAsync<T>(string url, CancellationToken ct)
     {
         using var res = await http.GetAsync(url, ct);

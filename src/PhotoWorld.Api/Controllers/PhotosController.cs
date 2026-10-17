@@ -20,12 +20,14 @@ public class PhotosController(
 {
     private const int PageSize = 24;
 
-    /// <summary>Newest photos first, optionally only one member's.</summary>
+    /// <summary>Newest photos first, optionally only one member's. Hidden photos are left out except for their owner.</summary>
     [HttpGet(ApiRoutes.Photos)]
     public async Task<PagedResult<PhotoSummaryDto>> List(int page = 1, Guid? ownerId = null, CancellationToken ct = default)
     {
         page = Math.Max(1, page);
-        var query = db.Photos.AsNoTracking();
+        var me = CurrentUserId();
+        var commentVisible = Moderation.CommentVisibleTo(me);
+        var query = VisiblePhotos(me);
         if (ownerId is not null) query = query.Where(p => p.OwnerId == ownerId);
 
         var total = await query.CountAsync(ct);
@@ -37,12 +39,15 @@ public class PhotosController(
                 p.Id, p.Title, p.ThumbnailPath, p.Width, p.Height, p.CreatedAt,
                 Owner = new UserSummaryDto(p.Owner.Id, p.Owner.DisplayName, p.Owner.AvatarUrl),
                 Likes = p.Likes.Count,
-                Comments = p.Comments.Count,
+                Comments = p.Comments.AsQueryable().Count(commentVisible),
+                Upheld = p.Reports.Any(r => r.Status == ReportStatus.Upheld),
+                OpenReports = p.Reports.Count(r => r.Status == ReportStatus.Open),
             })
             .ToListAsync(ct);
 
         var items = rows.Select(r => new PhotoSummaryDto(r.Id, r.Title, storage.PublicUrl(r.ThumbnailPath),
-            r.Width, r.Height, r.Owner, r.Likes, r.Comments, r.CreatedAt)).ToList();
+            r.Width, r.Height, r.Owner, r.Likes, r.Comments, r.CreatedAt,
+            Moderation.State(r.Upheld, r.OpenReports))).ToList();
         return new PagedResult<PhotoSummaryDto>(items, page, PageSize, total);
     }
 
@@ -161,7 +166,7 @@ public class PhotosController(
     public async Task<ActionResult<LikeStateDto>> Like(Guid id, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId) return Unauthorized();
-        if (!await db.Photos.AnyAsync(p => p.Id == id, ct)) return NotFound();
+        if (!await VisiblePhotos(userId).AnyAsync(p => p.Id == id, ct)) return NotFound();
 
         if (!await db.PhotoLikes.AnyAsync(l => l.PhotoId == id && l.UserId == userId, ct))
         {
@@ -176,7 +181,7 @@ public class PhotosController(
     public async Task<ActionResult<LikeStateDto>> Unlike(Guid id, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId) return Unauthorized();
-        if (!await db.Photos.AnyAsync(p => p.Id == id, ct)) return NotFound();
+        if (!await VisiblePhotos(userId).AnyAsync(p => p.Id == id, ct)) return NotFound();
 
         await db.PhotoLikes.Where(l => l.PhotoId == id && l.UserId == userId).ExecuteDeleteAsync(ct);
         return await LikeStateAsync(id, userId, ct);
@@ -185,25 +190,36 @@ public class PhotosController(
     [HttpGet(ApiRoutes.PhotoComments)]
     public async Task<ActionResult<IReadOnlyList<CommentDto>>> Comments(Guid id, CancellationToken ct)
     {
-        var ownerId = await db.Photos.Where(p => p.Id == id).Select(p => (Guid?)p.OwnerId).SingleOrDefaultAsync(ct);
+        var me = CurrentUserId();
+        var ownerId = await VisiblePhotos(me).Where(p => p.Id == id).Select(p => (Guid?)p.OwnerId).SingleOrDefaultAsync(ct);
         if (ownerId is null) return NotFound();
 
-        var me = CurrentUserId();
-        var comments = await db.PhotoComments.AsNoTracking()
+        var rows = await db.PhotoComments.AsNoTracking()
             .Where(c => c.PhotoId == id)
+            .Where(Moderation.CommentVisibleTo(me))
             .OrderBy(c => c.CreatedAt)
             .Take(500)
-            .Select(c => new CommentDto(c.Id, new UserSummaryDto(c.Author.Id, c.Author.DisplayName, c.Author.AvatarUrl),
-                c.Text, c.CreatedAt, c.AuthorId == me || ownerId == me))
+            .Select(c => new
+            {
+                c.Id, c.AuthorId, c.Text, c.CreatedAt,
+                Author = new UserSummaryDto(c.Author.Id, c.Author.DisplayName, c.Author.AvatarUrl),
+                Upheld = c.Reports.Any(r => r.Status == ReportStatus.Upheld),
+                OpenReports = c.Reports.Count(r => r.Status == ReportStatus.Open),
+                ReportedByMe = c.Reports.Any(r => r.ReporterId == me),
+            })
             .ToListAsync(ct);
-        return comments;
+
+        return rows.Select(c => new CommentDto(c.Id, c.Author, c.Text, c.CreatedAt,
+            CanDelete: c.AuthorId == me || ownerId == me,
+            Moderation: Moderation.State(c.Upheld, c.OpenReports),
+            CanReport: c.AuthorId != me && !c.ReportedByMe)).ToList();
     }
 
     [HttpPost(ApiRoutes.PhotoComments)]
     public async Task<ActionResult<CommentDto>> AddComment(Guid id, CreateCommentRequest request, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId) return Unauthorized();
-        if (!await db.Photos.AnyAsync(p => p.Id == id, ct)) return NotFound();
+        if (!await VisiblePhotos(userId).AnyAsync(p => p.Id == id, ct)) return NotFound();
 
         var text = request.Text.Trim();
         if (text.Length == 0)
@@ -237,20 +253,96 @@ public class PhotosController(
         return NoContent();
     }
 
+    [HttpPost(ApiRoutes.PhotoReports)]
+    public async Task<IActionResult> ReportPhoto(Guid id, CreateReportRequest request, CancellationToken ct)
+    {
+        if (CurrentUserId() is not { } me) return Unauthorized();
+        var ownerId = await VisiblePhotos(me).Where(p => p.Id == id).Select(p => (Guid?)p.OwnerId).SingleOrDefaultAsync(ct);
+        if (ownerId is null) return NotFound();
+        if (ownerId == me) return Problem("You can't report your own photo.", statusCode: StatusCodes.Status400BadRequest);
+
+        return await SaveReportAsync(photoId: id, commentId: null, request, me, ct);
+    }
+
+    [HttpPost(ApiRoutes.CommentReports)]
+    public async Task<IActionResult> ReportComment(Guid id, Guid commentId, CreateReportRequest request, CancellationToken ct)
+    {
+        if (CurrentUserId() is not { } me) return Unauthorized();
+        if (!await VisiblePhotos(me).AnyAsync(p => p.Id == id, ct)) return NotFound();
+        var authorId = await db.PhotoComments
+            .Where(c => c.Id == commentId && c.PhotoId == id)
+            .Where(Moderation.CommentVisibleTo(me))
+            .Select(c => (Guid?)c.AuthorId).SingleOrDefaultAsync(ct);
+        if (authorId is null) return NotFound();
+        if (authorId == me) return Problem("You can't report your own comment.", statusCode: StatusCodes.Status400BadRequest);
+
+        return await SaveReportAsync(photoId: null, commentId: commentId, request, me, ct);
+    }
+
     private Guid? CurrentUserId() => User.GetUserId();
+
+    /// <summary>Photos this user may see: everything that isn't hidden by moderation, plus their own.</summary>
+    private IQueryable<Photo> VisiblePhotos(Guid? userId) =>
+        db.Photos.AsNoTracking().Where(Moderation.PhotoVisibleTo(userId));
+
+    /// <summary>Records a report on a photo or (exactly one of) a comment, at most once per member.</summary>
+    private async Task<IActionResult> SaveReportAsync(Guid? photoId, Guid? commentId, CreateReportRequest request,
+        Guid reporterId, CancellationToken ct)
+    {
+        var (kind, targetId) = photoId is { } p ? ("Photo", p) : ("Comment", commentId!.Value);
+        var reportsOnTarget = db.Reports.Where(r => r.PhotoId == photoId && r.CommentId == commentId);
+
+        if (!ReportRules.Reasons.ContainsKey(request.Reason))
+        {
+            ModelState.AddModelError(nameof(request.Reason), "Choose a reason.");
+            return ValidationProblem(ModelState);
+        }
+        if (await reportsOnTarget.AnyAsync(r => r.ReporterId == reporterId, ct))
+            return Problem("You've already reported this.", statusCode: StatusCodes.Status409Conflict);
+
+        var report = new Report
+        {
+            PhotoId = photoId,
+            CommentId = commentId,
+            ReporterId = reporterId,
+            Reason = request.Reason,
+            Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim(),
+            CreatedAt = clock.GetUtcNow(),
+        };
+        db.Reports.Add(report);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Two reports from the same member at the same moment: the unique index kept just one.
+            return Problem("You've already reported this.", statusCode: StatusCodes.Status409Conflict);
+        }
+
+        logger.LogInformation("{Kind} {TargetId} reported for {Reason} by {ReporterId}", kind, targetId, report.Reason, reporterId);
+        var open = await reportsOnTarget.CountAsync(r => r.Status == ReportStatus.Open, ct);
+        if (open == ReportRules.AutoHideThreshold)
+            logger.LogWarning("{Kind} {TargetId} auto-hidden after {Count} reports, pending review", kind, targetId, open);
+        return NoContent();
+    }
 
     private async Task<PhotoDetailDto?> LoadDetailAsync(Guid id, CancellationToken ct)
     {
         var me = CurrentUserId();
-        var row = await db.Photos.AsNoTracking()
+        var commentVisible = Moderation.CommentVisibleTo(me);
+        var row = await VisiblePhotos(me)
             .Where(p => p.Id == id)
             .Select(p => new
             {
                 Photo = p,
                 Owner = new UserSummaryDto(p.Owner.Id, p.Owner.DisplayName, p.Owner.AvatarUrl),
                 Likes = p.Likes.Count,
-                Comments = p.Comments.Count,
+                Comments = p.Comments.AsQueryable().Count(commentVisible),
                 LikedByMe = p.Likes.Any(l => l.UserId == me),
+                Upheld = p.Reports.Any(r => r.Status == ReportStatus.Upheld),
+                OpenReports = p.Reports.Count(r => r.Status == ReportStatus.Open),
+                ReportedByMe = p.Reports.Any(r => r.ReporterId == me),
             })
             .SingleOrDefaultAsync(ct);
         if (row is null) return null;
@@ -259,7 +351,9 @@ public class PhotosController(
         return new PhotoDetailDto(p.Id, p.Title, p.Description,
             storage.PublicUrl(p.DisplayPath), storage.PublicUrl(p.ThumbnailPath), p.Width, p.Height, row.Owner,
             new CameraDetailsDto(p.CameraMake, p.CameraModel, p.Lens, p.FocalLengthMm, p.Aperture, p.ExposureTime, p.Iso, p.TakenAt),
-            row.Likes, row.Comments, row.LikedByMe, p.OwnerId == me, p.CreatedAt, p.UpdatedAt);
+            row.Likes, row.Comments, row.LikedByMe, p.OwnerId == me, p.CreatedAt, p.UpdatedAt,
+            Moderation.State(row.Upheld, row.OpenReports),
+            CanReport: p.OwnerId != me && !row.ReportedByMe);
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(

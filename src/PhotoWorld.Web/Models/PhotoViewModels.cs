@@ -55,3 +55,20 @@ public static class CameraDetailsDisplay
         if (c.TakenAt is { } taken) yield return ("Taken", taken.ToString("d MMM yyyy, HH:mm"));
     }
 }
+
+public sealed class ReportViewModel
+{
+    public Guid PhotoId { get; set; }
+    public Guid? CommentId { get; set; }
+
+    // What's being reported, shown at the top of the form.
+    public string? PhotoTitle { get; set; }
+    public string? ThumbnailUrl { get; set; }
+    public string? CommentText { get; set; }
+
+    [Required(ErrorMessage = "Choose a reason.")]
+    public string? Reason { get; set; }
+
+    [StringLength(ReportRules.MaxNoteLength)]
+    public string? Note { get; set; }
+}

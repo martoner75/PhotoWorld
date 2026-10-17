@@ -27,4 +27,7 @@ public interface IPhotoWorldApiClient
     Task<IReadOnlyList<CommentDto>> GetCommentsAsync(Guid id, CancellationToken ct = default);
     Task<ApiResult<CommentDto>> AddCommentAsync(Guid id, string text, CancellationToken ct = default);
     Task<bool> DeleteCommentAsync(Guid id, Guid commentId, CancellationToken ct = default);
+
+    /// <summary>Reports a photo, or one of its comments when <paramref name="commentId"/> is set.</summary>
+    Task<ReportOutcome> ReportAsync(Guid id, Guid? commentId, CreateReportRequest request, CancellationToken ct = default);
 }

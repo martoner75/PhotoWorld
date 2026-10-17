@@ -318,6 +318,79 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("photo_likes", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CommentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("comment_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<Guid?>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid>("ReporterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reporter_id");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("open")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reports");
+
+                    b.HasIndex("CommentId", "Status")
+                        .HasDatabaseName("ix_reports_comment_id_status");
+
+                    b.HasIndex("PhotoId", "Status")
+                        .HasDatabaseName("ix_reports_photo_id_status");
+
+                    b.HasIndex("ReporterId", "CommentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reports_reporter_id_comment_id");
+
+                    b.HasIndex("ReporterId", "PhotoId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reports_reporter_id_photo_id");
+
+                    b.ToTable("reports", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_reports_one_target", "(photo_id is null) <> (comment_id is null)");
+
+                            t.HasCheckConstraint("ck_reports_reason", "reason in ('spam', 'nudity', 'harassment', 'violence', 'copyright', 'other')");
+
+                            t.HasCheckConstraint("ck_reports_status", "status in ('open', 'dismissed', 'upheld')");
+                        });
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -424,11 +497,46 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Report", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.PhotoComment", "Comment")
+                        .WithMany("Reports")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_reports_photo_comments_comment_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany("Reports")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_reports_photos_photo_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.User", "Reporter")
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reports_users_reporter_id");
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("Reporter");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>
                 {
                     b.Navigation("Comments");
 
                     b.Navigation("Likes");
+
+                    b.Navigation("Reports");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoComment", b =>
+                {
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.User", b =>

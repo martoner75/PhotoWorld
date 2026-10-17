@@ -31,6 +31,7 @@ public class Photo
 
     public List<PhotoLike> Likes { get; set; } = [];
     public List<PhotoComment> Comments { get; set; } = [];
+    public List<Report> Reports { get; set; } = [];
 }
 
 public class PhotoLike
@@ -51,4 +52,6 @@ public class PhotoComment
     public User Author { get; set; } = null!;
     public required string Text { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+
+    public List<Report> Reports { get; set; } = [];
 }

@@ -5,6 +5,13 @@
     var camera = p.Camera.Rows().ToList();
 }
 
+@if (p.Moderation != ModerationState.Visible)
+{
+    <div class="container">
+        <partial name="_ModerationBanner" model="p.Moderation" />
+    </div>
+}
+
 <section class="container page photo-page">
     <div class="photo-stage">
         <a href="@p.ImageUrl" target="_blank" rel="noopener" title="Open full size">
@@ -54,6 +61,11 @@
                     <button type="submit" class="btn btn-danger-ghost btn-sm">Delete</button>
                 </form>
             </div>
+        }
+
+        @if (p.CanReport)
+        {
+            <p class="report-link"><a asp-action="Report" asp-route-id="@p.Id">Report this photo</a></p>
         }
 
         <section class="comments" id="comments">

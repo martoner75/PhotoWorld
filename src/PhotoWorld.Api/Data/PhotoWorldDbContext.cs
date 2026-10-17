@@ -11,6 +11,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<PhotoLike> PhotoLikes => Set<PhotoLike>();
     public DbSet<PhotoComment> PhotoComments => Set<PhotoComment>();
+    public DbSet<Report> Reports => Set<Report>();
 
     /// <summary>
     /// PhotoWorld's own schema in the Supabase database. Keeping it out of <c>public</c> means
@@ -68,6 +69,30 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(c => c.Photo).WithMany(p => p.Comments).HasForeignKey(c => c.PhotoId);
             e.HasOne(c => c.Author).WithMany().HasForeignKey(c => c.AuthorId);
             e.HasIndex(c => new { c.PhotoId, c.CreatedAt });
+        });
+
+        modelBuilder.Entity<Report>(e =>
+        {
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_reports_one_target", "(photo_id is null) <> (comment_id is null)");
+                t.HasCheckConstraint("ck_reports_status",
+                    $"status in ('{ReportStatus.Open}', '{ReportStatus.Dismissed}', '{ReportStatus.Upheld}')");
+                t.HasCheckConstraint("ck_reports_reason",
+                    $"reason in ({string.Join(", ", ReportRules.Reasons.Keys.Select(k => $"'{k}'"))})");
+            });
+            e.Property(r => r.Reason).HasMaxLength(16);
+            e.Property(r => r.Note).HasMaxLength(ReportRules.MaxNoteLength);
+            e.Property(r => r.Status).HasMaxLength(16).HasDefaultValue(ReportStatus.Open);
+            e.HasOne(r => r.Reporter).WithMany().HasForeignKey(r => r.ReporterId);
+            // Reports go when their photo or comment goes (optional FKs would otherwise block the delete).
+            e.HasOne(r => r.Photo).WithMany(p => p.Reports).HasForeignKey(r => r.PhotoId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.Comment).WithMany(c => c.Reports).HasForeignKey(r => r.CommentId).OnDelete(DeleteBehavior.Cascade);
+            // One report per member per item. (Postgres treats NULLs as distinct, so each index only bites on its own target.)
+            e.HasIndex(r => new { r.ReporterId, r.PhotoId }).IsUnique();
+            e.HasIndex(r => new { r.ReporterId, r.CommentId }).IsUnique();
+            e.HasIndex(r => new { r.PhotoId, r.Status });
+            e.HasIndex(r => new { r.CommentId, r.Status });
         });
 
         modelBuilder.Entity<LogEntry>(e =>

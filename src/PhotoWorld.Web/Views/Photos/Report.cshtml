@@ -1,0 +1,56 @@
+@model ReportViewModel
+@{
+    var isComment = Model.CommentId is not null;
+    ViewData["Title"] = isComment ? "Report comment" : "Report photo";
+}
+
+<section class="container page narrow">
+    <h1>@ViewData["Title"]</h1>
+    <p class="text-muted">Reports are private: the member won't know who reported them.</p>
+
+    <form asp-action="Report" asp-route-id="@Model.PhotoId" method="post" class="form-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="CommentId" />
+
+        <div class="report-target">
+            @if (Model.ThumbnailUrl is not null)
+            {
+                <img src="@Model.ThumbnailUrl" alt="" />
+            }
+            <div>
+                <strong>@Model.PhotoTitle</strong>
+                @if (isComment)
+                {
+                    <blockquote>@Model.CommentText</blockquote>
+                }
+            </div>
+        </div>
+
+        <fieldset class="field">
+            <legend>What's wrong with this @(isComment ? "comment" : "photo")?</legend>
+            @foreach (var (value, label) in ReportRules.Reasons)
+            {
+                <label class="radio-row">
+                    <input type="radio" asp-for="Reason" value="@value" />
+                    <span>@label</span>
+                </label>
+            }
+            <span asp-validation-for="Reason" class="field-error"></span>
+        </fieldset>
+
+        <div class="field">
+            <label asp-for="Note">Anything else we should know? <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Note" rows="3" maxlength="@ReportRules.MaxNoteLength"></textarea>
+            <span asp-validation-for="Note" class="field-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="Details" asp-route-id="@Model.PhotoId">Cancel</a>
+            <button type="submit" class="btn btn-accent">Send report</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

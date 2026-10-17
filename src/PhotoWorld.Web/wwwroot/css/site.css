@@ -225,3 +225,22 @@ a:hover { color: #ffc070; }
 .btn-danger:hover { background: #d0342b; color: #fff; }
 .btn-danger:disabled { background: #4a2020; color: #b58a8a; }
 
+/* ---------- Reports & moderation ---------- */
+.report-link { margin: -0.5rem 0 1.5rem; font-size: .85rem; }
+.report-link a { color: var(--pw-muted); }
+.report-link a:hover { color: #f19999; }
+.comment-head .comment-report { margin-left: auto; }
+.comment-head .comment-report + .comment-delete { margin-left: .5rem; }
+.moderation-badge { display: inline-block; padding: .1rem .5rem; border-radius: 99px; font-size: .72rem; font-weight: 600;
+  background: rgba(241, 153, 153, .15); color: #f19999; border: 1px solid #6b2a2a; }
+.photo-card-image { position: relative; }
+.photo-card-badge { position: absolute; top: .6rem; left: .6rem; z-index: 1; background: rgba(20, 8, 8, .85); }
+.moderation-banner { background: rgba(241, 153, 153, .1); border: 1px solid #6b2a2a; color: var(--pw-text); margin-top: 1.5rem; }
+.moderation-banner strong { color: #f19999; margin-right: .35rem; }
+.report-target { display: flex; gap: 1rem; align-items: flex-start; }
+.report-target img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; flex: none; }
+.report-target blockquote { margin: .5rem 0 0; padding-left: .75rem; border-left: 3px solid var(--pw-line); color: #c9c9c4; white-space: pre-line; }
+fieldset.field { border: 0; padding: 0; margin: 0; }
+fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem; }
+.radio-row { display: flex; align-items: center; gap: .6rem; padding: .35rem 0; cursor: pointer; }
+.radio-row input { accent-color: var(--pw-accent); width: 1rem; height: 1rem; }

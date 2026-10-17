@@ -267,3 +267,110 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    CREATE TABLE photoworld.reports (
+        id uuid NOT NULL,
+        reporter_id uuid NOT NULL,
+        photo_id uuid,
+        comment_id uuid,
+        reason character varying(16) NOT NULL,
+        note character varying(500),
+        status character varying(16) NOT NULL DEFAULT 'open',
+        created_at timestamp with time zone NOT NULL,
+        reviewed_at timestamp with time zone,
+        CONSTRAINT pk_reports PRIMARY KEY (id),
+        CONSTRAINT ck_reports_one_target CHECK ((photo_id is null) <> (comment_id is null)),
+        CONSTRAINT ck_reports_reason CHECK (reason in ('spam', 'nudity', 'harassment', 'violence', 'copyright', 'other')),
+        CONSTRAINT ck_reports_status CHECK (status in ('open', 'dismissed', 'upheld')),
+        CONSTRAINT fk_reports_photo_comments_comment_id FOREIGN KEY (comment_id) REFERENCES photoworld.photo_comments (id) ON DELETE CASCADE,
+        CONSTRAINT fk_reports_photos_photo_id FOREIGN KEY (photo_id) REFERENCES photoworld.photos (id) ON DELETE CASCADE,
+        CONSTRAINT fk_reports_users_reporter_id FOREIGN KEY (reporter_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    CREATE INDEX ix_reports_comment_id_status ON photoworld.reports (comment_id, status);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    CREATE INDEX ix_reports_photo_id_status ON photoworld.reports (photo_id, status);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    CREATE UNIQUE INDEX ix_reports_reporter_id_comment_id ON photoworld.reports (reporter_id, comment_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    CREATE UNIQUE INDEX ix_reports_reporter_id_photo_id ON photoworld.reports (reporter_id, photo_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    create or replace function photoworld.set_report_reviewed_at() returns trigger
+    language plpgsql set search_path = '' as $$
+    begin
+        if new.status is distinct from old.status then
+            new.reviewed_at := case when new.status = 'open' then null else now() end;
+        end if;
+        return new;
+    end $$;
+
+    create trigger reports_set_reviewed_at before update on photoworld.reports
+    for each row execute function photoworld.set_report_reviewed_at();
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    create or replace view photoworld.open_reports with (security_invoker = true) as
+    select r.id as report_id,
+           r.created_at,
+           case when r.photo_id is not null then 'photo' else 'comment' end as content_type,
+           coalesce(r.photo_id, c.photo_id) as photo_id,
+           r.comment_id,
+           coalesce(p.title, c.text) as content,
+           owner.display_name as content_owner,
+           r.reason,
+           r.note,
+           reporter.display_name as reporter,
+           (select count(*) from photoworld.reports o
+             where o.status = 'open'
+               and (o.photo_id = r.photo_id or o.comment_id = r.comment_id)) as open_reports_on_item
+    from photoworld.reports r
+    left join photoworld.photos p on p.id = r.photo_id
+    left join photoworld.photo_comments c on c.id = r.comment_id
+    left join photoworld.users owner on owner.id = coalesce(p.owner_id, c.author_id)
+    join photoworld.users reporter on reporter.id = r.reporter_id
+    where r.status = 'open'
+    order by r.created_at desc;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017080638_AddReports') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261017080638_AddReports', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

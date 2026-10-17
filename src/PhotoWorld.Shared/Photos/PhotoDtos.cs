@@ -13,7 +13,8 @@ public sealed record PhotoSummaryDto(
     UserSummaryDto Owner,
     int LikeCount,
     int CommentCount,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    ModerationState Moderation = ModerationState.Visible);
 
 /// <summary>Settings read from the photo's EXIF data when it was uploaded. Any of them may be missing.</summary>
 public sealed record CameraDetailsDto(
@@ -45,9 +46,18 @@ public sealed record PhotoDetailDto(
     bool LikedByMe,
     bool CanEdit,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    ModerationState Moderation = ModerationState.Visible,
+    bool CanReport = false);
 
-public sealed record CommentDto(Guid Id, UserSummaryDto Author, string Text, DateTimeOffset CreatedAt, bool CanDelete);
+public sealed record CommentDto(
+    Guid Id,
+    UserSummaryDto Author,
+    string Text,
+    DateTimeOffset CreatedAt,
+    bool CanDelete,
+    ModerationState Moderation = ModerationState.Visible,
+    bool CanReport = false);
 
 public sealed record LikeStateDto(bool LikedByMe, int LikeCount);
 

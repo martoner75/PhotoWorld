@@ -12,5 +12,7 @@ public sealed record ApiResult<T>(T? Value, IReadOnlyDictionary<string, string[]
     public static ApiResult<T> Failure(string message) => Failure(new Dictionary<string, string[]> { [""] = [message] });
 }
 
+public enum ReportOutcome { Reported, AlreadyReported, NotAllowed, NotFound }
+
 /// <summary>The API rejected the user's token (expired or user gone). Handled globally by signing out.</summary>
 public sealed class ApiUnauthorizedException() : Exception("The PhotoWorld API session has expired.");

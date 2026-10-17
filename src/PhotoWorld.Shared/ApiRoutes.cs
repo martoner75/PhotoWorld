@@ -12,6 +12,8 @@ public static class ApiRoutes
     public const string PhotoLike = "api/photos/{id:guid}/like";
     public const string PhotoComments = "api/photos/{id:guid}/comments";
     public const string PhotoComment = "api/photos/{id:guid}/comments/{commentId:guid}";
+    public const string PhotoReports = "api/photos/{id:guid}/reports";
+    public const string CommentReports = "api/photos/{id:guid}/comments/{commentId:guid}/reports";
 
     /// <summary>Fills in a route template's <c>{name:constraint}</c> placeholders, for use by API clients.</summary>
     public static string Format(string template, params (string Name, object Value)[] values)

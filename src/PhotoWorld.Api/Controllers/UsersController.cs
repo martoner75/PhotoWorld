@@ -68,10 +68,11 @@ public class UsersController(
     public async Task<ActionResult<MemberProfileDto>> Member(Guid id, CancellationToken ct)
     {
         var me = User.GetUserId();
+        var visiblePhotos = db.Photos.Where(Moderation.PhotoVisibleTo(me));
         var member = await db.Users.AsNoTracking()
             .Where(u => u.Id == id)
             .Select(u => new MemberProfileDto(u.Id, u.DisplayName, u.AvatarUrl, u.CreatedAt,
-                db.Photos.Count(p => p.OwnerId == u.Id), u.Id == me))
+                visiblePhotos.Count(p => p.OwnerId == u.Id), u.Id == me))
             .SingleOrDefaultAsync(ct);
         return member is null ? NotFound() : member;
     }

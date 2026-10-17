@@ -30,6 +30,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 |---|---|---|
 | `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members and their linked Google accounts |
 | `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
+| `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos and comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
 | `photoworld.app_logs` | API **and** Web (`SupabaseLoggerProvider`) | Application logs, tagged with `application` = `PhotoWorld.Api` / `PhotoWorld.Web` |
 | `photoworld.__ef_migrations_history` | API | Applied EF migrations |
@@ -119,6 +120,33 @@ After typing `DELETE`, the API removes the user row, which cascades to their pho
 and linked Google sign-in, and then deletes their files from the bucket. Log entries keep only the user id and
 expire after 30 days.
 
+## Reports and moderation
+
+Members can report a photo or comment (spam, nudity, harassment, violence, copyright, other), once per item, but
+not their own. Content is **hidden** from everyone except its owner when:
+
+- it has **3 or more open reports** from different members (pending review), or
+- a moderator marked one of its reports **upheld** (removed).
+
+Owners see a banner ("Hidden while we review reports" / "Removed by a moderator") and can still delete it.
+
+There's no admin page: you moderate in the Supabase dashboard.
+
+1. **Table Editor → `photoworld` schema → `open_reports` view**: open reports, newest first, with the reported
+   photo title or comment text, its owner, the reporter, the reason and how many open reports the item has.
+2. Act on it in the **`reports`** table (or the SQL editor). `reviewed_at` is filled in automatically.
+
+```sql
+-- Remove the content: uphold its open reports
+update photoworld.reports set status = 'upheld' where photo_id = '<photo id>' and status = 'open';
+
+-- Nothing wrong: dismiss the reports (auto-hidden content reappears)
+update photoworld.reports set status = 'dismissed' where comment_id = '<comment id>' and status = 'open';
+```
+
+Upheld photos stay in the bucket until their owner deletes them or their account. Every report and every
+auto-hide is logged in `app_logs` (search for "reported for" and "auto-hidden").
+
 ## Run locally
 
 ```bash
@@ -153,4 +181,4 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Notes / next steps
 - The privacy policy is at `/Home/Privacy`. Set `Site:ContactEmail` so it shows a contact address, and use
   that URL for the Google consent screen. Have it reviewed before going live.
-- Possible next steps: reporting inappropriate photos or comments.
+- Possible next steps: an in-app moderation page, email notifications for new reports.
