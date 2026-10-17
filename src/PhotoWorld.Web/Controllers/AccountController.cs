@@ -15,13 +15,16 @@ public class AccountController(
     IPhotoWorldApiClient api,
     ILogger<AccountController> logger) : Controller
 {
+    [AllowAnonymous]
     [HttpGet]
     public Task<IActionResult> Login(string? returnUrl, string? error) => ShowLogin(isRegister: false, returnUrl, error);
 
     /// <summary>Same flow as Login: the first sign-in with a provider creates the PhotoWorld account.</summary>
+    [AllowAnonymous]
     [HttpGet]
     public Task<IActionResult> Register(string? returnUrl, string? error) => ShowLogin(isRegister: true, returnUrl, error);
 
+    [AllowAnonymous]
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> ExternalLogin(string provider, string? returnUrl)
     {
@@ -38,6 +41,7 @@ public class AccountController(
         return Challenge(properties, provider);
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> ExternalLoginCallback(string? returnUrl, CancellationToken ct)
     {
@@ -88,19 +92,9 @@ public class AccountController(
         return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
     }
 
-    [Authorize]
+    /// <summary>Kept for old links: your profile is now your member page.</summary>
     [HttpGet]
-    public async Task<IActionResult> Profile(CancellationToken ct)
-    {
-        var profile = await api.GetCurrentUserAsync(ct);
-        if (profile is null)
-        {
-            // API token expired or user no longer exists: start over.
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction(nameof(Login), new { returnUrl = Url.Action(nameof(Profile)) });
-        }
-        return View(profile);
-    }
+    public IActionResult Profile() => RedirectToAction("Me", "Members");
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()

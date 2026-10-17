@@ -1,0 +1,9 @@
+@model UserSummaryDto
+@if (Model.AvatarUrl is not null)
+{
+    <img class="avatar" src="@Model.AvatarUrl" alt="" referrerpolicy="no-referrer" loading="lazy" />
+}
+else
+{
+    <span class="avatar avatar-initial" aria-hidden="true">@Model.DisplayName[..1]</span>
+}

@@ -1,0 +1,52 @@
+@model UploadPhotoViewModel
+@{
+    ViewData["Title"] = "Upload a photo";
+}
+
+<section class="container page narrow">
+    <h1>Upload a photo</h1>
+    <p class="text-muted">JPEG, PNG or WebP, up to @(PhotoUploadLimits.MaxBytes / (1024 * 1024)) MB. iPhone HEIC photos aren't supported yet:
+        export them as JPEG first.</p>
+
+    <form asp-action="Upload" method="post" enctype="multipart/form-data" class="form-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <label class="dropzone" for="photo-input">
+            <img class="dropzone-preview" data-preview-target alt="" hidden />
+            <span class="dropzone-hint" data-preview-hint>
+                <strong>Choose a photo</strong><br />or drag it here
+            </span>
+            <input asp-for="Photo" id="photo-input" type="file" accept="@PhotoUploadLimits.AcceptAttribute"
+                   data-preview-input data-max-bytes="@PhotoUploadLimits.MaxBytes" />
+        </label>
+        <span asp-validation-for="Photo" class="field-error"></span>
+
+        <div class="field">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" maxlength="@PhotoUploadLimits.MaxTitleLength" placeholder="Golden hour over the harbour" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+
+        <div class="field">
+            <label asp-for="Description">Description <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Description" rows="4" maxlength="@PhotoUploadLimits.MaxDescriptionLength"
+                      placeholder="Where was it taken? What's the story behind it?"></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+
+        <p class="text-muted small">
+            We keep your camera settings (camera, lens, exposure) to show on the photo page, then save a copy without
+            any hidden metadata, so your location is never shared.
+        </p>
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="Index">Cancel</a>
+            <button type="submit" class="btn btn-accent" data-busy-label="Uploading…">Share photo</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/photos.js" asp-append-version="true"></script>
+}

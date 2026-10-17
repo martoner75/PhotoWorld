@@ -1,0 +1,18 @@
+@model PhotoSummaryDto
+<figure class="photo-card">
+    <a asp-controller="Photos" asp-action="Details" asp-route-id="@Model.Id" class="photo-card-image">
+        <img src="@Model.ThumbnailUrl" alt="@Model.Title" width="@Model.Width" height="@Model.Height" loading="lazy" />
+    </a>
+    <figcaption>
+        <a asp-controller="Photos" asp-action="Details" asp-route-id="@Model.Id" class="photo-card-title">@Model.Title</a>
+        <div class="photo-card-meta">
+            <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Owner.Id" class="photo-card-owner">
+                <partial name="_Avatar" model="Model.Owner" /> @Model.Owner.DisplayName
+            </a>
+            <span class="photo-card-stats">
+                <span title="Likes">♥ @Model.LikeCount</span>
+                <span title="Comments">💬 @Model.CommentCount</span>
+            </span>
+        </div>
+    </figcaption>
+</figure>

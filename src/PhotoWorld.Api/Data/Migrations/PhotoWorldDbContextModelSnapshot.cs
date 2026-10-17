@@ -152,6 +152,172 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("app_logs", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal?>("Aperture")
+                        .HasPrecision(4, 1)
+                        .HasColumnType("numeric(4,1)")
+                        .HasColumnName("aperture");
+
+                    b.Property<string>("CameraMake")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("camera_make");
+
+                    b.Property<string>("CameraModel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("camera_model");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DisplayPath")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("display_path");
+
+                    b.Property<string>("ExposureTime")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("exposure_time");
+
+                    b.Property<decimal?>("FocalLengthMm")
+                        .HasPrecision(6, 1)
+                        .HasColumnType("numeric(6,1)")
+                        .HasColumnName("focal_length_mm");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer")
+                        .HasColumnName("height");
+
+                    b.Property<int?>("Iso")
+                        .HasColumnType("integer")
+                        .HasColumnName("iso");
+
+                    b.Property<string>("Lens")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("lens");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<DateTimeOffset?>("TakenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("taken_at");
+
+                    b.Property<string>("ThumbnailPath")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("thumbnail_path");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer")
+                        .HasColumnName("width");
+
+                    b.HasKey("Id")
+                        .HasName("pk_photos");
+
+                    b.HasIndex("CreatedAt")
+                        .IsDescending()
+                        .HasDatabaseName("ix_photos_created_at");
+
+                    b.HasIndex("OwnerId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_photos_owner_id_created_at");
+
+                    b.ToTable("photos", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id")
+                        .HasName("pk_photo_comments");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_photo_comments_author_id");
+
+                    b.HasIndex("PhotoId", "CreatedAt")
+                        .HasDatabaseName("ix_photo_comments_photo_id_created_at");
+
+                    b.ToTable("photo_comments", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoLike", b =>
+                {
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("PhotoId", "UserId")
+                        .HasName("pk_photo_likes");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_photo_likes_user_id");
+
+                    b.ToTable("photo_likes", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -202,6 +368,67 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasConstraintName("fk_external_logins_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photos_users_owner_id");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoComment", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_comments_users_author_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany("Comments")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_comments_photos_photo_id");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Photo");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoLike", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany("Likes")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_likes_photos_photo_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_likes_users_user_id");
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Likes");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.User", b =>

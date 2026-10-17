@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Identity;
+using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Logging;
 
@@ -35,6 +36,10 @@ foreach (var provider in AuthProviders.All)
 builder.Services.AddHttpClient<GoogleIdentityVerifier>();
 builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<GoogleIdentityVerifier>());
 
+builder.Services.Configure<SupabaseStorageOptions>(builder.Configuration.GetSection(SupabaseStorageOptions.Section));
+builder.Services.AddHttpClient<SupabaseStorage>();
+builder.Services.AddSingleton<ImageProcessor>();
+
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (jwt.SigningKey.Length < 32)
     throw new InvalidOperationException("Jwt:SigningKey must be at least 32 characters. Set it with `dotnet user-secrets set Jwt:SigningKey <value>`.");
@@ -61,6 +66,8 @@ using (var scope = app.Services.CreateScope())
         app.Logger.LogWarning("Database is missing {Count} migration(s): {Migrations}. Run `dotnet ef database update`.",
             pending.Count, string.Join(", ", pending));
 }
+if (string.IsNullOrWhiteSpace(app.Configuration[$"{SupabaseStorageOptions.Section}:SecretKey"]))
+    app.Logger.LogWarning("Supabase:SecretKey is not set, so photo uploads will fail. See README → Photo storage.");
 
 if (app.Environment.IsDevelopment())
 {

@@ -1,0 +1,40 @@
+@model EditPhotoViewModel
+@{
+    ViewData["Title"] = "Edit photo";
+}
+
+<section class="container page narrow">
+    <h1>Edit photo</h1>
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="form-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ThumbnailUrl" />
+
+        @if (Model.ThumbnailUrl is not null)
+        {
+            <img class="edit-thumb" src="@Model.ThumbnailUrl" alt="" />
+        }
+
+        <div class="field">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" maxlength="@PhotoUploadLimits.MaxTitleLength" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+
+        <div class="field">
+            <label asp-for="Description">Description <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Description" rows="4" maxlength="@PhotoUploadLimits.MaxDescriptionLength"></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+            <button type="submit" class="btn btn-accent">Save changes</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

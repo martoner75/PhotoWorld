@@ -1,0 +1,20 @@
+@model CommentItemViewModel
+<li class="comment" id="comment-@Model.Comment.Id">
+    <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Comment.Author.Id">
+        <partial name="_Avatar" model="Model.Comment.Author" />
+    </a>
+    <div class="comment-body">
+        <div class="comment-head">
+            <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Comment.Author.Id">@Model.Comment.Author.DisplayName</a>
+            <time datetime="@Model.Comment.CreatedAt.ToString("o")">@Model.Comment.CreatedAt.ToString("d MMM yyyy")</time>
+            @if (Model.Comment.CanDelete)
+            {
+                <form asp-action="DeleteComment" asp-route-id="@Model.PhotoId" asp-route-commentId="@Model.Comment.Id"
+                      method="post" data-ajax="delete-comment" class="comment-delete">
+                    <button type="submit" class="btn-link-muted" aria-label="Delete comment">Delete</button>
+                </form>
+            }
+        </div>
+        <p>@Model.Comment.Text</p>
+    </div>
+</li>

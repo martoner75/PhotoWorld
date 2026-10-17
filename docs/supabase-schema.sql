@@ -153,3 +153,117 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE TABLE photoworld.photos (
+        id uuid NOT NULL,
+        owner_id uuid NOT NULL,
+        title character varying(120) NOT NULL,
+        description character varying(2000),
+        display_path character varying(256) NOT NULL,
+        thumbnail_path character varying(256) NOT NULL,
+        width integer NOT NULL,
+        height integer NOT NULL,
+        size_bytes bigint NOT NULL,
+        camera_make character varying(100),
+        camera_model character varying(100),
+        lens character varying(150),
+        focal_length_mm numeric(6,1),
+        aperture numeric(4,1),
+        exposure_time character varying(20),
+        iso integer,
+        taken_at timestamp with time zone,
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_photos PRIMARY KEY (id),
+        CONSTRAINT fk_photos_users_owner_id FOREIGN KEY (owner_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE TABLE photoworld.photo_comments (
+        id uuid NOT NULL,
+        photo_id uuid NOT NULL,
+        author_id uuid NOT NULL,
+        text character varying(1000) NOT NULL,
+        created_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_photo_comments PRIMARY KEY (id),
+        CONSTRAINT fk_photo_comments_photos_photo_id FOREIGN KEY (photo_id) REFERENCES photoworld.photos (id) ON DELETE CASCADE,
+        CONSTRAINT fk_photo_comments_users_author_id FOREIGN KEY (author_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE TABLE photoworld.photo_likes (
+        photo_id uuid NOT NULL,
+        user_id uuid NOT NULL,
+        created_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_photo_likes PRIMARY KEY (photo_id, user_id),
+        CONSTRAINT fk_photo_likes_photos_photo_id FOREIGN KEY (photo_id) REFERENCES photoworld.photos (id) ON DELETE CASCADE,
+        CONSTRAINT fk_photo_likes_users_user_id FOREIGN KEY (user_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE INDEX ix_photo_comments_author_id ON photoworld.photo_comments (author_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE INDEX ix_photo_comments_photo_id_created_at ON photoworld.photo_comments (photo_id, created_at);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE INDEX ix_photo_likes_user_id ON photoworld.photo_likes (user_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE INDEX ix_photos_created_at ON photoworld.photos (created_at DESC);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    CREATE INDEX ix_photos_owner_id_created_at ON photoworld.photos (owner_id, created_at DESC);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    values ('photos', 'photos', true, 10485760, '{image/jpeg}')
+    on conflict (id) do nothing;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261017071949_AddPhotos') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261017071949_AddPhotos', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -1,0 +1,15 @@
+@model PagerViewModel
+@if (Model.TotalPages > 1)
+{
+    <nav class="pager" aria-label="Pages">
+        @if (Model.Page > 1)
+        {
+            <a class="btn btn-ghost" asp-route-page="@(Model.Page - 1)" rel="prev">← Newer</a>
+        }
+        <span class="pager-status">Page @Model.Page of @Model.TotalPages</span>
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a class="btn btn-ghost" asp-route-page="@(Model.Page + 1)" rel="next">Older →</a>
+        }
+    </nav>
+}

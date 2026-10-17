@@ -4,4 +4,7 @@
     <Project Path="src/PhotoWorld.Shared/PhotoWorld.Shared.csproj" />
     <Project Path="src/PhotoWorld.Web/PhotoWorld.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PhotoWorld.Api.Tests/PhotoWorld.Api.Tests.csproj" />
+  </Folder>
 </Solution>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using PhotoWorld.Shared.Logging;
 using PhotoWorld.Web.Authentication;
 using PhotoWorld.Web.Services;
@@ -7,7 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 // The UI only gets the insert-only logging connection, never the main database credentials.
 builder.Logging.AddSupabase(builder.Configuration.GetConnectionString("Logging"), "PhotoWorld.Web");
 
-builder.Services.AddControllersWithViews();
+// Members-only: every page needs a signed-in user unless it opts out with [AllowAnonymous].
+builder.Services.AddControllersWithViews(o => o.Filters.Add<ApiUnauthorizedFilter>());
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddPhotoWorldAuthentication(builder.Configuration);
 
@@ -31,7 +35,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// CSS, JS and images are endpoints too, so they'd fall under the members-only policy without this.
+app.MapStaticAssets().AllowAnonymous();
 
 app.MapControllerRoute(
     name: "default",

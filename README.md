@@ -6,8 +6,9 @@ ASP.NET Core MVC on **.NET 10**, split into an API, a UI and a shared library.
 ```
 PhotoWorld.slnx
 ├── src/PhotoWorld.Shared   Class library: DTOs, API routes, provider names, claim types, Supabase logger (used by both)
-├── src/PhotoWorld.Api      Web API: users (Supabase Postgres + EF Core), provider token verification, JWT issuing
-└── src/PhotoWorld.Web      MVC UI: pages, cookie auth, Google sign-in
+├── src/PhotoWorld.Api      Web API: users, photos, likes, comments (Supabase Postgres + Storage), JWT issuing
+├── src/PhotoWorld.Web      MVC UI: members-only pages, cookie auth, Google sign-in, gallery and upload
+└── tests/PhotoWorld.Api.Tests  xUnit tests for image processing
 ```
 
 ## How sign-in works
@@ -28,6 +29,8 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | Table | Written by | Contents |
 |---|---|---|
 | `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members and their linked Google accounts |
+| `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
+| Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
 | `photoworld.app_logs` | API **and** Web (`SupabaseLoggerProvider`) | Application logs, tagged with `application` = `PhotoWorld.Api` / `PhotoWorld.Web` |
 | `photoworld.__ef_migrations_history` | API | Applied EF migrations |
 
@@ -88,6 +91,29 @@ build is green, it applies any pending EF migrations to Supabase. It needs one r
 `SUPABASE_DB_CONNECTION_STRING`, holding the Session pooler connection string for the `postgres` user
 (GitHub → Settings → Secrets and variables → Actions).
 
+## Photos
+
+The whole site is members-only: everything except the landing, sign-in and privacy pages needs a Google
+sign-in. Members can upload photos, browse the gallery, like and comment, and edit or delete their own photos.
+
+**Upload pipeline** (`ImageProcessor` in the API): accepts JPEG, PNG or WebP up to 25 MB (HEIC isn't
+supported yet). It reads the camera settings from EXIF and stores them in `photoworld.photos`, then re-encodes
+the image as two JPEGs: `display` (longest side ≤ 2560 px) and `thumb` (≤ 640 px). The original is never kept,
+and the re-encoding drops all metadata, so GPS locations never reach the public bucket.
+
+**Photo storage setup.** The `AddPhotos` migration creates the public `photos` bucket. The API uploads to it
+with your project's secret key (Supabase dashboard → Project Settings → API Keys → *Secret keys*, `sb_secret_…`;
+the legacy `service_role` key also works). The key stays in the API; the UI never sees it.
+
+```bash
+dotnet user-secrets set "Supabase:SecretKey" "<sb_secret_…>" --project src/PhotoWorld.Api
+```
+
+`Supabase:Url` is in the API's `appsettings.json`. Image URLs are public: pages need sign-in, but anyone who
+has a direct image link can open it.
+
+Run the tests with `dotnet test`.
+
 ## Run locally
 
 ```bash
@@ -122,4 +148,4 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Notes / next steps
 - The privacy policy is at `/Home/Privacy`. Set `Site:ContactEmail` so it shows a contact address, and use
   that URL for the Google consent screen. Have it reviewed before going live.
-- Photos (upload, gallery, profiles) are the next feature to build on top of this skeleton.
+- Possible next steps: HEIC uploads, deleting your account and all your photos, reporting inappropriate content.

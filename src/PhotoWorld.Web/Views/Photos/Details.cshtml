@@ -1,0 +1,82 @@
+@model PhotoPageViewModel
+@{
+    var p = Model.Photo;
+    ViewData["Title"] = p.Title;
+    var camera = p.Camera.Rows().ToList();
+}
+
+<section class="container page photo-page">
+    <div class="photo-stage">
+        <a href="@p.ImageUrl" target="_blank" rel="noopener" title="Open full size">
+            <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" />
+        </a>
+    </div>
+
+    <aside class="photo-panel">
+        <h1>@p.Title</h1>
+        <a class="photo-owner" asp-controller="Members" asp-action="Details" asp-route-id="@p.Owner.Id">
+            <partial name="_Avatar" model="p.Owner" />
+            <span>@p.Owner.DisplayName</span>
+        </a>
+        <p class="text-muted small">Shared @p.CreatedAt.ToString("d MMMM yyyy")</p>
+
+        @if (p.Description is not null)
+        {
+            <p class="photo-description">@p.Description</p>
+        }
+
+        <form asp-action="Like" asp-route-id="@p.Id" method="post" data-ajax="like" class="like-form">
+            <input type="hidden" name="liked" value="@(p.LikedByMe ? "false" : "true")" />
+            <button type="submit" class="btn-like @(p.LikedByMe ? "is-liked" : "")" aria-pressed="@(p.LikedByMe ? "true" : "false")">
+                <span class="btn-like-heart" aria-hidden="true">♥</span>
+                <span data-like-label>@(p.LikedByMe ? "Liked" : "Like")</span>
+                <span class="btn-like-count" data-like-count>@p.LikeCount</span>
+            </button>
+        </form>
+
+        @if (camera.Count > 0)
+        {
+            <dl class="camera-details">
+                @foreach (var (label, value) in camera)
+                {
+                    <dt>@label</dt>
+                    <dd>@value</dd>
+                }
+            </dl>
+        }
+
+        @if (p.CanEdit)
+        {
+            <div class="owner-actions">
+                <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+                <form asp-action="Delete" asp-route-id="@p.Id" method="post"
+                      onsubmit="return confirm('Delete this photo? This can\'t be undone.');">
+                    <button type="submit" class="btn btn-danger-ghost btn-sm">Delete</button>
+                </form>
+            </div>
+        }
+
+        <section class="comments" id="comments">
+            <h2>Comments <span class="text-muted" data-comment-count>@Model.Comments.Count</span></h2>
+            <ul class="comment-list" id="comment-list">
+                @foreach (var comment in Model.Comments)
+                {
+                    <partial name="_Comment" model="new CommentItemViewModel(p.Id, comment)" />
+                }
+            </ul>
+            <p class="text-muted small comment-empty" @(Model.Comments.Count > 0 ? "hidden" : "")>No comments yet. Say something nice!</p>
+
+            <form asp-action="Comment" asp-route-id="@p.Id" method="post" data-ajax="comment" class="comment-form">
+                <label for="comment-text" class="visually-hidden">Add a comment</label>
+                <textarea id="comment-text" name="text" rows="2" maxlength="@PhotoUploadLimits.MaxCommentLength"
+                          placeholder="Add a comment…" required></textarea>
+                <p class="field-error" data-comment-error hidden></p>
+                <button type="submit" class="btn btn-accent btn-sm">Post</button>
+            </form>
+        </section>
+    </aside>
+</section>
+
+@section Scripts {
+    <script src="~/js/photos.js" asp-append-version="true"></script>
+}

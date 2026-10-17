@@ -1,0 +1,41 @@
+@model MemberPageViewModel
+@{
+    var m = Model.Member;
+    ViewData["Title"] = m.DisplayName;
+}
+
+<section class="container page">
+    <header class="member-header">
+        <partial name="_Avatar" model="new UserSummaryDto(m.Id, m.DisplayName, m.AvatarUrl)" />
+        <div>
+            <h1>@m.DisplayName</h1>
+            <p class="text-muted">
+                Member since @m.MemberSince.ToString("MMMM yyyy") ·
+                @m.PhotoCount @(m.PhotoCount == 1 ? "photo" : "photos")
+            </p>
+        </div>
+        @if (m.IsMe)
+        {
+            <a class="btn btn-accent member-upload" asp-controller="Photos" asp-action="Upload">Upload a photo</a>
+        }
+    </header>
+
+    @if (Model.Photos.TotalCount == 0)
+    {
+        <div class="empty-state">
+            @if (m.IsMe)
+            {
+                <p>You haven't shared any photos yet.</p>
+                <a class="btn btn-accent" asp-controller="Photos" asp-action="Upload">Share your first photo</a>
+            }
+            else
+            {
+                <p>@m.DisplayName hasn't shared any photos yet.</p>
+            }
+        </div>
+    }
+    else
+    {
+        <partial name="_PhotoGrid" model="Model.Photos" />
+    }
+</section>

@@ -26,8 +26,10 @@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             var avatar = User.FindFirstValue(PhotoWorldClaimTypes.AvatarUrl);
+                            <li class="nav-item"><a class="nav-link" asp-controller="Photos" asp-action="Index">Gallery</a></li>
+                            <li class="nav-item"><a class="btn btn-accent btn-sm" asp-controller="Photos" asp-action="Upload">Upload</a></li>
                             <li class="nav-item">
-                                <a class="nav-link nav-user" asp-controller="Account" asp-action="Profile">
+                                <a class="nav-link nav-user" asp-controller="Members" asp-action="Me">
                                     @if (avatar is not null)
                                     {
                                         <img src="@avatar" alt="" referrerpolicy="no-referrer" />

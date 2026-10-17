@@ -1,0 +1,8 @@
+@model PagedResult<PhotoSummaryDto>
+<div class="photo-grid">
+    @foreach (var photo in Model.Items)
+    {
+        <partial name="_PhotoCard" model="photo" />
+    }
+</div>
+<partial name="_Pager" model="new PagerViewModel(Model.Page, Model.TotalPages)" />

@@ -99,20 +99,6 @@ a:hover { color: #ffc070; }
 .auth-switch { margin: 1.5rem 0 0; }
 .auth-dev { text-align: left; font-size: .85rem; margin: 1.25rem 0 0; }
 
-/* ---------- Profile ---------- */
-.profile { display: grid; place-items: center; padding: 4rem 1rem; }
-.profile-card { width: 100%; max-width: 480px; text-align: center; }
-.profile-avatar { width: 112px; height: 112px; border-radius: 50%; object-fit: cover; border: 3px solid var(--pw-accent); margin-bottom: 1rem; }
-.profile-avatar-initial { display: inline-grid; place-items: center; font-family: var(--pw-serif); font-size: 3rem; background: var(--pw-ink-2); }
-.profile h1 { font-family: var(--pw-serif); }
-.profile-facts { display: grid; grid-template-columns: auto 1fr; gap: .6rem 1.25rem; text-align: left; margin-top: 2rem;
-  border-top: 1px solid var(--pw-line); padding-top: 1.5rem; }
-.profile-facts dt { color: var(--pw-muted); font-weight: 500; }
-.profile-facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
-.provider-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .6rem; border-radius: 99px;
-  border: 1px solid var(--pw-line); font-size: .85rem; }
-.provider-chip svg { width: 14px; height: 14px; }
-
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--pw-line); color: var(--pw-muted); padding: 1.5rem 0; font-size: .9rem; }
 .site-footer a { color: var(--pw-muted); }
@@ -124,3 +110,104 @@ a:hover { color: #ffc070; }
 .legal h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.25rem; }
 .legal p, .legal li { color: #c9c9c4; }
 .legal-updated { color: var(--pw-muted) !important; font-size: .9rem; }
+
+/* ---------- Pages & forms ---------- */
+.page { padding-top: 2.5rem; padding-bottom: 4rem; }
+.page.narrow { max-width: 640px; }
+.page h1 { font-family: var(--pw-serif); }
+.page-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+.page-header h1 { font-size: 2.4rem; margin: 0; }
+.page-header p { margin: .25rem 0 0; }
+.small { font-size: .85rem; }
+.empty-state { border: 1px dashed var(--pw-line); border-radius: var(--pw-radius); padding: 3rem 1rem; text-align: center; color: var(--pw-muted); }
+.btn-danger-ghost { background: transparent; border: 1px solid #6b2a2a; color: #f19999; }
+.btn-danger-ghost:hover { background: #3a1515; color: #ffb3b3; border-color: #8a3a3a; }
+.btn-link-muted { background: none; border: 0; padding: 0; color: var(--pw-muted); font-size: .8rem; }
+.btn-link-muted:hover { color: #f19999; }
+
+.form-card { background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: var(--pw-radius); padding: 1.5rem; display: grid; gap: 1.1rem; margin-top: 1.5rem; }
+.field { display: grid; gap: .35rem; }
+.field label { font-weight: 500; }
+.field input, .field textarea, .comment-form textarea {
+  width: 100%; background: var(--pw-ink); color: var(--pw-text); border: 1px solid var(--pw-line);
+  border-radius: 10px; padding: .65rem .8rem; font: inherit;
+}
+.field input:focus, .field textarea:focus, .comment-form textarea:focus { outline: none; border-color: var(--pw-accent); }
+.field-error, .field-validation-error { color: #f19999; font-size: .85rem; }
+.form-actions { display: flex; justify-content: flex-end; gap: .75rem; }
+.edit-thumb { max-height: 220px; width: auto; max-width: 100%; border-radius: 10px; justify-self: start; }
+
+.dropzone {
+  position: relative; display: grid; place-items: center; min-height: 260px; cursor: pointer; overflow: hidden;
+  border: 2px dashed var(--pw-line); border-radius: var(--pw-radius); background: var(--pw-ink); text-align: center; color: var(--pw-muted);
+}
+.dropzone:hover, .dropzone.is-dragging { border-color: var(--pw-accent); }
+.dropzone strong { color: var(--pw-text); }
+.dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.dropzone-preview { max-height: 420px; max-width: 100%; object-fit: contain; }
+
+/* ---------- Avatars ---------- */
+.avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; }
+.avatar-initial { display: inline-grid; place-items: center; background: #2b2e36; color: var(--pw-text); font-size: .8rem; font-weight: 600; }
+
+/* ---------- Gallery ---------- */
+.photo-grid { columns: 3 300px; column-gap: 1.25rem; }
+.photo-card { break-inside: avoid; margin: 0 0 1.25rem; background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: var(--pw-radius); overflow: hidden; }
+.photo-card-image { display: block; overflow: hidden; }
+.photo-card img { display: block; width: 100%; height: auto; transition: transform .35s ease; }
+.photo-card-image:hover img { transform: scale(1.03); }
+.photo-card figcaption { padding: .75rem .9rem .85rem; }
+.photo-card-title { display: block; color: var(--pw-text); font-weight: 600; text-decoration: none; margin-bottom: .4rem; }
+.photo-card-title:hover { color: var(--pw-accent); }
+.photo-card-meta { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .85rem; }
+.photo-card-owner { display: flex; align-items: center; gap: .45rem; color: var(--pw-muted); text-decoration: none; min-width: 0; }
+.photo-card-owner .avatar { width: 22px; height: 22px; }
+.photo-card-stats { display: flex; gap: .7rem; color: var(--pw-muted); white-space: nowrap; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 2rem; }
+.pager-status { color: var(--pw-muted); }
+
+/* ---------- Photo page ---------- */
+.photo-page { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 2rem; align-items: start; }
+@media (max-width: 991px) { .photo-page { grid-template-columns: 1fr; } }
+.photo-stage { background: #07080a; border-radius: var(--pw-radius); display: grid; place-items: center; overflow: hidden; }
+.photo-stage img { display: block; max-width: 100%; max-height: 82vh; width: auto; height: auto; }
+.photo-panel h1 { font-size: 2rem; margin-bottom: .75rem; }
+.photo-owner { display: inline-flex; align-items: center; gap: .55rem; color: var(--pw-text); text-decoration: none; font-weight: 500; }
+.photo-owner .avatar { width: 34px; height: 34px; }
+.photo-owner:hover { color: var(--pw-accent); }
+.photo-panel > .small { margin: .35rem 0 1rem; }
+.photo-description { white-space: pre-line; color: #c9c9c4; }
+.like-form { margin: 1.25rem 0; }
+.btn-like {
+  display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; border-radius: 99px;
+  background: transparent; color: var(--pw-text); border: 1px solid var(--pw-line); font-weight: 600;
+}
+.btn-like:hover { border-color: #e2557b; }
+.btn-like-heart { color: var(--pw-muted); font-size: 1.1rem; line-height: 1; transition: transform .15s ease; }
+.btn-like.is-liked { border-color: #e2557b; background: rgba(226, 85, 123, .12); }
+.btn-like.is-liked .btn-like-heart { color: #e2557b; transform: scale(1.15); }
+.btn-like-count { color: var(--pw-muted); font-weight: 500; }
+.camera-details { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1rem; padding: 1rem; margin: 0 0 1.25rem;
+  background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: 10px; font-size: .9rem; }
+.camera-details dt { color: var(--pw-muted); font-weight: 500; }
+.camera-details dd { margin: 0; }
+.owner-actions { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.comments { border-top: 1px solid var(--pw-line); padding-top: 1.25rem; }
+.comments h2 { font-family: var(--pw-serif); font-size: 1.3rem; }
+.comment-list { list-style: none; padding: 0; margin: 0 0 .5rem; display: grid; gap: 1rem; }
+.comment { display: flex; gap: .65rem; }
+.comment-body { min-width: 0; flex: 1; }
+.comment-head { display: flex; align-items: baseline; gap: .5rem; font-size: .85rem; }
+.comment-head a { color: var(--pw-text); font-weight: 600; text-decoration: none; }
+.comment-head time { color: var(--pw-muted); }
+.comment-delete { margin-left: auto; }
+.comment-body p { margin: .15rem 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+.comment-form { display: grid; gap: .5rem; margin-top: 1rem; }
+.comment-form button { justify-self: end; }
+
+/* ---------- Member page ---------- */
+.member-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; margin-bottom: 2.5rem; }
+.member-header .avatar { width: 88px; height: 88px; border: 3px solid var(--pw-accent); font-size: 2rem; }
+.member-header h1 { font-size: 2.2rem; margin: 0; }
+.member-header p { margin: .25rem 0 0; }
+.member-upload { margin-left: auto; }

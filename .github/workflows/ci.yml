@@ -15,6 +15,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet build PhotoWorld.slnx --configuration Release
+      - run: dotnet test PhotoWorld.slnx --configuration Release --no-build
 
   # Applies EF migrations to Supabase. Runs only for main, after a green build; a no-op when nothing is pending.
   migrate:
