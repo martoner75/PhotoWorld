@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text;
+using ImageMagick;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using PhotoWorld.Shared.Photos;
@@ -25,6 +27,10 @@ public sealed class ImageProcessor
     private const int DisplayQuality = 88;
     private const int ThumbnailQuality = 80;
     private const long MaxPixels = 120_000_000;
+    private const string TooManyPixels = "That photo has too many pixels (the limit is 120 megapixels).";
+
+    // ISO base media "ftyp" brands used by HEIC/HEIF stills (iPhone photos are "heic").
+    private static readonly string[] HeifBrands = ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"];
 
     public ProcessedPhoto Process(byte[] file)
     {
@@ -32,15 +38,19 @@ public sealed class ImageProcessor
         if (file.Length > PhotoUploadLimits.MaxBytes)
             throw new ImageValidationException($"Photos can be up to {PhotoUploadLimits.MaxBytes / (1024 * 1024)} MB.");
 
+        // Camera details come from the original file, before any conversion drops them.
+        var camera = ReadCamera(file);
+
+        // Skia can't decode HEIC (iPhone photos), so those are converted to an upright, metadata-free JPEG first.
+        if (IsHeif(file)) file = ConvertHeifToJpeg(file);
+
         // Trust the file's actual content, not the browser-supplied content type or extension.
         using var codec = SKCodec.Create(new MemoryStream(file))
-            ?? throw new ImageValidationException("That file isn't an image we can read. Use JPEG, PNG or WebP.");
+            ?? throw new ImageValidationException("That file isn't an image we can read. Use JPEG, PNG, WebP or HEIC.");
         if (codec.EncodedFormat is not (SKEncodedImageFormat.Jpeg or SKEncodedImageFormat.Png or SKEncodedImageFormat.Webp))
-            throw new ImageValidationException("Only JPEG, PNG and WebP photos are supported.");
+            throw new ImageValidationException("Only JPEG, PNG, WebP and HEIC photos are supported.");
         if ((long)codec.Info.Width * codec.Info.Height > MaxPixels)
-            throw new ImageValidationException("That photo has too many pixels (the limit is 120 megapixels).");
-
-        var camera = ReadCamera(file);
+            throw new ImageValidationException(TooManyPixels);
 
         using var decoded = DecodeForDisplay(codec);
         using var oriented = ApplyOrientation(decoded, codec.EncodedOrigin);
@@ -48,6 +58,34 @@ public sealed class ImageProcessor
             EncodeJpeg(oriented, DisplayMaxSide, DisplayQuality),
             EncodeJpeg(oriented, ThumbnailMaxSide, ThumbnailQuality),
             camera);
+    }
+
+    internal static bool IsHeif(byte[] file) =>
+        file.Length >= 12
+        && Encoding.ASCII.GetString(file, 4, 4) == "ftyp"
+        && HeifBrands.Contains(Encoding.ASCII.GetString(file, 8, 4));
+
+    /// <summary>
+    /// Decodes HEIC/HEIF with ImageMagick (libheif), applies its rotation and strips metadata, returning a
+    /// high-quality JPEG for the normal Skia pipeline.
+    /// </summary>
+    private static byte[] ConvertHeifToJpeg(byte[] file)
+    {
+        try
+        {
+            var info = new MagickImageInfo(file);
+            if ((long)info.Width * info.Height > MaxPixels) throw new ImageValidationException(TooManyPixels);
+
+            using var image = new MagickImage(file);
+            image.AutoOrient();
+            image.Strip();
+            image.Quality = 95;
+            return image.ToByteArray(MagickFormat.Jpeg);
+        }
+        catch (MagickException)
+        {
+            throw new ImageValidationException("That HEIC photo couldn't be read. Try exporting it as JPEG.");
+        }
     }
 
     /// <summary>Decodes at the smallest native scale that's still at least display size, to save memory on huge files.</summary>

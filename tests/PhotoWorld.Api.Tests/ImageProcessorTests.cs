@@ -95,13 +95,50 @@ public class ImageProcessorTests
     public void Rejects_files_that_are_not_images()
     {
         var ex = Assert.Throws<ImageValidationException>(() => _processor.Process("not a photo"u8.ToArray()));
-        Assert.Contains("JPEG, PNG or WebP", ex.Message);
+        Assert.Contains("JPEG, PNG, WebP or HEIC", ex.Message);
     }
 
     [Fact]
     public void Rejects_unsupported_image_formats()
     {
         Assert.Throws<ImageValidationException>(() => _processor.Process(TestImages.Gif()));
+    }
+
+    [Fact]
+    public void Converts_iphone_heic_and_keeps_camera_details()
+    {
+        var heic = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "camera.heic"));
+        Assert.True(ImageProcessor.IsHeif(heic));
+
+        var result = _processor.Process(heic);
+
+        // The fixture's pixels are 600x400 with a "rotated 90° clockwise" orientation, so it's stored upright as 400x600.
+        AssertJpegSize(result.Display.Bytes, 400, 600);
+        AssertJpegSize(result.Thumbnail.Bytes, 400, 600);
+        using (var bitmap = SKBitmap.Decode(result.Display.Bytes))
+        {
+            Assert.True(IsRed(bitmap.GetPixel(bitmap.Width - 10, 10)), "Red marker should be top-right once upright");
+            Assert.False(IsRed(bitmap.GetPixel(10, 10)));
+        }
+        Assert.Equal("X-T5", result.Camera.Model);
+        Assert.Equal(2.8m, result.Camera.Aperture);
+        var directories = ImageMetadataReader.ReadMetadata(new MemoryStream(result.Display.Bytes));
+        Assert.Empty(directories.OfType<GpsDirectory>());
+        Assert.Empty(directories.OfType<ExifIfd0Directory>());
+    }
+
+    [Fact]
+    public void Jpeg_is_not_mistaken_for_heic()
+    {
+        Assert.False(ImageProcessor.IsHeif(TestImages.Jpeg(10, 10)));
+    }
+
+    [Fact]
+    public void Damaged_heic_is_rejected_with_a_clear_message()
+    {
+        var heic = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "camera.heic"));
+        var ex = Assert.Throws<ImageValidationException>(() => _processor.Process(heic[..200]));
+        Assert.Contains("HEIC", ex.Message);
     }
 
     [Fact]

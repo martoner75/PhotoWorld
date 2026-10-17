@@ -96,8 +96,8 @@ build is green, it applies any pending EF migrations to Supabase. It needs one r
 The whole site is members-only: everything except the landing, sign-in and privacy pages needs a Google
 sign-in. Members can upload photos, browse the gallery, like and comment, and edit or delete their own photos.
 
-**Upload pipeline** (`ImageProcessor` in the API): accepts JPEG, PNG or WebP up to 25 MB (HEIC isn't
-supported yet). It reads the camera settings from EXIF and stores them in `photoworld.photos`, then re-encodes
+**Upload pipeline** (`ImageProcessor` in the API): accepts JPEG, PNG, WebP or iPhone HEIC up to 25 MB. HEIC is
+decoded with Magick.NET (libheif) into an upright, metadata-free image first. It reads the camera settings from EXIF and stores them in `photoworld.photos`, then re-encodes
 the image as two JPEGs: `display` (longest side ≤ 2560 px) and `thumb` (≤ 640 px). The original is never kept,
 and the re-encoding drops all metadata, so GPS locations never reach the public bucket.
 
@@ -148,4 +148,4 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Notes / next steps
 - The privacy policy is at `/Home/Privacy`. Set `Site:ContactEmail` so it shows a contact address, and use
   that URL for the Google consent screen. Have it reviewed before going live.
-- Possible next steps: HEIC uploads, deleting your account and all your photos, reporting inappropriate content.
+- Possible next steps: deleting your account and all your photos, reporting inappropriate content.

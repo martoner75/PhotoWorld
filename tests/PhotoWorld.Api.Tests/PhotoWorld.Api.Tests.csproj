@@ -22,4 +22,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- iPhone-style HEIC (600x400, orientation 6, camera EXIF and GPS), made with macOS `sips -s format heic` from a TestImages JPEG. -->
+    <None Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

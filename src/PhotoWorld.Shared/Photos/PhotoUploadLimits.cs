@@ -8,8 +8,12 @@ public static class PhotoUploadLimits
     public const int MaxDescriptionLength = 2000;
     public const int MaxCommentLength = 1000;
 
-    public static readonly IReadOnlyList<string> AllowedContentTypes = ["image/jpeg", "image/png", "image/webp"];
+    public static readonly IReadOnlyList<string> AllowedContentTypes =
+        ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 
-    /// <summary>Value for an <c>&lt;input type="file" accept="…"&gt;</c> attribute.</summary>
-    public static string AcceptAttribute => string.Join(",", AllowedContentTypes);
+    /// <summary>
+    /// Value for an <c>&lt;input type="file" accept="…"&gt;</c> attribute. Extensions are listed too because
+    /// browsers often don't know the HEIC content type.
+    /// </summary>
+    public static string AcceptAttribute => string.Join(",", AllowedContentTypes) + ",.heic,.heif";
 }
