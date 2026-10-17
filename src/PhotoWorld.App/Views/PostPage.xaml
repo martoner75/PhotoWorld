@@ -6,7 +6,7 @@
              x:DataType="vm:PostViewModel"
              Title="{Binding Post.Title}">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Report" Command="{Binding ReportPostCommand}" IsVisible="{Binding Post.CanReport}" />
+        <ToolbarItem x:Name="ReportItem" Text="Report" Command="{Binding ReportPostCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="*,Auto">

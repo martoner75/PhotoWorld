@@ -7,7 +7,7 @@
              x:DataType="vm:PhotoDetailViewModel"
              Title="{Binding Photo.Title}">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Report" Command="{Binding ReportPhotoCommand}" IsVisible="{Binding Photo.CanReport}" />
+        <ToolbarItem x:Name="ReportItem" Text="Report" Command="{Binding ReportPhotoCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid>
