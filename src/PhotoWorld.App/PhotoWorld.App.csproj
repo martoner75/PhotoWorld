@@ -1,12 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<!--
+  TreatAsLocalProperty: IDEs such as Rider pass their own JavaSdkDirectory to MSBuild (an old or placeholder Java
+  when none is configured, giving XA0031 "Java SDK 11.0 or above is required"). This lets Local.props override it.
+-->
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="JavaSdkDirectory">
+
+  <!-- Machine-specific settings that stay out of git: GoogleMapsApiKey, optionally JavaSdkDirectory. See Local.props.example. -->
+  <Import Project="Local.props" Condition="Exists('Local.props')" />
 
   <PropertyGroup>
     <!--
-      net10.0-ios is the iPhone/iPad app. It needs Xcode, so it's only built on a Mac that has it; elsewhere (and in
-      the Linux CI job) the plain net10.0 target still compiles all the C# and XAML so mistakes surface early.
+      Each app target is built only where its tools exist, so the solution still builds anywhere:
+      net10.0-ios needs a Mac with Xcode; net10.0-android needs the Android SDK and a JDK (set EnableAndroid=false to
+      skip it). The plain net10.0 target always compiles all the C# and XAML so mistakes surface early.
     -->
+    <_HasXcode Condition="$([MSBuild]::IsOSPlatform('osx')) And Exists('/Applications/Xcode.app')">true</_HasXcode>
+    <_HasAndroidSdk Condition="'$(AndroidSdkDirectory)' != '' Or '$(ANDROID_HOME)' != '' Or Exists('$(HOME)/Library/Android/sdk')">true</_HasAndroidSdk>
+    <_HasJdk Condition="'$(JavaSdkDirectory)' != '' Or '$(JAVA_HOME)' != '' Or Exists('/Library/Java/JavaVirtualMachines/microsoft-21.jdk')">true</_HasJdk>
     <TargetFrameworks>net10.0</TargetFrameworks>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx')) And Exists('/Applications/Xcode.app')">net10.0-ios;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(EnableAndroid)' != 'false' And '$(_HasAndroidSdk)' == 'true' And '$(_HasJdk)' == 'true'">net10.0-android;$(TargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks Condition="'$(_HasXcode)' == 'true'">net10.0-ios;$(TargetFrameworks)</TargetFrameworks>
     <OutputType Condition="'$(TargetFramework)' != 'net10.0'">Exe</OutputType>
 
     <RootNamespace>PhotoWorld.App</RootNamespace>
@@ -23,6 +35,10 @@
     <ApplicationVersion>1</ApplicationVersion>
 
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">16.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+
+    <!-- Fills ${GoogleMapsApiKey} in Platforms/Android/AndroidManifest.xml. Empty: the Places map stays blank. -->
+    <AndroidManifestPlaceholders>GoogleMapsApiKey=$(GoogleMapsApiKey)</AndroidManifestPlaceholders>
   </PropertyGroup>
 
   <!--

@@ -28,7 +28,24 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet workload install maui-ios
-      - run: dotnet build src/PhotoWorld.App --configuration Release -f net10.0-ios -r iossimulator-arm64
+      # The runner has Android tools too; skip that target here (it has its own job).
+      - run: dotnet build src/PhotoWorld.App --configuration Release -f net10.0-ios -r iossimulator-arm64 -p:EnableAndroid=false
+
+  # Builds the Android app in Release on Linux, where the Android SDK is preinstalled.
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-java@v5
+        with:
+          distribution: microsoft
+          java-version: 21
+      - run: dotnet workload install maui-android
+      - run: dotnet build src/PhotoWorld.App -t:InstallAndroidDependencies -f net10.0-android -p:AndroidSdkDirectory=$ANDROID_HOME -p:AcceptAndroidSDKLicenses=True
+      - run: dotnet build src/PhotoWorld.App --configuration Release -f net10.0-android
 
   # Applies EF migrations to Supabase. Runs only for main, after a green build; a no-op when nothing is pending.
   migrate:

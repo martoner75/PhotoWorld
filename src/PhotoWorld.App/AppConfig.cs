@@ -5,7 +5,9 @@ public static class AppConfig
 {
 #if DEBUG
     // The iOS Simulator shares the Mac's network, so it reaches the API and website started with `dotnet run`.
-    // A real iPhone can't: point these at a deployed PhotoWorld (or your Mac's LAN address) to test on a device.
+    // The Android emulator does too after `adb reverse tcp:7041 tcp:7041` and `adb reverse tcp:7211 tcp:7211`
+    // (localhost matters: it's the sign-in redirect registered with Google). Real phones can't: point these at a
+    // deployed PhotoWorld to test on a device.
     public static readonly Uri ApiBaseUrl = new("https://localhost:7041/");
     public static readonly Uri WebBaseUrl = new("https://localhost:7211/");
 #else

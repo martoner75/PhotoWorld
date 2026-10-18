@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- No backups: the sign-in token lives in SecureStorage and must not be restored onto another device. -->
+	<application android:allowBackup="false" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
+		<!-- Google Maps for the Places tab. The key comes from GoogleMapsApiKey in Local.props (not in git). -->
+		<meta-data android:name="com.google.android.geo.API_KEY" android:value="${GoogleMapsApiKey}" />
+	</application>
+
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.INTERNET" />
+	<!-- Only when the member chooses "Take a photo"; picking from the gallery uses the system photo picker. -->
+	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-feature android:name="android.hardware.camera" android:required="false" />
+
+	<!-- Android 11+ package visibility: the camera app (MediaPicker) and Custom Tabs browsers (sign-in). -->
+	<queries>
+		<intent>
+			<action android:name="android.media.action.IMAGE_CAPTURE" />
+		</intent>
+		<intent>
+			<action android:name="android.support.customtabs.action.CustomTabsService" />
+		</intent>
+	</queries>
+</manifest>

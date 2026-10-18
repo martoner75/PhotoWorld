@@ -1,0 +1,12 @@
+<!--
+  Copy to Local.props (git-ignored) and fill in. Read by PhotoWorld.App.csproj.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Google Maps for the Android Places map (Maps SDK for Android, restricted to com.photoworld.app). -->
+    <GoogleMapsApiKey></GoogleMapsApiKey>
+
+    <!-- Only if your JDK isn't found automatically (JAVA_HOME or /Library/Java/JavaVirtualMachines/microsoft-21.jdk). -->
+    <!-- <JavaSdkDirectory>/path/to/jdk</JavaSdkDirectory> -->
+  </PropertyGroup>
+</Project>
