@@ -19,6 +19,8 @@ public static class ApiRoutes
     public const string Blog = "api/blogs/{userId:guid}";
     public const string BlogPosts = "api/blog-posts";
     public const string BlogPost = "api/blog-posts/{id:guid}";
+    public const string BlogPostAttachments = "api/blog-posts/{id:guid}/attachments";
+    public const string BlogPostAttachment = "api/blog-posts/{id:guid}/attachments/{attachmentId:guid}";
     public const string BlogPostComments = "api/blog-posts/{id:guid}/comments";
     public const string BlogPostComment = "api/blog-posts/{id:guid}/comments/{commentId:guid}";
     public const string BlogPostReports = "api/blog-posts/{id:guid}/reports";

@@ -292,6 +292,15 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .post-body figure.pw-photo { margin: 2rem 0; }
 .post-body figure.pw-photo img { display: block; max-width: 100%; height: auto; border-radius: 10px; margin: 0 auto; }
 .post-body figcaption { color: var(--pw-muted); font-size: .88rem; text-align: center; margin-top: .5rem; }
+.attachments { margin: 2rem 0; }
+.attachments h2 { font-family: var(--pw-serif); font-size: 1.4rem; margin-bottom: .75rem; }
+.attachment-list { list-style: none; padding: 0; margin: 0 0 .75rem; display: flex; flex-direction: column; gap: .5rem; }
+.attachment-list li { display: flex; align-items: baseline; flex-wrap: wrap; gap: .75rem; padding: .65rem .9rem;
+    background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: 10px; }
+.attachment-name { color: var(--pw-accent); text-decoration: none; overflow-wrap: anywhere; }
+.attachment-name::before { content: "\1F4C4\00A0"; }
+.attachment-name:hover { text-decoration: underline; }
+.attachment-remove { margin-left: auto; font-size: .85rem; color: var(--pw-muted); }
 .draft-banner { border-color: #6b5021; background: rgba(242, 165, 65, .08); }
 .draft-banner strong { color: var(--pw-accent); }
 
@@ -327,6 +336,15 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .picker-upload { display: grid; gap: .75rem; }
 .picker-caption { margin-top: 1rem; border-top: 1px solid var(--pw-line); padding-top: 1rem; }
 .picker input[type=file] { color: var(--pw-muted); }
+
+/* Cover photo choice in the editor; the preview matches the 3:2 post-card cover */
+.cover-choice { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.cover-preview { width: 180px; aspect-ratio: 3 / 2; border-radius: 10px; overflow: hidden; background: #07080a;
+    border: 1px solid var(--pw-line); display: grid; place-items: center; }
+.cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+.cover-preview img[hidden] { display: none; }
+.cover-preview-auto { color: var(--pw-muted); font-size: .8rem; text-align: center; padding: .5rem; }
+.cover-actions { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; }
 
 /* An error summary with nothing to report renders as an empty box; hide it until client validation fills it. */
 .validation-summary-valid { display: none; }

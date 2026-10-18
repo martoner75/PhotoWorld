@@ -54,6 +54,46 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("blogs", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("file_name");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("storage_path");
+
+                    b.HasKey("Id")
+                        .HasName("pk_blog_attachments");
+
+                    b.HasIndex("PostId", "CreatedAt")
+                        .HasDatabaseName("ix_blog_attachments_post_id_created_at");
+
+                    b.ToTable("blog_attachments", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.BlogComment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -107,6 +147,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasMaxLength(100000)
                         .HasColumnType("character varying(100000)")
                         .HasColumnName("body_html");
+
+                    b.Property<bool>("CoverChosen")
+                        .HasColumnType("boolean")
+                        .HasColumnName("cover_chosen");
 
                     b.Property<Guid?>("CoverPhotoId")
                         .HasColumnType("uuid")
@@ -765,6 +809,18 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.BlogAttachment", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.BlogPost", "Post")
+                        .WithMany("Attachments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blog_attachments_blog_posts_post_id");
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.BlogComment", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.User", "Author")
@@ -968,6 +1024,8 @@ namespace PhotoWorld.Api.Data.Migrations
 
             modelBuilder.Entity("PhotoWorld.Api.Data.BlogPost", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("Comments");
 
                     b.Navigation("Photos");

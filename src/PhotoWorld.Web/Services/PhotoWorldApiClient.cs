@@ -144,6 +144,24 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res);
     }
 
+    public async Task<ApiResult<BlogAttachmentDto>> AddBlogAttachmentAsync(Guid postId, IFormFile file, CancellationToken ct = default)
+    {
+        using var form = new MultipartFormDataContent();
+        var fileContent = new StreamContent(file.OpenReadStream());
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(BlogLimits.AttachmentContentType);
+        form.Add(fileContent, "file", file.FileName);
+
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.BlogPostAttachments, ("id", postId)), form, ct);
+        return await ReadResultAsync<BlogAttachmentDto>(res, ct);
+    }
+
+    public async Task<bool> DeleteBlogAttachmentAsync(Guid postId, Guid attachmentId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(
+            ApiRoutes.Format(ApiRoutes.BlogPostAttachment, ("id", postId), ("attachmentId", attachmentId)), ct);
+        return IsSuccess(res);
+    }
+
     public async Task<IReadOnlyList<BlogCommentDto>> GetBlogCommentsAsync(Guid postId, CancellationToken ct = default) =>
         await GetOrNullAsync<List<BlogCommentDto>>(ApiRoutes.Format(ApiRoutes.BlogPostComments, ("id", postId)), ct) ?? [];
 

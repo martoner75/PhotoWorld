@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
 
@@ -23,8 +24,24 @@ public sealed class PostEditorViewModel
 
     public bool Publish { get; set; }
 
+    /// <summary>The photo on the post's tile; empty means the first photo in the post.</summary>
+    public Guid? CoverPhotoId { get; set; }
+
+    /// <summary>Preview of the chosen cover in the editor (display only; the API checks <see cref="CoverPhotoId"/>).</summary>
+    public string? CoverUrl { get; set; }
+
     /// <summary>Current status when editing, to label the buttons.</summary>
     public string? Status { get; set; }
+
+    /// <summary>PDFs chosen in the form, uploaded once the post is saved.</summary>
+    public List<IFormFile> NewAttachments { get; set; } = [];
+
+    /// <summary>Existing PDFs the author ticked for removal.</summary>
+    public List<Guid> RemoveAttachmentIds { get; set; } = [];
+
+    /// <summary>The post's current PDFs when editing (loaded from the API, never bound from the form).</summary>
+    [BindNever]
+    public IReadOnlyList<BlogAttachmentDto> Attachments { get; set; } = [];
 }
 
 public sealed class BlogSettingsViewModel

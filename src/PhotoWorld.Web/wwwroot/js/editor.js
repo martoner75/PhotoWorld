@@ -1,4 +1,4 @@
-// Blog post editor: Quill with a photo block that embeds the author's own PhotoWorld photos.
+// Blog post editor: Quill with a photo block that embeds the author's own PhotoWorld photos, plus a cover photo choice.
 // The API re-sanitizes everything on save, so this is about a pleasant editor, not security.
 (() => {
   const script = document.currentScript;
@@ -59,7 +59,7 @@
           ["photo"],
           ["clean"],
         ],
-        handlers: { photo: () => openPicker() },
+        handlers: { photo: () => openPicker("insert") },
       },
     },
   });
@@ -80,15 +80,26 @@
   const captionInput = modalEl.querySelector("#picker-caption");
   const uploadForm = modalEl.querySelector("[data-picker-upload]");
   const uploadError = modalEl.querySelector("[data-picker-error]");
+  const uploadButton = modalEl.querySelector("[data-picker-submit]");
+  const title = modalEl.querySelector("#photo-picker-title");
+  const captionField = modalEl.querySelector(".picker-caption");
   let insertAt = 0;
   let page = 0;
+  // "insert" puts the chosen photo in the post; "cover" makes it the post's cover.
+  let mode = "insert";
 
-  function openPicker() {
-    insertAt = (quill.getSelection(true) ?? { index: quill.getLength() }).index;
+  function openPicker(nextMode = "insert") {
+    mode = nextMode;
+    if (mode === "insert") insertAt = (quill.getSelection(true) ?? { index: quill.getLength() }).index;
+    title.textContent = mode === "cover" ? "Choose a cover photo" : "Add a photo";
+    uploadButton.textContent = uploadLabel();
+    captionField.hidden = mode === "cover";
     captionInput.value = "";
     if (page === 0) loadPage();
     modal.show();
   }
+
+  const uploadLabel = () => (mode === "cover" ? "Upload and use" : "Upload and add");
 
   async function loadPage() {
     page += 1;
@@ -110,14 +121,17 @@
     img.alt = photo.title;
     img.loading = "lazy";
     tile.appendChild(img);
-    tile.addEventListener("click", () => insertPhoto(photo));
+    tile.addEventListener("click", () => choose(photo));
     prepend ? grid.prepend(tile) : grid.appendChild(tile);
   }
 
-  function insertPhoto(photo) {
-    quill.insertEmbed(insertAt, "photo",
-      { id: photo.id, src: photo.thumbnailUrl, alt: photo.title, caption: captionInput.value.trim() }, "user");
-    quill.setSelection(insertAt + 1, 0, "user");
+  function choose(photo) {
+    if (mode === "cover") setCover(photo.id, photo.thumbnailUrl);
+    else {
+      quill.insertEmbed(insertAt, "photo",
+        { id: photo.id, src: photo.thumbnailUrl, alt: photo.title, caption: captionInput.value.trim() }, "user");
+      quill.setSelection(insertAt + 1, 0, "user");
+    }
     modal.hide();
   }
 
@@ -142,10 +156,30 @@
       addTile(body, true);
       empty.hidden = true;
       uploadForm.reset();
-      insertPhoto(body);
+      choose(body);
     } finally {
       button.disabled = false;
-      button.textContent = "Upload and add";
+      button.textContent = uploadLabel();
     }
   });
+
+  // ----- Cover photo (the post's tile in blog lists; empty means the first photo in the post) -----
+  const cover = document.querySelector("[data-cover]");
+  const coverId = document.getElementById("cover-photo-id");
+  const coverUrl = document.getElementById("cover-url");
+  const coverImg = cover.querySelector("[data-cover-img]");
+  const coverAuto = cover.querySelector("[data-cover-auto]");
+  const coverClear = cover.querySelector("[data-cover-clear]");
+
+  function setCover(id, url) {
+    coverId.value = id || "";
+    coverUrl.value = url || "";
+    if (url) coverImg.src = url;
+    coverImg.hidden = !url;
+    coverAuto.hidden = !!url;
+    coverClear.hidden = !url;
+  }
+
+  cover.querySelector("[data-cover-choose]").addEventListener("click", () => openPicker("cover"));
+  coverClear.addEventListener("click", () => setCover(null, null));
 })();

@@ -27,7 +27,7 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Deletes the signed-in member and everything they shared: photos (and their files), likes, comments
+    /// Deletes the signed-in member and everything they shared: photos and post PDFs (and their files), likes, comments
     /// and linked sign-ins. Database rows go first, in one statement via cascades; files are removed after.
     /// </summary>
     [HttpDelete(ApiRoutes.CurrentUser)]
@@ -43,15 +43,18 @@ public class UsersController(
             .SelectMany(p => new[] { p.DisplayPath, p.ThumbnailPath })
             .ToList();
 
+        var attachments = await db.BlogAttachments.Where(a => a.Post.AuthorId == id).Select(a => a.StoragePath).ToListAsync(ct);
+
         db.Users.Remove(user);
         await db.SaveChangesAsync(ct);
 
         // Storage deletes take up to 1,000 paths per call.
-        foreach (var chunk in files.Chunk(500))
+        foreach (var (bucket, paths) in new[] { ((string?)null, files), (storage.AttachmentBucket, attachments) })
+        foreach (var chunk in paths.Chunk(500))
         {
             try
             {
-                await storage.DeleteAsync(chunk, CancellationToken.None);
+                await storage.DeleteAsync(chunk, CancellationToken.None, bucket);
             }
             catch (HttpRequestException ex)
             {

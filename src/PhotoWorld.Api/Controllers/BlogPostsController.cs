@@ -84,7 +84,8 @@ public class BlogPostsController(
             Title = request.Title.Trim(),
             BodyHtml = cleaned.Html,
             Excerpt = cleaned.Excerpt,
-            CoverPhotoId = cleaned.PhotoIds.Count > 0 ? cleaned.PhotoIds[0] : null,
+            CoverPhotoId = CoverFor(request, cleaned),
+            CoverChosen = request.CoverPhotoId is not null,
             Status = request.Publish ? BlogPostStatus.Published : BlogPostStatus.Draft,
             CreatedAt = now,
             UpdatedAt = now,
@@ -113,7 +114,8 @@ public class BlogPostsController(
         post.Title = request.Title.Trim();
         post.BodyHtml = cleaned.Html;
         post.Excerpt = cleaned.Excerpt;
-        post.CoverPhotoId = cleaned.PhotoIds.Count > 0 ? cleaned.PhotoIds[0] : null;
+        post.CoverPhotoId = CoverFor(request, cleaned);
+        post.CoverChosen = request.CoverPhotoId is not null;
         post.Status = request.Publish ? BlogPostStatus.Published : BlogPostStatus.Draft;
         post.PublishedAt = request.Publish ? post.PublishedAt ?? now : null;
         post.UpdatedAt = now;
@@ -129,13 +131,88 @@ public class BlogPostsController(
     [HttpDelete(ApiRoutes.BlogPost)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var post = await db.BlogPosts.FindAsync([id], ct);
+        var post = await db.BlogPosts.Include(p => p.Attachments).SingleOrDefaultAsync(p => p.Id == id, ct);
         if (post is null) return NotFound();
         if (post.AuthorId != CurrentUserId()) return Forbid();
 
+        var files = post.Attachments.Select(a => a.StoragePath).ToList();
         db.BlogPosts.Remove(post);
         await db.SaveChangesAsync(ct);
+        if (files.Count > 0) await TryDeleteAttachmentFilesAsync(files, id);
         logger.LogInformation("User {UserId} deleted blog post {PostId}", post.AuthorId, id);
+        return NoContent();
+    }
+
+    /// <summary>Attaches a PDF to the caller's own post (draft or published).</summary>
+    [HttpPost(ApiRoutes.BlogPostAttachments)]
+    [RequestSizeLimit(BlogLimits.AttachmentMaxBytes + 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = BlogLimits.AttachmentMaxBytes + 1024 * 1024)]
+    public async Task<ActionResult<BlogAttachmentDto>> AddAttachment(Guid id, [FromForm] IFormFile? file, CancellationToken ct)
+    {
+        var post = await db.BlogPosts.AsNoTracking()
+            .Where(p => p.Id == id)
+            .Select(p => new { p.AuthorId, Count = p.Attachments.Count })
+            .SingleOrDefaultAsync(ct);
+        if (post is null) return NotFound();
+        if (CurrentUserId() is not { } me || post.AuthorId != me) return Forbid();
+
+        if (file is null || file.Length == 0) ModelState.AddModelError(nameof(file), "Choose a PDF to attach.");
+        else if (file.Length > BlogLimits.AttachmentMaxBytes)
+            ModelState.AddModelError(nameof(file), $"{file.FileName} is too big. PDFs can be up to {BlogLimits.AttachmentMaxBytes / (1024 * 1024)} MB.");
+        if (post.Count >= BlogLimits.AttachmentsMax)
+            ModelState.AddModelError(nameof(file), $"A post can have up to {BlogLimits.AttachmentsMax} PDFs.");
+        if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+        using var buffer = new MemoryStream((int)file!.Length);
+        await file.CopyToAsync(buffer, ct);
+        var content = buffer.ToArray();
+        if (!BlogAttachments.LooksLikePdf(content))
+        {
+            ModelState.AddModelError(nameof(file), $"{file.FileName} isn't a PDF.");
+            return ValidationProblem(ModelState);
+        }
+
+        var attachment = new BlogAttachment
+        {
+            PostId = id,
+            FileName = BlogAttachments.CleanFileName(file.FileName),
+            SizeBytes = content.Length,
+            StoragePath = "",
+            CreatedAt = clock.GetUtcNow(),
+        };
+        attachment.StoragePath = BlogAttachments.StoragePath(me, id, attachment.Id);
+
+        // File first, then the row: a row never points at a missing file. If saving fails, clean the file up.
+        await storage.UploadAsync(attachment.StoragePath, content, BlogLimits.AttachmentContentType, ct, storage.AttachmentBucket);
+        try
+        {
+            db.BlogAttachments.Add(attachment);
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await TryDeleteAttachmentFilesAsync([attachment.StoragePath], id);
+            throw;
+        }
+
+        logger.LogInformation("User {UserId} attached {AttachmentId} ({Bytes} bytes) to blog post {PostId}",
+            me, attachment.Id, attachment.SizeBytes, id);
+        return ToDto(attachment);
+    }
+
+    [HttpDelete(ApiRoutes.BlogPostAttachment)]
+    public async Task<IActionResult> DeleteAttachment(Guid id, Guid attachmentId, CancellationToken ct)
+    {
+        var attachment = await db.BlogAttachments.Include(a => a.Post)
+            .SingleOrDefaultAsync(a => a.Id == attachmentId && a.PostId == id, ct);
+        if (attachment is null) return NotFound();
+        if (attachment.Post.AuthorId != CurrentUserId()) return Forbid();
+
+        db.BlogAttachments.Remove(attachment);
+        await db.SaveChangesAsync(ct);
+        await TryDeleteAttachmentFilesAsync([attachment.StoragePath], id);
+        logger.LogInformation("User {UserId} removed attachment {AttachmentId} from blog post {PostId}",
+            attachment.Post.AuthorId, attachmentId, id);
         return NoContent();
     }
 
@@ -253,8 +330,13 @@ public class BlogPostsController(
         var cleaned = html.Clean(request.BodyHtml, ownPhotos);
         if (cleaned.IsEmpty) ModelState.AddModelError(nameof(request.BodyHtml), "Write something or add a photo first.");
         if (cleaned.Html.Length > BlogLimits.BodyMax) ModelState.AddModelError(nameof(request.BodyHtml), "That post is too long.");
+        if (request.CoverPhotoId is { } coverId && !await db.Photos.AnyAsync(p => p.Id == coverId && p.OwnerId == authorId, ct))
+            ModelState.AddModelError(nameof(request.CoverPhotoId), "Choose one of your own photos for the cover.");
         return ModelState.IsValid ? cleaned : null;
     }
+
+    private static Guid? CoverFor(SavePostRequest request, CleanedPost cleaned) =>
+        request.CoverPhotoId ?? (cleaned.PhotoIds.Count > 0 ? cleaned.PhotoIds[0] : null);
 
     private async Task<BlogPostDto?> LoadAsync(Guid id, CancellationToken ct)
     {
@@ -274,6 +356,7 @@ public class BlogPostsController(
                 Upheld = p.Reports.Any(r => r.Status == ReportStatus.Upheld),
                 OpenReports = p.Reports.Count(r => r.Status == ReportStatus.Open),
                 ReportedByMe = p.Reports.Any(r => r.ReporterId == me),
+                Attachments = p.Attachments.OrderBy(a => a.CreatedAt).ToList(),
             })
             .SingleOrDefaultAsync(ct);
         if (row is null) return null;
@@ -284,6 +367,24 @@ public class BlogPostsController(
             post.PublishedAt, post.CreatedAt, post.UpdatedAt, row.Comments,
             CanEdit: post.AuthorId == me,
             CanReport: post.AuthorId != me && !row.ReportedByMe,
-            Moderation.State(row.Upheld, row.OpenReports));
+            Moderation.State(row.Upheld, row.OpenReports),
+            row.Attachments.Select(ToDto).ToList(),
+            ChosenCoverPhotoId: post.AuthorId == me && post.CoverChosen ? post.CoverPhotoId : null);
+    }
+
+    private BlogAttachmentDto ToDto(BlogAttachment a) =>
+        new(a.Id, a.FileName, a.SizeBytes, storage.DownloadUrl(a.StoragePath, a.FileName, storage.AttachmentBucket));
+
+    private async Task TryDeleteAttachmentFilesAsync(IReadOnlyList<string> paths, Guid postId)
+    {
+        try
+        {
+            await storage.DeleteAsync(paths, CancellationToken.None, storage.AttachmentBucket);
+        }
+        catch (HttpRequestException ex)
+        {
+            // The database is the source of truth; an orphaned file is harmless but worth knowing about.
+            logger.LogWarning(ex, "Could not delete {Count} attachment files for blog post {PostId}", paths.Count, postId);
+        }
     }
 }

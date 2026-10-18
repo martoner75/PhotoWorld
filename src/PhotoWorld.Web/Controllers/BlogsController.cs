@@ -9,10 +9,13 @@ namespace PhotoWorld.Web.Controllers;
 
 public class BlogsController(IPhotoWorldApiClient api) : Controller
 {
+    private const long AttachmentsRequestLimit = BlogLimits.AttachmentsMax * BlogLimits.AttachmentMaxBytes + 2 * 1024 * 1024;
+
     private static readonly Dictionary<string, string> PostFields = new()
     {
         ["title"] = nameof(PostEditorViewModel.Title),
         ["bodyHtml"] = nameof(PostEditorViewModel.BodyHtml),
+        ["coverPhotoId"] = nameof(PostEditorViewModel.CoverPhotoId),
     };
 
     /// <summary>The newest published posts from everyone.</summary>
@@ -44,18 +47,23 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
     public IActionResult New() => View("Editor", new PostEditorViewModel());
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RequestSizeLimit(AttachmentsRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = AttachmentsRequestLimit)]
     public async Task<IActionResult> New(PostEditorViewModel model, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return View("Editor", model);
+        ValidateAttachments(model);
+        if (!ModelState.IsValid) return Editor(model);
 
-        var result = await api.CreatePostAsync(new SavePostRequest(model.Title, model.BodyHtml, model.Publish), ct);
+        var result = await api.CreatePostAsync(new SavePostRequest(model.Title, model.BodyHtml, model.Publish, model.CoverPhotoId), ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, PostFields);
-            return View("Editor", model);
+            return Editor(model);
         }
-        TempData["Flash"] = model.Publish ? "Your post is published." : "Draft saved. Only you can see it.";
-        return RedirectToAction(nameof(Post), new { id = result.Value!.Id });
+        var id = result.Value!.Id;
+        TempData["Flash"] = await SaveAttachmentsAsync(id, model, ct)
+                            ?? (model.Publish ? "Your post is published." : "Draft saved. Only you can see it.");
+        return RedirectToAction(nameof(Post), new { id });
     }
 
     [HttpGet]
@@ -67,23 +75,29 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
         return View("Editor", new PostEditorViewModel
         {
             Id = post.Id, Title = post.Title, BodyHtml = post.BodyHtml, Status = post.Status,
-            Publish = post.Status == BlogPostStatus.Published,
+            Publish = post.Status == BlogPostStatus.Published, Attachments = post.Attachments,
+            CoverPhotoId = post.ChosenCoverPhotoId, CoverUrl = post.ChosenCoverPhotoId is null ? null : post.CoverUrl,
         });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [RequestSizeLimit(AttachmentsRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = AttachmentsRequestLimit)]
     public async Task<IActionResult> Edit(Guid id, PostEditorViewModel model, CancellationToken ct)
     {
         model.Id = id;
-        if (!ModelState.IsValid) return View("Editor", model);
+        model.Attachments = (await api.GetPostAsync(id, ct))?.Attachments ?? [];
+        ValidateAttachments(model);
+        if (!ModelState.IsValid) return Editor(model);
 
-        var result = await api.UpdatePostAsync(id, new SavePostRequest(model.Title, model.BodyHtml, model.Publish), ct);
+        var result = await api.UpdatePostAsync(id, new SavePostRequest(model.Title, model.BodyHtml, model.Publish, model.CoverPhotoId), ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, PostFields);
-            return View("Editor", model);
+            return Editor(model);
         }
-        TempData["Flash"] = model.Publish ? "Post updated." : "Saved as a draft. Only you can see it.";
+        TempData["Flash"] = await SaveAttachmentsAsync(id, model, ct)
+                            ?? (model.Publish ? "Post updated." : "Saved as a draft. Only you can see it.");
         return RedirectToAction(nameof(Post), new { id });
     }
 
@@ -198,6 +212,47 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
         return result.Succeeded
             ? Json(new { id = result.Value!.Id, title = result.Value.Title, thumbnailUrl = result.Value.ThumbnailUrl })
             : BadRequest(new { error = result.Errors.Values.SelectMany(m => m).FirstOrDefault() ?? "Upload failed." });
+    }
+
+    /// <summary>Re-shows the editor. Browsers don't keep chosen files across a round trip, so say so.</summary>
+    private ViewResult Editor(PostEditorViewModel model)
+    {
+        if (model.NewAttachments.Count > 0)
+            ModelState.AddModelError(nameof(PostEditorViewModel.NewAttachments), "Please choose your PDFs again.");
+        return View("Editor", model);
+    }
+
+    /// <summary>Checks chosen PDFs before anything is saved, so a bad file doesn't leave a half-saved post.</summary>
+    private void ValidateAttachments(PostEditorViewModel model)
+    {
+        const string field = nameof(PostEditorViewModel.NewAttachments);
+        model.NewAttachments.RemoveAll(f => f.Length == 0);
+        foreach (var file in model.NewAttachments)
+        {
+            if (!file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                ModelState.AddModelError(field, $"{file.FileName} isn't a PDF.");
+            else if (file.Length > BlogLimits.AttachmentMaxBytes)
+                ModelState.AddModelError(field, $"{file.FileName} is too big. PDFs can be up to {BlogLimits.AttachmentMaxBytes / (1024 * 1024)} MB.");
+        }
+        var kept = model.Attachments.Count(a => !model.RemoveAttachmentIds.Contains(a.Id));
+        if (kept + model.NewAttachments.Count > BlogLimits.AttachmentsMax)
+            ModelState.AddModelError(field, $"A post can have up to {BlogLimits.AttachmentsMax} PDFs.");
+    }
+
+    /// <summary>Removes ticked PDFs, then uploads new ones. Returns a message if any couldn't be attached.</summary>
+    private async Task<string?> SaveAttachmentsAsync(Guid postId, PostEditorViewModel model, CancellationToken ct)
+    {
+        foreach (var attachmentId in model.RemoveAttachmentIds.Intersect(model.Attachments.Select(a => a.Id)))
+            await api.DeleteBlogAttachmentAsync(postId, attachmentId, ct);
+
+        var failures = new List<string>();
+        foreach (var file in model.NewAttachments)
+        {
+            var result = await api.AddBlogAttachmentAsync(postId, file, ct);
+            if (!result.Succeeded)
+                failures.Add(result.Errors.Values.SelectMany(m => m).FirstOrDefault() ?? $"{file.FileName} couldn't be uploaded.");
+        }
+        return failures.Count == 0 ? null : "Your post is saved, but some PDFs weren't attached: " + string.Join(" ", failures);
     }
 
     private async Task<ReportViewModel?> LoadReportTargetAsync(ReportViewModel model, CancellationToken ct)

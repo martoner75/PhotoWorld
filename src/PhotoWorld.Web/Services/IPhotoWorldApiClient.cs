@@ -45,6 +45,8 @@ public interface IPhotoWorldApiClient
     Task<ApiResult<BlogPostDto>> CreatePostAsync(SavePostRequest request, CancellationToken ct = default);
     Task<ApiResult<BlogPostDto>> UpdatePostAsync(Guid id, SavePostRequest request, CancellationToken ct = default);
     Task<bool> DeletePostAsync(Guid id, CancellationToken ct = default);
+    Task<ApiResult<BlogAttachmentDto>> AddBlogAttachmentAsync(Guid postId, IFormFile file, CancellationToken ct = default);
+    Task<bool> DeleteBlogAttachmentAsync(Guid postId, Guid attachmentId, CancellationToken ct = default);
     Task<IReadOnlyList<BlogCommentDto>> GetBlogCommentsAsync(Guid postId, CancellationToken ct = default);
     Task<ApiResult<BlogCommentDto>> AddBlogCommentAsync(Guid postId, string text, CancellationToken ct = default);
     Task<bool> DeleteBlogCommentAsync(Guid postId, Guid commentId, CancellationToken ct = default);

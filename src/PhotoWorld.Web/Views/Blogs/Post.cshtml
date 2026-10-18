@@ -47,6 +47,22 @@
     @* The API sanitizes every post body (BlogHtml): only basic formatting and the author's own photos remain. *@
     <div class="post-body">@Html.Raw(p.BodyHtml)</div>
 
+    @if (p.Attachments.Count > 0)
+    {
+        <section class="attachments" aria-labelledby="attachments-title">
+            <h2 id="attachments-title">Attachments</h2>
+            <ul class="attachment-list">
+                @foreach (var a in p.Attachments)
+                {
+                    <li>
+                        <a href="@a.Url" class="attachment-name" download="@a.FileName">@a.FileName</a>
+                        <span class="text-muted small">PDF · @FileSize.Format(a.SizeBytes)</span>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
     @if (p.CanReport)
     {
         <p class="report-link"><a asp-action="Report" asp-route-id="@p.Id">Report this post</a></p>

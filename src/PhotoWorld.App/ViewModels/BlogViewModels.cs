@@ -55,6 +55,11 @@ public partial class PostViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     {
         var date = (post.PublishedAt ?? post.UpdatedAt).LocalDateTime.ToString("d MMMM yyyy");
         var draft = post.Status == BlogPostStatus.Draft ? "<p class=\"draft\">Draft: only you can see this post.</p>" : "";
+        // PDF links open in the browser (PostPage.OnNavigating), which downloads or previews them.
+        var attachments = post.Attachments.Count == 0 ? "" :
+            "<h2>Attachments</h2><ul class=\"attachments\">" + string.Concat(post.Attachments.Select(a =>
+                $"<li><a href=\"{WebUtility.HtmlEncode(a.Url)}\">{WebUtility.HtmlEncode(a.FileName)}</a> " +
+                $"<span>PDF · {FileSize.Format(a.SizeBytes)}</span></li>")) + "</ul>";
         return $$"""
             <!DOCTYPE html>
             <html><head>
@@ -71,12 +76,16 @@ public partial class PostViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
               figure { margin: 24px 0; }
               figcaption { color: #9a9ca4; font-size: 14px; margin-top: 6px; }
               blockquote { border-left: 3px solid #f2a541; margin: 16px 0; padding-left: 14px; color: #d0d0cb; }
+              .attachments { list-style: none; padding: 0; }
+              .attachments li { background: #17191e; border-radius: 10px; padding: 10px 14px; margin: 8px 0; overflow-wrap: anywhere; }
+              .attachments span { color: #9a9ca4; font-size: 14px; }
             </style></head>
             <body>
               <h1>{{WebUtility.HtmlEncode(post.Title)}}</h1>
               <p class="byline">by {{WebUtility.HtmlEncode(post.Author.DisplayName)}} · {{date}}</p>
               {{draft}}
               {{post.BodyHtml}}
+              {{attachments}}
             </body></html>
             """;
     }

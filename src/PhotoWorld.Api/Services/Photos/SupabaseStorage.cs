@@ -14,22 +14,34 @@ public sealed class SupabaseStorageOptions
     public string SecretKey { get; set; } = "";
 
     public string PhotoBucket { get; set; } = "photos";
+
+    /// <summary>Public bucket for PDFs attached to blog posts.</summary>
+    public string AttachmentBucket { get; set; } = "attachments";
 }
 
-/// <summary>Minimal client for the Supabase Storage REST API: upload, delete and public URLs.</summary>
+/// <summary>
+/// Minimal client for the Supabase Storage REST API: upload, delete and public URLs. Photos by default;
+/// pass <see cref="SupabaseStorageOptions.AttachmentBucket"/> (via <see cref="AttachmentBucket"/>) for blog PDFs.
+/// </summary>
 public sealed class SupabaseStorage(HttpClient http, IOptions<SupabaseStorageOptions> options)
 {
     private readonly SupabaseStorageOptions _options = options.Value;
 
-    public string PublicUrl(string path) =>
-        $"{_options.Url.TrimEnd('/')}/storage/v1/object/public/{_options.PhotoBucket}/{path}";
+    public string AttachmentBucket => _options.AttachmentBucket;
 
-    public async Task UploadAsync(string path, byte[] content, string contentType, CancellationToken ct)
+    public string PublicUrl(string path, string? bucket = null) =>
+        $"{_options.Url.TrimEnd('/')}/storage/v1/object/public/{bucket ?? _options.PhotoBucket}/{path}";
+
+    /// <summary>A public URL that makes browsers save the file as <paramref name="fileName"/> instead of opening it.</summary>
+    public string DownloadUrl(string path, string fileName, string? bucket = null) =>
+        $"{PublicUrl(path, bucket)}?download={Uri.EscapeDataString(fileName)}";
+
+    public async Task UploadAsync(string path, byte[] content, string contentType, CancellationToken ct, string? bucket = null)
     {
-        using var request = CreateRequest(HttpMethod.Post, $"storage/v1/object/{_options.PhotoBucket}/{path}");
+        using var request = CreateRequest(HttpMethod.Post, $"storage/v1/object/{bucket ?? _options.PhotoBucket}/{path}");
         request.Content = new ByteArrayContent(content);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-        // Each path holds one photo forever (new uploads get new ids), so browsers and the CDN can cache it for a year.
+        // Each path holds one file forever (new uploads get new ids), so browsers and the CDN can cache it for a year.
         request.Headers.Add("cache-control", "max-age=31536000");
         request.Headers.Add("x-upsert", "true");
 
@@ -37,9 +49,9 @@ public sealed class SupabaseStorage(HttpClient http, IOptions<SupabaseStorageOpt
         await EnsureSuccessAsync(response, "upload", path, ct);
     }
 
-    public async Task DeleteAsync(IEnumerable<string> paths, CancellationToken ct)
+    public async Task DeleteAsync(IEnumerable<string> paths, CancellationToken ct, string? bucket = null)
     {
-        using var request = CreateRequest(HttpMethod.Delete, $"storage/v1/object/{_options.PhotoBucket}");
+        using var request = CreateRequest(HttpMethod.Delete, $"storage/v1/object/{bucket ?? _options.PhotoBucket}");
         request.Content = JsonContent.Create(new { prefixes = paths.ToArray() });
 
         using var response = await http.SendAsync(request, ct);

@@ -35,10 +35,11 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 |---|---|---|
 | `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members and their linked Google accounts |
 | `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
-| `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, and comments |
+| `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_attachments`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, attached PDFs, and comments |
 | `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates) |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
+| Storage bucket `attachments` (public) | API | PDFs attached to blog posts: `{userId}/{postId}/{attachmentId}.pdf` |
 | `photoworld.app_logs` | API **and** Web (`SupabaseLoggerProvider`) | Application logs, tagged with `application` = `PhotoWorld.Api` / `PhotoWorld.Web` |
 | `photoworld.__ef_migrations_history` | API | Applied EF migrations |
 
@@ -143,11 +144,20 @@ lists, quotes, links and a **photo** button. That button picks from your gallery
 also lands in your gallery. Posts can be saved as drafts (visible only to you) or published. Members comment on
 published posts; comment authors and post authors can delete comments.
 
+**PDF attachments.** Below the editor, authors can attach up to 5 PDFs (20 MB each) for readers to download,
+such as guides, checklists or maps, and remove them again when editing. The API checks that each file really is
+a PDF (by its `%PDF-` header), cleans the file name, and stores it in the public `attachments` bucket, which the
+`AddBlogAttachments` migration creates (PDF only, 20 MB limit). Download links use Supabase's `?download=` option, so
+browsers save the file instead of opening it from the storage domain. Deleting a post, or the account, deletes its PDFs.
+
 **Safety.** The API never trusts post HTML. `BlogHtml` runs every body through HtmlSanitizer, which keeps
 only basic formatting, http(s)/mailto links (opened with `rel="nofollow noopener"`) and the author's own
 photos, re-pointed at their real storage URL. Scripts, styles, event handlers and foreign images are removed.
-When a post is shown, photos that were since deleted or hidden by moderation are dropped from it. The first
-photo is the post's cover on cards.
+When a post is shown, photos that were since deleted or hidden by moderation are dropped from it.
+
+**Cover photo.** The photo on a post's tile (in blog lists, the app and notification emails) is the one the author
+picks under *Cover photo* in the editor, from their gallery or a new upload; it doesn't have to appear in the post.
+Without a choice, it's the first photo in the post. The API only accepts the author's own photos as covers.
 
 ## My places
 

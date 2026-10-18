@@ -12,7 +12,7 @@
 <section class="container page editor-page">
     <h1>@ViewData["Title"]</h1>
 
-    <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" class="form-card" id="post-form">
+    <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="form-card" id="post-form">
         <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
         <div class="field">
@@ -25,8 +25,50 @@
             <label id="editor-label">Your post</label>
             <div id="editor" aria-labelledby="editor-label"></div>
             <input type="hidden" asp-for="BodyHtml" id="body-html" />
-            <p class="text-muted small">Use the <strong>photo</strong> button to add photos from your gallery or upload new ones.
-                The first photo becomes the post's cover.</p>
+            <p class="text-muted small">Use the <strong>photo</strong> button to add photos from your gallery or upload new ones.</p>
+        </div>
+
+        <div class="field">
+            <label id="cover-label">Cover photo <span class="text-muted">(optional)</span></label>
+            <div class="cover-choice" data-cover aria-labelledby="cover-label">
+                <div class="cover-preview">
+                    <img src="@Model.CoverUrl" alt="Cover photo" data-cover-img @(Model.CoverUrl is null ? "hidden" : "") />
+                    <span class="cover-preview-auto" data-cover-auto @(Model.CoverUrl is null ? "" : "hidden")>First photo in the post</span>
+                </div>
+                <div class="cover-actions">
+                    <button type="button" class="btn btn-ghost btn-sm" data-cover-choose>Choose a cover photo</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-cover-clear @(Model.CoverUrl is null ? "hidden" : "")>Use the first photo instead</button>
+                </div>
+            </div>
+            <input type="hidden" asp-for="CoverPhotoId" id="cover-photo-id" />
+            <input type="hidden" asp-for="CoverUrl" id="cover-url" />
+            <span asp-validation-for="CoverPhotoId" class="field-error"></span>
+            <p class="text-muted small">Shown on your post's tile in blog lists. It doesn't have to appear in the post.</p>
+        </div>
+
+        <div class="field">
+            <label for="new-attachments">PDF attachments <span class="text-muted">(optional)</span></label>
+            @if (Model.Attachments.Count > 0)
+            {
+                <ul class="attachment-list editing">
+                    @foreach (var a in Model.Attachments)
+                    {
+                        <li>
+                            <a href="@a.Url" class="attachment-name">@a.FileName</a>
+                            <span class="text-muted small">@FileSize.Format(a.SizeBytes)</span>
+                            <label class="attachment-remove">
+                                <input type="checkbox" name="@nameof(PostEditorViewModel.RemoveAttachmentIds)" value="@a.Id"
+                                       checked="@Model.RemoveAttachmentIds.Contains(a.Id)" /> Remove
+                            </label>
+                        </li>
+                    }
+                </ul>
+            }
+            <input id="new-attachments" name="@nameof(PostEditorViewModel.NewAttachments)" type="file"
+                   accept="@BlogLimits.AttachmentAccept" multiple />
+            <span asp-validation-for="NewAttachments" class="field-error"></span>
+            <p class="text-muted small">Add guides, checklists or maps readers can download. Up to @BlogLimits.AttachmentsMax PDFs,
+                @(BlogLimits.AttachmentMaxBytes / (1024 * 1024)) MB each. Anyone who can read the post can download them.</p>
         </div>
 
         <div class="form-actions">
@@ -69,7 +111,7 @@
                             </div>
                             <p class="text-muted small">It's also added to your gallery.</p>
                             <p class="field-error" data-picker-error hidden></p>
-                            <button type="submit" class="btn btn-accent btn-sm">Upload and add</button>
+                            <button type="submit" class="btn btn-accent btn-sm" data-picker-submit>Upload and add</button>
                         </form>
                     </div>
                 </div>

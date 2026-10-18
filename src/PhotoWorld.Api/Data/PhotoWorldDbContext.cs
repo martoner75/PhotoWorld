@@ -18,6 +18,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Blog> Blogs => Set<Blog>();
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
     public DbSet<BlogPostPhoto> BlogPostPhotos => Set<BlogPostPhoto>();
+    public DbSet<BlogAttachment> BlogAttachments => Set<BlogAttachment>();
     public DbSet<BlogComment> BlogComments => Set<BlogComment>();
     public DbSet<Place> Places => Set<Place>();
     public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
@@ -138,6 +139,14 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasKey(p => new { p.PostId, p.PhotoId });
             e.HasOne(p => p.Post).WithMany(p => p.Photos).HasForeignKey(p => p.PostId);
             e.HasOne(p => p.Photo).WithMany().HasForeignKey(p => p.PhotoId);
+        });
+
+        modelBuilder.Entity<BlogAttachment>(e =>
+        {
+            e.Property(a => a.FileName).HasMaxLength(BlogLimits.AttachmentFileNameMax);
+            e.Property(a => a.StoragePath).HasMaxLength(256);
+            e.HasOne(a => a.Post).WithMany(p => p.Attachments).HasForeignKey(a => a.PostId);
+            e.HasIndex(a => new { a.PostId, a.CreatedAt });
         });
 
         modelBuilder.Entity<BlogComment>(e =>

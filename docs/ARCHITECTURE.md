@@ -20,7 +20,7 @@ database and storage, Google sign-in, and the map services. For setup and day-to
 
 ## 1. System overview
 
-```mermaid
+```markup
 flowchart LR
     subgraph Clients
         Browser["Web browser"]
@@ -40,7 +40,7 @@ flowchart LR
     subgraph Supabase["Supabase (London, eu-west-2)"]
         Db[("Postgres<br/>schema photoworld")]
         Logs[("photoworld.app_logs")]
-        Storage[("Storage<br/>bucket photos (public)")]
+        Storage[("Storage<br/>buckets photos, attachments (public)")]
     end
 
     Smtp["SMTP email provider"]
@@ -189,7 +189,7 @@ so run a single Web instance or move them to a shared cache.
 - **Expiry or rejection:** any `401` from the API ends the session. The Web sends the member to sign in again
   (`ApiUnauthorizedFilter`); the app's `ApiAuthHandler` signs out and the shell returns to the sign-in page.
 - **Account deletion** (Web settings or the app's Me tab): `DELETE api/users/me` removes the member and, through
-  database cascades, everything they created; their photo files are then deleted from Storage.
+  database cascades, everything they created; their photo and PDF files are then deleted from Storage.
 
 ## 4. A request, end to end
 
@@ -251,6 +251,9 @@ sequenceDiagram
   does the same for all of a member's photos.
 - **Blog posts** embed photos as references (`data-photo-id`), not as uploads. The API's `BlogHtml` sanitizer keeps
   basic formatting, safe links and the author's own photos only, re-pointed at their real storage URLs.
+- **Post PDFs** are real uploads: `POST api/blog-posts/{id}/attachments` (author only, checked by `%PDF-` header,
+  5 per post, 20 MB each) stores them in the public `attachments` bucket; readers get `?download=` URLs.
+  Deleting an attachment, its post or the account removes the row first, then the file.
 
 ## 6. Data model
 
@@ -273,6 +276,7 @@ erDiagram
     photos ||--o{ photo_comments : has
     photos ||--o{ blog_post_photos : "embedded in"
     blog_posts ||--o{ blog_post_photos : embeds
+    blog_posts ||--o{ blog_attachments : attaches
     blog_posts ||--o{ blog_comments : has
     photos ||--o{ reports : "reported in"
     photo_comments ||--o{ reports : "reported in"
@@ -340,6 +344,13 @@ erDiagram
     blog_post_photos {
         uuid post_id PK
         uuid photo_id PK
+    }
+    blog_attachments {
+        uuid id PK
+        uuid post_id FK
+        text file_name
+        bigint size_bytes
+        text storage_path
     }
     blog_comments {
         uuid id PK

@@ -11,6 +11,12 @@ public static class BlogLimits
     public const int BodyMax = 100_000;
     public const int CommentMax = 2000;
     public const int ExcerptLength = 280;
+
+    public const long AttachmentMaxBytes = 20 * 1024 * 1024;
+    public const int AttachmentsMax = 5;
+    public const int AttachmentFileNameMax = 200;
+    public const string AttachmentContentType = "application/pdf";
+    public const string AttachmentAccept = "application/pdf,.pdf";
 }
 
 public static class BlogPostStatus
@@ -47,7 +53,12 @@ public sealed record BlogPostDto(
     int CommentCount,
     bool CanEdit,
     bool CanReport,
-    ModerationState Moderation);
+    ModerationState Moderation,
+    IReadOnlyList<BlogAttachmentDto> Attachments,
+    Guid? ChosenCoverPhotoId);
+
+/// <summary>A PDF attached to a post. <see cref="Url"/> downloads it under <see cref="FileName"/>.</summary>
+public sealed record BlogAttachmentDto(Guid Id, string FileName, long SizeBytes, string Url);
 
 public sealed record BlogCommentDto(
     Guid Id,
@@ -65,11 +76,13 @@ public sealed record SaveBlogRequest(
 /// <summary>
 /// Create or update a post. <see cref="BodyHtml"/> is cleaned by the API; photos are embedded as
 /// <c>&lt;figure class="pw-photo" data-photo-id="…"&gt;</c> and must be the author's own.
+/// <see cref="CoverPhotoId"/> (also the author's own) is the photo on the post's tile; without it, the first embedded photo.
 /// </summary>
 public sealed record SavePostRequest(
     [Required, StringLength(BlogLimits.PostTitleMax)] string Title,
     [Required, StringLength(BlogLimits.BodyMax)] string BodyHtml,
-    bool Publish);
+    bool Publish,
+    Guid? CoverPhotoId = null);
 
 public sealed record CreateBlogCommentRequest(
     [Required, StringLength(BlogLimits.CommentMax, MinimumLength = 1)] string Text);
