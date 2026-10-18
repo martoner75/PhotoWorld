@@ -1,0 +1,19 @@
+@model bool
+@{
+    ViewData["Title"] = "Unsubscribed";
+}
+
+<section class="container page narrow">
+    @if (Model)
+    {
+        <h1>You're unsubscribed</h1>
+        <p>We won't email you about new blog posts any more.</p>
+        <p class="text-muted">Changed your mind? Switch them back on from your account settings.</p>
+    }
+    else
+    {
+        <h1>That link doesn't work</h1>
+        <p>We couldn't find that subscription. It may belong to an account that was deleted.</p>
+    }
+    <a class="btn btn-ghost" asp-controller="Account" asp-action="Settings" asp-fragment="notifications">Notification settings</a>
+</section>

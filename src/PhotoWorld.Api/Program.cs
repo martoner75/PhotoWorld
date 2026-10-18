@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Blogs;
 using PhotoWorld.Api.Services.Identity;
 using PhotoWorld.Api.Services.Moderation;
+using PhotoWorld.Api.Services.Notifications;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Logging;
@@ -44,6 +46,14 @@ builder.Services.AddSingleton<ImageProcessor>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddSingleton<BlogHtml>();
 
+// Email notifications about new blog posts. Without an SMTP host (development) emails are written to .eml files.
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.Section));
+var email = builder.Configuration.GetSection(EmailOptions.Section).Get<EmailOptions>() ?? new EmailOptions();
+if (email.UsesSmtp) builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+else builder.Services.AddSingleton<IEmailSender, PickupDirectoryEmailSender>();
+builder.Services.AddSingleton(sp => new NotificationEmails(sp.GetRequiredService<IOptions<EmailOptions>>().Value.WebBaseUrl));
+builder.Services.AddHostedService<BlogNotificationSender>();
+
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (jwt.SigningKey.Length < 32)
     throw new InvalidOperationException("Jwt:SigningKey must be at least 32 characters. Set it with `dotnet user-secrets set Jwt:SigningKey <value>`.");
@@ -70,6 +80,10 @@ using (var scope = app.Services.CreateScope())
         app.Logger.LogWarning("Database is missing {Count} migration(s): {Migrations}. Run `dotnet ef database update`.",
             pending.Count, string.Join(", ", pending));
 }
+if (string.IsNullOrWhiteSpace(email.WebBaseUrl))
+    app.Logger.LogWarning("Email:WebBaseUrl is not set, so links in notification emails won't work. See README → Email notifications.");
+if (!email.UsesSmtp && !app.Environment.IsDevelopment())
+    app.Logger.LogWarning("Email:Smtp:Host is not set, so notification emails are only written to {Directory}.", email.PickupDirectory);
 if (string.IsNullOrWhiteSpace(app.Configuration[$"{SupabaseStorageOptions.Section}:SecretKey"]))
     app.Logger.LogWarning("Supabase:SecretKey is not set, so photo uploads will fail. See README → Photo storage.");
 

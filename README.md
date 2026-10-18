@@ -2,14 +2,17 @@
 
 A portal for sharing a passion for photography with people around the world.
 ASP.NET Core MVC on **.NET 10**, split into an API, a UI and a shared library, plus a .NET MAUI app for
-iPhone and iPad.
+iPhone, iPad and Android.
+
+How the pieces fit together (diagrams of the components, sign-in, requests, photos, data model, CI):
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```
 PhotoWorld.slnx
 ├── src/PhotoWorld.Shared   Class library: DTOs, API routes, provider names, claim types, Supabase logger (used by both)
 ├── src/PhotoWorld.Api      Web API: users, photos, likes, comments (Supabase Postgres + Storage), JWT issuing
 ├── src/PhotoWorld.Web      MVC UI: members-only pages, cookie auth, Google sign-in, gallery and upload
-├── src/PhotoWorld.App      .NET MAUI app for iPhone and iPad (talks to the API; signs in through Web)
+├── src/PhotoWorld.App      .NET MAUI app for iPhone, iPad and Android (talks to the API; signs in through Web)
 └── tests/PhotoWorld.Api.Tests  xUnit tests for image processing
 ```
 
@@ -92,7 +95,7 @@ New EF migrations: `dotnet ef migrations add <Name> --project src/PhotoWorld.Api
 ## CI
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds every push and pull request: the server projects
-and tests on Linux, and the iPhone/iPad app for the iOS Simulator on a macOS runner. On `main`, once the
+and tests on Linux, the app for the iOS Simulator on a macOS runner, and the Android app on Linux. On `main`, once the
 server build is green, it applies any pending EF migrations to Supabase. It needs one repository secret,
 `SUPABASE_DB_CONNECTION_STRING`, holding the Session pooler connection string for the `postgres` user
 (GitHub → Settings → Secrets and variables → Actions).
@@ -161,6 +164,43 @@ the list flies the map to it.
   are fine for a small site; with heavy traffic, switch the tile URL in `wwwroot/js/places.js` to a commercial
   OSM tile provider and run or rent a geocoder.
 
+## Email notifications
+
+Members can get an email when new blog posts are published (account settings on the website, or the app's **Me**
+tab): on/off, any address, and how often: **as soon as a post is published**, a **daily** or a **weekly** digest.
+
+- **Confirmed addresses only.** The member's verified Google address is trusted as is; any other address gets a
+  confirmation link (valid 2 days, single use, only its SHA-256 is stored) and nothing else until it's clicked.
+- **Unsubscribe** links in every email, plus RFC 8058 one-click `List-Unsubscribe` headers. The website's
+  `/Notifications/Unsubscribe` page asks before unsubscribing, so link scanners can't do it by accident.
+- **Sender.** `BlogNotificationSender` (a background service in the API) runs every `Email:PollMinutes` (5). It
+  emails each due subscriber the posts they could see on the site (published, not hidden, not their own) since
+  their cursor, then advances it, so each post is sent once; a failed email is retried on the next run. A Postgres
+  advisory lock means only one API instance sends. Posts younger than a minute wait for the next run.
+
+**Set up sending (SMTP).** Any provider works (Resend, Postmark, SendGrid, Amazon SES, Google Workspace…). Verify
+your sending domain with the provider (SPF/DKIM) so emails don't land in spam, then:
+
+```bash
+dotnet user-secrets set "Email:From" "PhotoWorld <notifications@your-domain>" --project src/PhotoWorld.Api
+dotnet user-secrets set "Email:Smtp:Host" "smtp.your-provider.com" --project src/PhotoWorld.Api
+dotnet user-secrets set "Email:Smtp:Port" "587" --project src/PhotoWorld.Api        # 587 STARTTLS, or 465 TLS
+dotnet user-secrets set "Email:Smtp:Username" "<user>" --project src/PhotoWorld.Api
+dotnet user-secrets set "Email:Smtp:Password" "<password or API key>" --project src/PhotoWorld.Api
+```
+
+**Resend:** host `smtp.resend.com`, username `resend`, password = your API key. `Email:From` must use a domain
+verified in Resend (Domains → Add domain, then the DNS records). Until then, `PhotoWorld <onboarding@resend.dev>`
+works for testing but only delivers to your Resend account's own address.
+
+**Testing tips:** members never get emails about their **own** posts, so test with a post by another member. The
+API must be running; posts wait a minute, then go out on the next run (every 5 minutes). Send failures are logged as
+"Could not email member …" and retried.
+
+`Email:WebBaseUrl` (the website's public address, for links) is `https://localhost:7211/` in Development; set it
+in production. **Without an SMTP host** the API writes each email as an `.eml` file to `src/PhotoWorld.Api/emails/`
+(git-ignored) instead, so the whole flow can be tried locally: open the files with Mail.
+
 ## Reports and moderation
 
 Members can report a photo, a photo comment, a blog post or a blog comment (spam, nudity, harassment, violence,
@@ -222,24 +262,24 @@ dotnet user-secrets set "Authentication:Google:ClientSecret" "<secret>" --projec
 dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/PhotoWorld.Api
 ```
 
-## iPhone and iPad app
+## Mobile app (iPhone, iPad and Android)
 
-`src/PhotoWorld.App` is a .NET MAUI app (native XAML, CommunityToolkit.Mvvm) for iPhone and iPad, in
-PhotoWorld's dark look. Tabs: **Gallery** (photos, likes, comments, reporting), **Blogs** (read posts, comment),
-**Upload** (from Photos or the camera, with the home-page toggle), **Places** (the private map on Apple Maps;
-search with Apple's geocoder or tap the map) and **Me** (sign out, delete account). It calls the same API as the
+`src/PhotoWorld.App` is one .NET MAUI app (native XAML, CommunityToolkit.Mvvm) for iPhone, iPad and
+Android, in PhotoWorld's dark look; only `Platforms/iOS` and `Platforms/Android` differ. Tabs: **Gallery** (photos, likes, comments, reporting), **Blogs** (read posts, comment),
+**Upload** (from Photos or the camera, with the home-page toggle), **Places** (the private map: Apple Maps on iOS, Google
+Maps on Android; search with the platform's geocoder or tap the map) and **Me** (sign out, delete account). It calls the same API as the
 website and compiles the DTOs and routes from `PhotoWorld.Shared` as source (not a project reference, so the app
 doesn't ship the Supabase logger's Npgsql).
 
 **Sign-in** goes through the website, so the app needs no Google client of its own and the API is unchanged.
-The app opens `Web /Account/AppLogin` in Apple's secure sign-in sheet with a PKCE-style challenge; after Google
+The app opens `Web /Account/AppLogin` in the system's secure sign-in sheet (Apple's, or a Chrome Custom Tab) with a PKCE-style challenge; after Google
 sign-in the website parks the session under a one-time code (2 minutes, in memory) and redirects to
 `photoworld://auth?code=…`; the app redeems the code at `/Account/AppToken` with its verifier
 (`AppSignIn` in Shared, tested in `AppSignInTests`). An app that intercepts the redirect gets a useless code. The
-PhotoWorld token is kept in the Keychain and lasts as long as on the website (8 hours). Because codes live in
+PhotoWorld token is kept in secure storage (iOS Keychain, Android Keystore; Android backups are off) and lasts as long as on the website (8 hours). Because codes live in
 memory, run a single Web instance or move them to a shared cache.
 
-**Run it.** Needs a Mac with Xcode and the MAUI workload (`dotnet workload install maui`). The iOS target is only
+**Run it on iOS.** Needs a Mac with Xcode and the MAUI workload (`dotnet workload install maui`). The iOS target is only
 built when `/Applications/Xcode.app` exists, so the solution still builds without it (as plain `net10.0`).
 
 ```bash
@@ -263,6 +303,43 @@ Debug builds talk to `https://localhost:7041` / `:7211` and trust the dev certif
 sign-in sheet, also trust it in the Simulator: `dotnet dev-certs https -ep ~/pw-dev.crt --format PEM`, then drag
 the file onto the Simulator and enable it under Settings → General → About → Certificate Trust Settings. On a
 real iPhone, point `AppConfig` at a deployed PhotoWorld.
+
+**Run it on Android.** Needs the Android SDK and JDK 21 (on this Mac: `brew install openjdk@21`, then
+`dotnet build src/PhotoWorld.App -t:InstallAndroidDependencies -f net10.0-android "-p:AndroidSdkDirectory=$HOME/Library/Android/sdk" -p:AcceptAndroidSDKLicenses=True`).
+The Android target is built only when both are found (`JAVA_HOME`, or `JavaSdkDirectory` in `Local.props`);
+`-p:EnableAndroid=false` skips it. Copy `src/PhotoWorld.App/Local.props.example` to `Local.props` (git-ignored) for
+machine settings and the Maps key.
+
+```bash
+SDK=~/Library/Android/sdk
+$SDK/emulator/emulator -avd PhotoWorld_Pixel &      # Pixel 8, Android 36 with Google Play (Maps needs Play services)
+$SDK/platform-tools/adb reverse tcp:7041 tcp:7041   # emulator's localhost -> this Mac (repeat after each boot)
+$SDK/platform-tools/adb reverse tcp:7211 tcp:7211
+dotnet build src/PhotoWorld.App "-t:Build;Run" -f net10.0-android
+```
+
+`adb reverse` lets the app use the same `localhost` URLs as iOS, which matters because Google sign-in only accepts
+the registered `localhost` redirect. Chrome on the emulator doesn't trust the dev certificate: tap *Advanced →
+Proceed* once, or install it under Settings → Security → Encryption & credentials → Install a certificate.
+
+**Google Maps key (Android Places map).** Without it the map stays blank; everything else works.
+1. [Google Cloud Console](https://console.cloud.google.com/) → the project that has PhotoWorld's OAuth client →
+   **Billing** linked (Maps requires it; small usage stays in the free tier).
+2. **APIs & Services → Library → Maps SDK for Android → Enable.**
+3. **APIs & Services → Credentials → Create credentials → API key.**
+4. Edit the key: **Application restrictions → Android apps → Add**: package `com.photoworld.app` and the SHA-1 of
+   the signing certificate. Debug builds on this Mac: `16:A2:72:12:DD:3C:E4:D3:FA:76:D9:7E:1C:86:46:B9:AA:C8:7C:D0`
+   (`keytool -list -v -keystore "$HOME/Library/Application Support/Xamarin/Mono for Android/debug.keystore" -alias androiddebugkey -storepass android`);
+   add your release key's SHA-1 too before publishing. **API restrictions → Restrict key → Maps SDK for Android.**
+5. Put it in `src/PhotoWorld.App/Local.props` as `<GoogleMapsApiKey>…</GoogleMapsApiKey>` and rebuild. The build
+   writes it into the APK's manifest (an Android key is always readable from the app; the restrictions above
+   are what protect it). For CI or release builds, pass `-p:GoogleMapsApiKey=…` from a secret.
+
+Search and suggested names on Android use the platform `Geocoder` (no key needed).
+
+**Before Google Play:** create a release keystore and sign with it (`AndroidKeyStore` and related properties),
+add its SHA-1 to the Maps key, build an `.aab` (`-p:AndroidPackageFormat=aab`), and fill in the Data safety form
+to match the privacy policy.
 
 **Before the App Store:** set `ApplicationId` (bundle id) and the release URLs in `AppConfig.cs`; sign with your
 Apple developer account. Apple also expects: *Sign in with Apple* alongside Google sign-in (guideline 4.8, not

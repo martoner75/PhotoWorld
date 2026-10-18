@@ -28,6 +28,12 @@ public static class ApiRoutes
     public const string Places = "api/places";
     public const string Place = "api/places/{id:guid}";
 
+    // Email notifications about new blog posts: the member's own settings, and the anonymous links in emails.
+    public const string MyNotifications = "api/users/me/notifications";
+    public const string MyNotificationsConfirmation = "api/users/me/notifications/confirmation";
+    public const string ConfirmNotifications = "api/notifications/confirm";
+    public const string Unsubscribe = "api/notifications/unsubscribe";
+
     /// <summary>Fills in a route template's <c>{name:constraint}</c> placeholders, for use by API clients.</summary>
     public static string Format(string template, params (string Name, object Value)[] values)
     {

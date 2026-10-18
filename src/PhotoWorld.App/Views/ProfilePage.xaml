@@ -28,12 +28,39 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <Border Padding="16">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Email notifications" Style="{StaticResource Subheading}" />
+                        <Label Text="Get an email when members publish new blog posts." Style="{StaticResource MutedText}" FontSize="14" />
+                        <Label Text="{Binding NotifyStatus}" FontSize="14" />
+                        <Button Text="Send the confirmation link again" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding ResendConfirmationCommand}" IsVisible="{Binding AwaitingConfirmation}" />
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Email me about new blog posts" Style="{StaticResource Strong}" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" IsToggled="{Binding NotifyEnabled}" />
+                        </Grid>
+                        <Label Text="Send them to" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}">
+                            <Entry Text="{Binding NotifyEmail}" Keyboard="Email" Placeholder="you@example.com" />
+                        </Border>
+                        <Label Text="Any address you like. If it isn't your Google email, we'll send a confirmation link first."
+                               Style="{StaticResource MutedText}" />
+                        <Label Text="How often" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}">
+                            <Picker ItemsSource="{Binding FrequencyOptions}" SelectedIndex="{Binding FrequencyIndex}"
+                                    TextColor="{StaticResource Text}" Title="How often" />
+                        </Border>
+                        <Button Text="Save notification settings" Command="{Binding SaveNotificationsCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+
                 <Button Text="Sign out" Command="{Binding SignOutCommand}" Style="{StaticResource GhostButton}" />
 
                 <Border Padding="16" Stroke="#6B2A2A" Margin="0,18,0,0">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Delete account" Style="{StaticResource Subheading}" />
-                        <Label Text="Permanently deletes your account, all your photos, your blog, your places, likes and comments, straight away. This can't be undone."
+                        <Label Text="Permanently deletes your account, all your photos, your blog, your places, notification settings, likes and comments, straight away. This can't be undone."
                                Style="{StaticResource MutedText}" FontSize="14" />
                         <Button Text="Delete my account" Command="{Binding DeleteAccountCommand}" Style="{StaticResource DangerButton}" />
                     </VerticalStackLayout>

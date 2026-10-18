@@ -380,3 +380,12 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .place-popup { display: grid; gap: .3rem; justify-items: start; min-width: 180px; }
 .place-popup strong { font-family: var(--pw-serif); font-size: 1.1rem; }
 .place-popup p { margin: 0; white-space: pre-line; color: #d0d0cb; }
+
+/* ---------- Email notifications (account settings) ---------- */
+.settings-heading { font-family: var(--pw-serif); font-size: 1.4rem; margin: 0; }
+.notify-status { border-radius: 10px; padding: .75rem 1rem; }
+.notify-status.is-on { background: rgba(110, 200, 140, .1); border: 1px solid rgba(110, 200, 140, .35); }
+.notify-status.is-pending { background: rgba(242, 165, 65, .1); border: 1px solid rgba(242, 165, 65, .4); }
+.notify-form { display: grid; gap: 1.1rem; }
+.notify-form fieldset { border: 0; padding: 0; margin: 0; }
+.notify-form legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem; }

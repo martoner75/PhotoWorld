@@ -181,6 +181,84 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("blog_post_photos", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset?>("ConfirmTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirm_token_expires_at");
+
+                    b.Property<string>("ConfirmTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("confirm_token_hash");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("frequency");
+
+                    b.Property<DateTimeOffset?>("LastSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_sent_at");
+
+                    b.Property<DateTimeOffset>("NotifiedThrough")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("notified_through");
+
+                    b.Property<DateTimeOffset>("PeriodStartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("period_started_at");
+
+                    b.Property<string>("UnsubscribeToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("unsubscribe_token");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_email_subscriptions");
+
+                    b.HasIndex("ConfirmTokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_email_subscriptions_confirm_token_hash");
+
+                    b.HasIndex("UnsubscribeToken")
+                        .IsUnique()
+                        .HasDatabaseName("ix_email_subscriptions_unsubscribe_token");
+
+                    b.ToTable("email_subscriptions", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_email_subscriptions_frequency", "frequency in ('instant', 'daily', 'weekly')");
+                        });
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.ExternalLogin", b =>
                 {
                     b.Property<int>("Id")
@@ -747,6 +825,18 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Photo");
 
                     b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithOne()
+                        .HasForeignKey("PhotoWorld.Api.Data.EmailSubscription", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_email_subscriptions_users_user_id");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.ExternalLogin", b =>

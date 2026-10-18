@@ -1,5 +1,6 @@
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
@@ -56,4 +57,15 @@ public interface IPhotoWorldApiClient
     Task<ApiResult<PlaceDto>> CreatePlaceAsync(SavePlaceRequest request, CancellationToken ct = default);
     Task<ApiResult<PlaceDto>> UpdatePlaceAsync(Guid id, SavePlaceRequest request, CancellationToken ct = default);
     Task<bool> DeletePlaceAsync(Guid id, CancellationToken ct = default);
+
+    // Email notifications about new blog posts
+    Task<EmailNotificationsDto?> GetNotificationsAsync(CancellationToken ct = default);
+    Task<ApiResult<EmailNotificationsDto>> SaveNotificationsAsync(SaveEmailNotificationsRequest request, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the member.</summary>
+    Task<string?> ResendNotificationConfirmationAsync(CancellationToken ct = default);
+
+    /// <summary>From the link in a confirmation email; works without signing in. False if the link is unknown or expired.</summary>
+    Task<bool> ConfirmNotificationsAsync(string token, CancellationToken ct = default);
+    /// <summary>From the link in a notification email; works without signing in. False if the link is unknown.</summary>
+    Task<bool> UnsubscribeAsync(string token, CancellationToken ct = default);
 }

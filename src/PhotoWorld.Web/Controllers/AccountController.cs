@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using PhotoWorld.Shared.Auth;
+using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Web.Authentication;
 using PhotoWorld.Web.Models;
 using PhotoWorld.Web.Services;
@@ -172,7 +173,46 @@ public class AccountController(
     public async Task<IActionResult> Settings(CancellationToken ct)
     {
         var me = await api.GetCurrentUserAsync(ct);
-        return me is null ? RedirectToAction(nameof(Login)) : View(me);
+        if (me is null) return RedirectToAction(nameof(Login));
+        var current = await api.GetNotificationsAsync(ct);
+        return View(new AccountSettingsViewModel(me, NotificationsFormViewModel.From(current), current));
+    }
+
+    /// <summary>Saves the email notification settings (the form on the settings page).</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Notifications([Bind(Prefix = nameof(AccountSettingsViewModel.Notifications))] NotificationsFormViewModel model,
+        CancellationToken ct)
+    {
+        if (!NotificationFrequency.IsValid(model.Frequency))
+            ModelState.AddModelError($"{nameof(AccountSettingsViewModel.Notifications)}.{nameof(model.Frequency)}", "Choose how often to get emails.");
+        if (ModelState.IsValid)
+        {
+            var result = await api.SaveNotificationsAsync(new SaveEmailNotificationsRequest(model.Email, model.Frequency, model.Enabled), ct);
+            if (result.Succeeded)
+            {
+                var saved = result.Value!;
+                TempData["Flash"] = !saved.Enabled ? "Email notifications are off."
+                    : saved.Confirmed ? $"Saved. We'll email {saved.Email} about new blog posts."
+                    : $"Almost there: we've sent a confirmation link to {saved.Email}. Notifications start once you click it.";
+                return Redirect(Url.Action(nameof(Settings)) + "#notifications");
+            }
+            ModelState.AddApiErrors(result.Errors, new Dictionary<string, string>
+            {
+                ["email"] = $"{nameof(AccountSettingsViewModel.Notifications)}.{nameof(model.Email)}",
+                ["frequency"] = $"{nameof(AccountSettingsViewModel.Notifications)}.{nameof(model.Frequency)}",
+            });
+        }
+
+        var me = await api.GetCurrentUserAsync(ct);
+        if (me is null) return RedirectToAction(nameof(Login));
+        return View(nameof(Settings), new AccountSettingsViewModel(me, model, await api.GetNotificationsAsync(ct)));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendConfirmation(CancellationToken ct)
+    {
+        TempData["Flash"] = await api.ResendNotificationConfirmationAsync(ct) ?? "We've sent the confirmation link again.";
+        return Redirect(Url.Action(nameof(Settings)) + "#notifications");
     }
 
     /// <summary>Permanently deletes the account. The form requires typing DELETE, checked here too.</summary>

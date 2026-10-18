@@ -663,3 +663,52 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261018042426_AddEmailSubscriptions') THEN
+    CREATE TABLE photoworld.email_subscriptions (
+        user_id uuid NOT NULL,
+        email character varying(320) NOT NULL,
+        frequency character varying(16) NOT NULL,
+        enabled boolean NOT NULL,
+        confirmed_at timestamp with time zone,
+        confirm_token_hash character varying(64),
+        confirm_token_expires_at timestamp with time zone,
+        unsubscribe_token character varying(64) NOT NULL,
+        notified_through timestamp with time zone NOT NULL,
+        period_started_at timestamp with time zone NOT NULL,
+        last_sent_at timestamp with time zone,
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_email_subscriptions PRIMARY KEY (user_id),
+        CONSTRAINT ck_email_subscriptions_frequency CHECK (frequency in ('instant', 'daily', 'weekly')),
+        CONSTRAINT fk_email_subscriptions_users_user_id FOREIGN KEY (user_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261018042426_AddEmailSubscriptions') THEN
+    CREATE UNIQUE INDEX ix_email_subscriptions_confirm_token_hash ON photoworld.email_subscriptions (confirm_token_hash);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261018042426_AddEmailSubscriptions') THEN
+    CREATE UNIQUE INDEX ix_email_subscriptions_unsubscribe_token ON photoworld.email_subscriptions (unsubscribe_token);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261018042426_AddEmailSubscriptions') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261018042426_AddEmailSubscriptions', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

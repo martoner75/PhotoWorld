@@ -1,0 +1,20 @@
+@model string?
+@{
+    ViewData["Title"] = "Unsubscribe";
+}
+
+<section class="container page narrow">
+    <h1>Stop emails about new blog posts?</h1>
+    @if (string.IsNullOrWhiteSpace(Model))
+    {
+        <p>This unsubscribe link is incomplete. Use the link from one of our emails, or change it in your account settings.</p>
+    }
+    else
+    {
+        <p>You won't get any more emails about new blog posts. You can switch them back on any time from your account settings.</p>
+        <form asp-action="Unsubscribe" method="post" class="form-actions justify-content-start">
+            <input type="hidden" name="token" value="@Model" />
+            <button type="submit" class="btn btn-accent">Unsubscribe</button>
+        </form>
+    }
+</section>

@@ -1,6 +1,8 @@
-@model PhotoWorld.Shared.Users.UserProfileDto
+@model AccountSettingsViewModel
 @{
     ViewData["Title"] = "Account settings";
+    var profile = Model.Profile;
+    var current = Model.Current;
 }
 
 <section class="container page narrow">
@@ -9,15 +11,76 @@
     <div class="form-card">
         <dl class="settings-facts">
             <dt>Name</dt>
-            <dd>@Model.DisplayName</dd>
+            <dd>@profile.DisplayName</dd>
             <dt>Email</dt>
-            <dd>@(Model.Email ?? "Not shared")</dd>
+            <dd>@(profile.Email ?? "Not shared")</dd>
             <dt>Signs in with</dt>
-            <dd>@string.Join(", ", Model.LinkedProviders)</dd>
+            <dd>@string.Join(", ", profile.LinkedProviders)</dd>
             <dt>Member since</dt>
-            <dd>@Model.MemberSince.ToString("d MMMM yyyy")</dd>
+            <dd>@profile.MemberSince.ToString("d MMMM yyyy")</dd>
         </dl>
         <p class="text-muted small">Your name and picture come from your Google account and update each time you sign in.</p>
+    </div>
+
+    <div class="form-card" id="notifications">
+        <h2 class="settings-heading">Email notifications</h2>
+        <p class="text-muted mb-0">Get an email when members publish new blog posts.</p>
+
+        @if (current is { Enabled: true, Email: not null })
+        {
+            @if (current.Confirmed)
+            {
+                <p class="notify-status is-on mb-0">
+                    On: <strong>@NotificationFrequency.Labels[current.Frequency].ToLowerInvariant()</strong>, to @current.Email.
+                </p>
+            }
+            else
+            {
+                <div class="notify-status is-pending">
+                    <p class="mb-2">Waiting for you to confirm <strong>@current.Email</strong>: open the link we emailed you.
+                        Nothing is sent until then.</p>
+                    <form asp-action="ResendConfirmation" method="post">
+                        <button type="submit" class="btn btn-ghost btn-sm">Send the link again</button>
+                    </form>
+                </div>
+            }
+        }
+
+        <form asp-action="Notifications" method="post" class="notify-form">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <label class="check-row">
+                <input asp-for="Notifications.Enabled" type="checkbox" />
+                <span><strong>Email me about new blog posts</strong><br />
+                    <span class="text-muted small">Untick to stop. Every email also has an unsubscribe link.</span></span>
+            </label>
+
+            <div class="field">
+                <label asp-for="Notifications.Email">Send them to</label>
+                <input asp-for="Notifications.Email" type="email" autocomplete="email" maxlength="@NotificationLimits.EmailMax" />
+                <span asp-validation-for="Notifications.Email" class="field-error"></span>
+                <span class="text-muted small">
+                    Any address you like. @(profile.Email is null ? "" : $"If it isn't {profile.Email}, ")we'll email it a confirmation link first.
+                </span>
+            </div>
+
+            <fieldset class="field">
+                <legend>How often</legend>
+                @foreach (var (value, label) in NotificationFrequency.Labels)
+                {
+                    <label class="check-row">
+                        <input type="radio" name="Notifications.Frequency" value="@value"
+                               checked="@(Model.Notifications.Frequency == value)" />
+                        <span>@label</span>
+                    </label>
+                }
+                <span asp-validation-for="Notifications.Frequency" class="field-error"></span>
+            </fieldset>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-accent">Save notification settings</button>
+            </div>
+        </form>
     </div>
 
     <div class="form-card danger-zone">
@@ -28,6 +91,7 @@
             <li>all your photos and their files,</li>
             <li>your blog and all your posts,</li>
             <li>the places on your map,</li>
+            <li>your email notification settings,</li>
             <li>your likes and comments, including comments on other members' photos and posts.</li>
         </ul>
         <p class="text-muted small">This can't be undone. If you sign in with Google again later, you'll start as a new member.</p>

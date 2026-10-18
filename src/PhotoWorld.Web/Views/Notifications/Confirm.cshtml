@@ -1,0 +1,20 @@
+@model bool
+@{
+    ViewData["Title"] = Model ? "Email confirmed" : "Link expired";
+}
+
+<section class="container page narrow">
+    @if (Model)
+    {
+        <h1>You're subscribed</h1>
+        <p>Thanks for confirming. We'll email you about new blog posts on PhotoWorld, as often as you chose.</p>
+        <p class="text-muted">You can change how often, or stop, from your account settings or from any of the emails.</p>
+    }
+    else
+    {
+        <h1>That link doesn't work</h1>
+        <p>It may have expired (links last two days) or been used already.</p>
+        <p class="text-muted">Sign in and open your account settings to send a new confirmation link.</p>
+    }
+    <a class="btn btn-accent" asp-controller="Account" asp-action="Settings" asp-fragment="notifications">Notification settings</a>
+</section>

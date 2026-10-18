@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
+using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Places;
 
 namespace PhotoWorld.Api.Data;
@@ -19,6 +20,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<BlogPostPhoto> BlogPostPhotos => Set<BlogPostPhoto>();
     public DbSet<BlogComment> BlogComments => Set<BlogComment>();
     public DbSet<Place> Places => Set<Place>();
+    public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
 
     /// <summary>
     /// PhotoWorld's own schema in the Supabase database. Keeping it out of <c>public</c> means
@@ -158,6 +160,21 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             // Goes with the account (cascade), like everything else a member creates.
             e.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId);
             e.HasIndex(p => new { p.UserId, p.CreatedAt });
+        });
+
+        modelBuilder.Entity<EmailSubscription>(e =>
+        {
+            e.HasKey(s => s.UserId);
+            e.ToTable(t => t.HasCheckConstraint("ck_email_subscriptions_frequency",
+                $"frequency in ({string.Join(", ", NotificationFrequency.Labels.Keys.Select(k => $"'{k}'"))})"));
+            e.Property(s => s.Email).HasMaxLength(NotificationLimits.EmailMax);
+            e.Property(s => s.Frequency).HasMaxLength(16);
+            e.Property(s => s.ConfirmTokenHash).HasMaxLength(64);
+            e.Property(s => s.UnsubscribeToken).HasMaxLength(64);
+            // Goes with the account (cascade), like everything else a member creates.
+            e.HasOne(s => s.User).WithOne().HasForeignKey<EmailSubscription>(s => s.UserId);
+            e.HasIndex(s => s.ConfirmTokenHash).IsUnique();
+            e.HasIndex(s => s.UnsubscribeToken).IsUnique();
         });
 
         modelBuilder.Entity<LogEntry>(e =>

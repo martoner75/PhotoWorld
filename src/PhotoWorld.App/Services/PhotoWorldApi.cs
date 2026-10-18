@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
@@ -94,6 +95,16 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task DeletePlaceAsync(Guid id, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Place, id), null, ct);
 
+    // ----- Email notifications -----
+    public Task<EmailNotificationsDto> GetNotificationsAsync(CancellationToken ct = default) =>
+        GetAsync<EmailNotificationsDto>(ApiRoutes.MyNotifications, ct);
+
+    public Task<EmailNotificationsDto> SaveNotificationsAsync(SaveEmailNotificationsRequest request, CancellationToken ct = default) =>
+        SendAsync<EmailNotificationsDto>(HttpMethod.Put, ApiRoutes.MyNotifications, JsonContent.Create(request, options: Json), ct);
+
+    public Task ResendNotificationConfirmationAsync(CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Post, ApiRoutes.MyNotificationsConfirmation, null, ct);
+
     // ----- Plumbing -----
     private static string WithId(string template, Guid id) => ApiRoutes.Format(template, ("id", id));
 
@@ -133,6 +144,7 @@ public sealed class PhotoWorldApi(HttpClient http)
                 HttpStatusCode.Forbidden or HttpStatusCode.NotFound => "That's no longer available.",
                 HttpStatusCode.Conflict => "You've already reported this.",
                 HttpStatusCode.RequestEntityTooLarge => "That photo is too large.",
+                HttpStatusCode.BadGateway => await ReadProblemAsync(response, ct),
                 _ => "Something went wrong. Please try again.",
             }, response.StatusCode);
         }

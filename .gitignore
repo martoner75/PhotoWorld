@@ -483,3 +483,9 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+# PhotoWorld app: machine-specific settings and keys (see src/PhotoWorld.App/Local.props.example)
+src/PhotoWorld.App/Local.props
+
+# Development notification emails written by the API when no SMTP host is configured
+src/PhotoWorld.Api/emails/

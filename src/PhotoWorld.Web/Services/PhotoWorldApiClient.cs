@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
@@ -180,6 +181,39 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Place, ("id", id)), ct);
         return IsSuccess(res);
     }
+
+    public Task<EmailNotificationsDto?> GetNotificationsAsync(CancellationToken ct = default) =>
+        GetOrNullAsync<EmailNotificationsDto>(ApiRoutes.MyNotifications, ct);
+
+    public async Task<ApiResult<EmailNotificationsDto>> SaveNotificationsAsync(SaveEmailNotificationsRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.MyNotifications, request, ct);
+        // Saved, but the confirmation email couldn't be sent: the API explains in the problem's detail.
+        if (res.StatusCode == HttpStatusCode.BadGateway) return ApiResult<EmailNotificationsDto>.Failure(await ProblemDetailAsync(res, ct));
+        return await ReadResultAsync<EmailNotificationsDto>(res, ct, "We couldn't save your notification settings.");
+    }
+
+    public async Task<string?> ResendNotificationConfirmationAsync(CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.MyNotificationsConfirmation, null, ct);
+        if (res.StatusCode == HttpStatusCode.BadGateway) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That email address is already confirmed.";
+    }
+
+    public async Task<bool> ConfirmNotificationsAsync(string token, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.ConfirmNotifications, new NotificationTokenRequest(token), ct);
+        return res.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UnsubscribeAsync(string token, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Unsubscribe, new NotificationTokenRequest(token), ct);
+        return res.IsSuccessStatusCode;
+    }
+
+    private static async Task<string> ProblemDetailAsync(HttpResponseMessage res, CancellationToken ct) =>
+        (await res.Content.ReadFromJsonAsync<ProblemDetails>(ct))?.Detail ?? "Something went wrong. Please try again.";
 
     private async Task<ReportOutcome> SendReportAsync(string url, CreateReportRequest request, CancellationToken ct)
     {
