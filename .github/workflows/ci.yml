@@ -67,4 +67,6 @@ jobs:
             exit 1
           fi
       - run: dotnet tool restore
+      # dotnet ef reads the project's metadata before it builds, which needs its packages restored first.
+      - run: dotnet restore src/PhotoWorld.Api
       - run: dotnet ef database update --project src/PhotoWorld.Api
