@@ -65,14 +65,14 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
 
     public bool IsFiltered => !Search.IsEmpty;
 
-    public string FilterSummary => "Camera filters on: " + string.Join(", ", Search.Describe());
+    public string FilterSummary => "Showing: " + string.Join(", ", Search.Describe());
 
     public string? ChallengeBanner => FeaturedChallenge is { } c
         ? $"🏆 Challenge: {c.Title} · {c.When(DateTimeOffset.UtcNow, TimeZoneInfo.Local)}"
         : null;
 
     public string EmptyMessage =>
-        IsFiltered ? "No photos match those camera settings."
+        IsFiltered ? "No photos match."
         : Following ? "No photos from members you follow yet. Tap a member's name to see their page and follow them."
         : "No photos yet. Be the first to share one from the Upload tab.";
 
@@ -122,6 +122,9 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
 
     [RelayCommand]
     private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);
+
+    [RelayCommand]
+    private Task OpenExploreAsync() => Shell.Current.GoToAsync(Routes.Explore);
 
     [RelayCommand]
     private Task OpenSpotsAsync() => Shell.Current.GoToAsync(Routes.Spots);
@@ -233,7 +236,7 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(AspectHeight),
-        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel))]
+        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags))]
     public partial PhotoDetailDto? Photo { get; set; }
 
     public bool HasCamera => Photo?.Camera is { } c && (c.Model ?? c.Make) is not null;
@@ -332,6 +335,12 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         await api.DeleteCommentAsync(Photo!.Id, comment.Id);
         Comments.Remove(comment);
     });
+
+    public IReadOnlyList<string> Tags => Photo?.Tags?.Select(t => "#" + t).ToList() ?? [];
+    public bool HasTags => Tags.Count > 0;
+
+    [RelayCommand]
+    private Task OpenTagAsync(string tag) => ShowInGalleryAsync(new PhotoSearch { Tag = tag });
 
     public string? PlaceLabel => Photo?.Place is { } p ? $"📍 {p.Name}" : null;
 

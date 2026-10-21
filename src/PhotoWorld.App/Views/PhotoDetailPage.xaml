@@ -46,6 +46,14 @@
                     <Button Text="{Binding PlaceLabel}" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Text}"
                             HorizontalOptions="Start" Padding="0,2" Command="{Binding OpenPlaceCommand}"
                             IsVisible="{Binding PlaceLabel, Converter={StaticResource HasValue}}" />
+                    <FlexLayout BindableLayout.ItemsSource="{Binding Tags}" Wrap="Wrap" IsVisible="{Binding HasTags}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Button Text="{Binding .}" Style="{StaticResource ChipButton}" CommandParameter="{Binding .}"
+                                        Command="{Binding OpenTagCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoDetailViewModel}}, x:DataType=vm:PhotoDetailViewModel}" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
                     <Label Text="{Binding Photo.Description}" FontSize="16"
                            IsVisible="{Binding Photo.Description, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding CameraSummary}" Style="{StaticResource MutedText}"

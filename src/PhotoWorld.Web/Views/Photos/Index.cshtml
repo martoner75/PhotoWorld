@@ -10,8 +10,21 @@
 <section class="container page">
     <header class="page-header">
         <div>
-            <h1>Gallery</h1>
-            <p class="text-muted">The latest shots from PhotoWorld members.</p>
+            @if (PhotoTags.Normalize(s.Tag) is { } tag)
+            {
+                <h1>#@tag</h1>
+                <p class="text-muted">Photos tagged #@tag. <a asp-action="Index">See all photos</a></p>
+            }
+            else if (!string.IsNullOrWhiteSpace(s.Text))
+            {
+                <h1>“@s.Text.Trim()”</h1>
+                <p class="text-muted">Photos matching your search. <a asp-action="Index">See all photos</a></p>
+            }
+            else
+            {
+                <h1>Gallery</h1>
+                <p class="text-muted">The latest shots from PhotoWorld members.</p>
+            }
         </div>
         <div class="member-actions">
             <a class="btn btn-ghost" asp-controller="Spots" asp-action="Index">🗺 Spots map</a>
@@ -27,6 +40,14 @@
             @if (Model.Following)
             {
                 <input type="hidden" name="following" value="true" />
+            }
+            @if (PhotoTags.Normalize(s.Tag) is { } keepTag)
+            {
+                <input type="hidden" name="tag" value="@keepTag" />
+            }
+            @if (!string.IsNullOrWhiteSpace(s.Text))
+            {
+                <input type="hidden" name="text" value="@s.Text.Trim()" />
             }
             <div class="field">
                 <label for="filter-camera">Camera</label>

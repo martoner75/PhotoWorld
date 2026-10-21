@@ -52,6 +52,7 @@ public static class MauiProgram
         services.AddTransient<SpotsPage>().AddTransient<SpotsViewModel>();
         services.AddTransient<CollectionsPage>().AddTransient<CollectionsViewModel>();
         services.AddTransient<CollectionPage>().AddTransient<CollectionViewModel>();
+        services.AddTransient<ExplorePage>().AddTransient<ExploreViewModel>();
 
         return builder.Build();
     }

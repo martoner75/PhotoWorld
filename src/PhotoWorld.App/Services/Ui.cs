@@ -20,6 +20,7 @@ public static class Routes
     public const string Spots = "spots";
     public const string Collections = "collections";
     public const string Collection = "collection";
+    public const string Explore = "explore";
 
     public static Task OpenMemberAsync(Guid id) =>
         Shell.Current.GoToAsync(Member, new ShellNavigationQueryParameters { ["id"] = id });

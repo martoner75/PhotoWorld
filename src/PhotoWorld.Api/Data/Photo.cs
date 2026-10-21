@@ -39,9 +39,18 @@ public class Photo
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
+    public List<PhotoTag> Tags { get; set; } = [];
     public List<PhotoLike> Likes { get; set; } = [];
     public List<PhotoComment> Comments { get; set; } = [];
     public List<Report> Reports { get; set; } = [];
+}
+
+/// <summary>A tag on a photo, stored normalised without '#' (see PhotoTags).</summary>
+public class PhotoTag
+{
+    public Guid PhotoId { get; set; }
+    public Photo Photo { get; set; } = null!;
+    public required string Name { get; set; }
 }
 
 public class PhotoLike

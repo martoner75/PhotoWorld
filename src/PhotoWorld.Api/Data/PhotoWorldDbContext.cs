@@ -18,6 +18,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<LogEntry> Logs => Set<LogEntry>();
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<PhotoLike> PhotoLikes => Set<PhotoLike>();
+    public DbSet<PhotoTag> PhotoTags => Set<PhotoTag>();
     public DbSet<PhotoComment> PhotoComments => Set<PhotoComment>();
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<Blog> Blogs => Set<Blog>();
@@ -80,6 +81,14 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(p => p.CreatedAt).IsDescending();
             e.HasIndex(p => new { p.OwnerId, p.CreatedAt }).IsDescending(false, true);
             e.HasIndex(p => new { p.ShowOnHome, p.CreatedAt }).IsDescending(false, true);
+        });
+
+        modelBuilder.Entity<PhotoTag>(e =>
+        {
+            e.HasKey(t => new { t.PhotoId, t.Name });
+            e.Property(t => t.Name).HasMaxLength(Shared.Photos.PhotoTags.MaxLength);
+            e.HasOne(t => t.Photo).WithMany(p => p.Tags).HasForeignKey(t => t.PhotoId);
+            e.HasIndex(t => t.Name);
         });
 
         modelBuilder.Entity<PhotoLike>(e =>

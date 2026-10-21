@@ -1,0 +1,51 @@
+@model ExploreDto
+@{
+    ViewData["Title"] = "Explore";
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Explore</h1>
+            <p class="text-muted">What's popular on PhotoWorld lately, and photographers you might like.</p>
+        </div>
+        <partial name="_SearchForm" model='""' />
+    </header>
+
+    @if (Model.TrendingTags.Count > 0)
+    {
+        <h2 class="section-heading">Trending tags</h2>
+        <p class="tag-list mb-4">
+            @foreach (var t in Model.TrendingTags)
+            {
+                <a class="tag-chip" asp-controller="Photos" asp-action="Index" asp-route-tag="@t.Name">#@t.Name <span>@t.Count</span></a>
+            }
+        </p>
+    }
+
+    @if (Model.SuggestedMembers.Count > 0)
+    {
+        <h2 class="section-heading">Photographers to follow</h2>
+        <ul class="member-results mb-4">
+            @foreach (var m in Model.SuggestedMembers)
+            {
+                <partial name="_MemberResult" model="m" />
+            }
+        </ul>
+    }
+
+    <h2 class="section-heading">Popular photos</h2>
+    @if (Model.PopularPhotos.Count == 0)
+    {
+        <div class="empty-state"><p>Nothing here yet: popular photos from members you don't follow show up here.</p></div>
+    }
+    else
+    {
+        <div class="photo-grid">
+            @foreach (var photo in Model.PopularPhotos)
+            {
+                <partial name="_PhotoCard" model="photo" />
+            }
+        </div>
+    }
+</section>

@@ -50,7 +50,8 @@ public sealed record PhotoDetailDto(
     ModerationState Moderation = ModerationState.Visible,
     bool CanReport = false,
     bool ShowOnHome = false,
-    PhotoPlaceDto? Place = null);
+    PhotoPlaceDto? Place = null,
+    IReadOnlyList<string>? Tags = null);
 
 /// <summary>Where a photo was taken: one of its owner's places, which they chose to show with it.</summary>
 public sealed record PhotoPlaceDto(Guid Id, string Name, double Latitude, double Longitude);
@@ -109,7 +110,8 @@ public sealed record UpdatePhotoRequest(
     [Required, StringLength(PhotoUploadLimits.MaxTitleLength)] string Title,
     [StringLength(PhotoUploadLimits.MaxDescriptionLength)] string? Description,
     bool ShowOnHome = false,
-    Guid? PlaceId = null);
+    Guid? PlaceId = null,
+    [StringLength(600)] string? Tags = null);
 
 public sealed record CreateCommentRequest(
     [Required, StringLength(PhotoUploadLimits.MaxCommentLength, MinimumLength = 1)] string Text);

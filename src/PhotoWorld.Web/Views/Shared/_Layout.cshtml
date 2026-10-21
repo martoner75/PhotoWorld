@@ -40,6 +40,7 @@
                         {
                             var avatar = User.FindFirstValue(PhotoWorldClaimTypes.AvatarUrl);
                             <li class="nav-item"><a class="nav-link" asp-controller="Photos" asp-action="Index">Gallery</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Search" asp-action="Explore">Explore</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Blogs" asp-action="Index">Blogs</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Challenges" asp-action="Index">Challenges</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Places" asp-action="Index">My places</a></li>
@@ -47,6 +48,11 @@
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">Admin</a></li>
                             }
+                            <li class="nav-item">
+                                <form asp-controller="Search" asp-action="Index" method="get" class="nav-search" role="search">
+                                    <input name="q" maxlength="100" placeholder="Search" aria-label="Search PhotoWorld" />
+                                </form>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link nav-bell" asp-controller="Activity" asp-action="Index" aria-label="Activity" data-activity-bell>
                                     <svg class="nav-bell-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"

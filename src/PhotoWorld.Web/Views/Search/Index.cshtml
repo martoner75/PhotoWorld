@@ -1,0 +1,76 @@
+@model SearchResultsDto
+@{
+    ViewData["Title"] = $"Search: {Model.Query}";
+    var nothing = Model.Members.Count == 0 && Model.Tags.Count == 0 && Model.PhotoCount == 0 && Model.Posts.Count == 0;
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>“@Model.Query”</h1>
+            <p class="text-muted">Members, tags, photos and posts. <a asp-action="Explore">Explore</a></p>
+        </div>
+        <partial name="_SearchForm" model="Model.Query" />
+    </header>
+
+    @if (Model.Query.Length < 2)
+    {
+        <div class="empty-state"><p>Type at least two letters.</p></div>
+    }
+    else if (nothing)
+    {
+        <div class="empty-state">
+            <p>Nothing matches “@Model.Query”. Try another word, or <a asp-action="Explore">explore</a> what's popular.</p>
+        </div>
+    }
+
+    @if (Model.Tags.Count > 0)
+    {
+        <h2 class="section-heading">Tags</h2>
+        <p class="tag-list mb-4">
+            @foreach (var t in Model.Tags)
+            {
+                <a class="tag-chip" asp-controller="Photos" asp-action="Index" asp-route-tag="@t.Name">#@t.Name <span>@t.Count</span></a>
+            }
+        </p>
+    }
+
+    @if (Model.Members.Count > 0)
+    {
+        <h2 class="section-heading">Members</h2>
+        <ul class="member-results mb-4">
+            @foreach (var m in Model.Members)
+            {
+                <partial name="_MemberResult" model="m" />
+            }
+        </ul>
+    }
+
+    @if (Model.PhotoCount > 0)
+    {
+        <div class="section-row">
+            <h2 class="section-heading">Photos <span class="text-muted">@Model.PhotoCount</span></h2>
+            @if (Model.PhotoCount > Model.Photos.Count)
+            {
+                <a asp-controller="Photos" asp-action="Index" asp-route-text="@Model.Query">See all</a>
+            }
+        </div>
+        <div class="photo-grid mb-4">
+            @foreach (var photo in Model.Photos)
+            {
+                <partial name="_PhotoCard" model="photo" />
+            }
+        </div>
+    }
+
+    @if (Model.Posts.Count > 0)
+    {
+        <h2 class="section-heading">Blog posts</h2>
+        <div class="post-grid">
+            @foreach (var post in Model.Posts)
+            {
+                <partial name="~/Views/Blogs/_PostCard.cshtml" model="post" />
+            }
+        </div>
+    }
+</section>

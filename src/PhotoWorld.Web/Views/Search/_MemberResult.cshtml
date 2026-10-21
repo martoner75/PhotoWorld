@@ -1,0 +1,13 @@
+@model MemberResultDto
+<li class="member-result">
+    <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Member.Id" class="photo-card-owner">
+        <partial name="_Avatar" model="Model.Member" />
+        <span>
+            <strong>@Model.Member.DisplayName</strong>
+            <span class="text-muted small d-block">
+                @Model.PhotoCount @(Model.PhotoCount == 1 ? "photo" : "photos") · @Model.FollowerCount @(Model.FollowerCount == 1 ? "follower" : "followers")
+                @(Model.FollowedByMe ? "· following" : "")
+            </span>
+        </span>
+    </a>
+</li>

@@ -152,6 +152,20 @@
         <Setter Property="MinimumHeightRequest" Value="36" />
     </Style>
 
+    <!-- A tag (#fog): a small rounded chip. -->
+    <Style x:Key="ChipButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{DynamicResource Ink2}" />
+        <Setter Property="TextColor" Value="{DynamicResource Text}" />
+        <Setter Property="BorderColor" Value="{DynamicResource Line}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="CornerRadius" Value="15" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="12,4" />
+        <Setter Property="MinimumHeightRequest" Value="30" />
+        <Setter Property="Margin" Value="0,0,6,6" />
+    </Style>
+
     <!-- Text drawn on photos (over the dark gradient or a badge): light in both themes. -->
     <Style x:Key="OnPhoto" TargetType="Label">
         <Setter Property="TextColor" Value="White" />

@@ -1,0 +1,7 @@
+@model string?
+<div class="field">
+    <label for="photo-tags">Tags <span class="text-muted">(optional)</span></label>
+    <input id="photo-tags" name="Tags" value="@Model" maxlength="600" placeholder="fog wildlife london" autocomplete="off" />
+    <span class="text-muted small">Up to @PhotoTags.MaxPerPhoto, separated by spaces. #hashtags in the description count too. Members can find your photo by them.</span>
+    @Html.ValidationMessage("Tags", new { @class = "field-error" })
+</div>

@@ -75,7 +75,7 @@ public class PhotosController(
     [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
     public async Task<ActionResult<PhotoDetailDto>> Upload(
         [FromForm] IFormFile? file, [FromForm] string? title, [FromForm] string? description,
-        [FromForm] bool showOnHome, [FromForm] Guid? placeId, CancellationToken ct)
+        [FromForm] bool showOnHome, [FromForm] Guid? placeId, [FromForm] string? tags, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId || !await db.Users.AnyAsync(u => u.Id == userId, ct)) return Unauthorized();
 
@@ -122,6 +122,7 @@ public class PhotosController(
             TakenAt = processed.Camera.TakenAt,
             ShowOnHome = showOnHome,
             PlaceId = placeId,
+            Tags = PhotoTags.Parse(tags, description).Select(name => new PhotoTag { Name = name }).ToList(),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -151,7 +152,7 @@ public class PhotosController(
     [HttpPut(ApiRoutes.Photo)]
     public async Task<ActionResult<PhotoDetailDto>> Update(Guid id, UpdatePhotoRequest request, CancellationToken ct)
     {
-        var photo = await db.Photos.FindAsync([id], ct);
+        var photo = await db.Photos.Include(p => p.Tags).SingleOrDefaultAsync(p => p.Id == id, ct);
         if (photo is null) return NotFound();
         if (photo.OwnerId != CurrentUserId()) return Forbid();
         if (!await IsOwnPlaceAsync(request.PlaceId, photo.OwnerId, ct))
@@ -164,6 +165,10 @@ public class PhotosController(
         photo.PlaceId = request.PlaceId;
         photo.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         photo.ShowOnHome = request.ShowOnHome;
+        // Clients that don't send tags (older apps) leave them alone; #hashtags in the description always count.
+        var tagNames = PhotoTags.Parse(request.Tags ?? PhotoTags.Join(photo.Tags.Select(t => t.Name)), photo.Description);
+        photo.Tags.RemoveAll(t => !tagNames.Contains(t.Name));
+        foreach (var name in tagNames.Where(n => photo.Tags.All(t => t.Name != n))) photo.Tags.Add(new PhotoTag { PhotoId = id, Name = name });
         photo.UpdatedAt = clock.GetUtcNow();
         await db.SaveChangesAsync(ct);
 
@@ -341,6 +346,7 @@ public class PhotosController(
                 OpenReports = p.Reports.Count(r => r.Status == ReportStatus.Open),
                 ReportedByMe = p.Reports.Any(r => r.ReporterId == me),
                 Place = p.Place == null ? null : new PhotoPlaceDto(p.Place.Id, p.Place.Name, p.Place.Latitude, p.Place.Longitude),
+                Tags = p.Tags.OrderBy(t => t.Name).Select(t => t.Name).ToList(),
             })
             .SingleOrDefaultAsync(ct);
         if (row is null) return null;
@@ -353,7 +359,8 @@ public class PhotosController(
             Moderation.State(row.Upheld, row.OpenReports),
             CanReport: p.OwnerId != me && !row.ReportedByMe,
             ShowOnHome: p.ShowOnHome,
-            Place: row.Place);
+            Place: row.Place,
+            Tags: row.Tags);
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(

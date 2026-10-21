@@ -40,6 +40,16 @@
             </p>
         }
 
+        @if (p.Tags is { Count: > 0 } tags)
+        {
+            <p class="tag-list">
+                @foreach (var tag in tags)
+                {
+                    <a class="tag-chip" asp-action="Index" asp-route-tag="@tag">#@tag</a>
+                }
+            </p>
+        }
+
         @if (p.Description is not null)
         {
             <p class="photo-description">@p.Description</p>

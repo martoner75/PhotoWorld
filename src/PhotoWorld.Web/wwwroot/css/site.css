@@ -563,3 +563,18 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .collection-photo { break-inside: avoid; margin-bottom: 1.25rem; }
 .collection-photo .photo-card { margin-bottom: .25rem; }
 .collection-remove { text-align: right; }
+
+/* ---------- Tags, search and Explore ---------- */
+.tag-list { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem; }
+.tag-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .7rem; border-radius: 99px; font-size: .88rem;
+  background: var(--pw-chip); color: var(--pw-text); text-decoration: none; border: 1px solid var(--pw-line); }
+.tag-chip:hover { border-color: var(--pw-accent); color: var(--pw-accent); }
+.tag-chip span { color: var(--pw-muted); font-size: .78rem; }
+.nav-search input { width: 9.5rem; background: var(--pw-ink-2); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 99px;
+  padding: .3rem .8rem; font-size: .9rem; transition: width .2s ease; }
+.nav-search input:focus { outline: none; border-color: var(--pw-accent); width: 13rem; }
+.member-results { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .6rem; }
+.member-result { background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: 12px; padding: .7rem .8rem; }
+.member-result .photo-card-owner { color: var(--pw-text); }
+.member-result .avatar { width: 40px; height: 40px; }
+.section-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }

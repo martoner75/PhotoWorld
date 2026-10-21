@@ -27,6 +27,10 @@ public sealed class UploadPhotoViewModel
     /// <summary>One of the member's places, to show the photo on the Spots map. Optional.</summary>
     public Guid? PlaceId { get; set; }
 
+    /// <summary>Tags as typed ("fog wildlife london"); #hashtags in the description are added too.</summary>
+    [StringLength(600)]
+    public string? Tags { get; set; }
+
     /// <summary>The member's places for the picker (filled in by the controller).</summary>
     public IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places { get; set; } = [];
 }
@@ -47,6 +51,9 @@ public sealed class EditPhotoViewModel
 
     public Guid? PlaceId { get; set; }
     public IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places { get; set; } = [];
+
+    [StringLength(600)]
+    public string? Tags { get; set; }
 }
 
 /// <summary>The Spots map; <see cref="Focus"/> is a photo to open on arrival.</summary>

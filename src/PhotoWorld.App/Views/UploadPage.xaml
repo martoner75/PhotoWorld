@@ -35,6 +35,11 @@
                     <Editor Text="{Binding Description}" Placeholder="Where, when, the story behind the shot…"
                             AutoSize="TextChanges" MinimumHeightRequest="90" MaxLength="{Binding DescriptionMaxLength}" />
                 </Border>
+                <Label Text="Tags (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Tags}" Placeholder="fog wildlife london" Keyboard="Plain" />
+                </Border>
+                <Label Text="Separated by spaces. #hashtags in the description count too." Style="{StaticResource MutedText}" />
                 <VerticalStackLayout Spacing="6" IsVisible="{Binding HasPlaces}">
                     <Label Text="Where was it taken? (optional)" Style="{StaticResource Strong}" />
                     <Border Style="{StaticResource Field}">

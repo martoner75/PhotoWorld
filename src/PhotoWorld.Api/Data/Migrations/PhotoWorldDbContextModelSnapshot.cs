@@ -926,6 +926,26 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("photo_likes", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoTag", b =>
+                {
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("name");
+
+                    b.HasKey("PhotoId", "Name")
+                        .HasName("pk_photo_tags");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_photo_tags_name");
+
+                    b.ToTable("photo_tags", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Place", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1454,6 +1474,18 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoTag", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany("Tags")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_tags_photos_photo_id");
+
+                    b.Navigation("Photo");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Place", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.User", "User")
@@ -1543,6 +1575,8 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Likes");
 
                     b.Navigation("Reports");
+
+                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoComment", b =>

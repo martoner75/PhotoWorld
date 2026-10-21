@@ -6,11 +6,19 @@ namespace PhotoWorld.Api.Services.Photos;
 public static class PhotoFilters
 {
     /// <summary>
-    /// Narrows photos to the camera settings in <paramref name="search"/>. Text uses ToLower().Contains, which EF
+    /// Narrows photos to the words, tag and camera settings in <paramref name="search"/>. Text uses ToLower().Contains, which EF
     /// turns into a case-insensitive match with the user's text escaped (so % and _ are literal).
     /// </summary>
     public static IQueryable<Photo> Matching(this IQueryable<Photo> photos, PhotoSearch search)
     {
+        if (search.Text?.Trim().ToLowerInvariant() is { Length: > 0 } text)
+        {
+            var asTag = PhotoTags.Normalize(text);
+            photos = photos.Where(p => p.Title.ToLower().Contains(text)
+                                       || (p.Description != null && p.Description.ToLower().Contains(text))
+                                       || p.Tags.Any(t => t.Name == asTag));
+        }
+        if (PhotoTags.Normalize(search.Tag) is { } tag) photos = photos.Where(p => p.Tags.Any(t => t.Name == tag));
         if (search.Camera?.Trim().ToLowerInvariant() is { Length: > 0 } camera)
             photos = photos.Where(p => (p.CameraMake != null && p.CameraMake.ToLower().Contains(camera))
                                        || (p.CameraModel != null && p.CameraModel.ToLower().Contains(camera)));

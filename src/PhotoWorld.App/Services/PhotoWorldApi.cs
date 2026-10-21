@@ -53,6 +53,11 @@ public sealed class PhotoWorldApi(HttpClient http)
             $"{ApiRoutes.Photos}?" + string.Join("&", query.Select(q => $"{q.Name}={Uri.EscapeDataString(q.Value)}")), ct);
     }
 
+    public Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default) =>
+        GetAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct);
+
+    public Task<ExploreDto> ExploreAsync(CancellationToken ct = default) => GetAsync<ExploreDto>(ApiRoutes.Explore, ct);
+
     public Task<List<PhotoSpotDto>> GetSpotsAsync(CancellationToken ct = default) =>
         GetAsync<List<PhotoSpotDto>>(ApiRoutes.Spots, ct);
 
@@ -63,7 +68,7 @@ public sealed class PhotoWorldApi(HttpClient http)
         GetAsync<PhotoDetailDto>(WithId(ApiRoutes.Photo, id), ct);
 
     public async Task<PhotoDetailDto> UploadPhotoAsync(Stream file, string fileName, string contentType, string title,
-        string? description, bool showOnHome, Guid? placeId = null, CancellationToken ct = default)
+        string? description, bool showOnHome, Guid? placeId = null, string? tags = null, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var content = new StreamContent(file);
@@ -73,6 +78,7 @@ public sealed class PhotoWorldApi(HttpClient http)
         if (!string.IsNullOrWhiteSpace(description)) form.Add(new StringContent(description), "description");
         form.Add(new StringContent(showOnHome ? "true" : "false"), "showOnHome");
         if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
+        if (!string.IsNullOrWhiteSpace(tags)) form.Add(new StringContent(tags), "tags");
         return await SendAsync<PhotoDetailDto>(HttpMethod.Post, ApiRoutes.Photos, form, ct);
     }
 

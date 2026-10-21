@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             xmlns:blogs="clr-namespace:PhotoWorld.Shared.Blogs"
+             x:Class="PhotoWorld.App.Views.ExplorePage"
+             x:DataType="vm:ExploreViewModel"
+             Title="Explore">
+    <Grid RowDefinitions="Auto,*">
+        <SearchBar Text="{Binding Query}" Placeholder="Members, #tags, photos, posts" SearchCommand="{Binding SearchCommand}" Margin="6,2" />
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Photos}" SelectionMode="None" Margin="12,4">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=2, Tablet=4, Default=3}" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="8" Padding="2,6,2,10">
+                    <Label Text="Nothing matches that search. Try another word." Style="{StaticResource MutedText}" FontSize="15"
+                           IsVisible="{Binding NothingFound}" Margin="0,20" HorizontalTextAlignment="Center" />
+
+                    <Label Text="{Binding TagsTitle}" Style="{StaticResource Subheading}" IsVisible="{Binding HasTags}" />
+                    <FlexLayout BindableLayout.ItemsSource="{Binding Tags}" Wrap="Wrap" IsVisible="{Binding HasTags}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="dto:TagCountDto">
+                                <Button Text="{Binding Name, StringFormat='#{0}'}" Style="{StaticResource ChipButton}" CommandParameter="{Binding .}"
+                                        Command="{Binding OpenTagCommand, Source={RelativeSource AncestorType={x:Type vm:ExploreViewModel}}, x:DataType=vm:ExploreViewModel}" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+
+                    <Label Text="{Binding MembersTitle}" Style="{StaticResource Subheading}" IsVisible="{Binding HasMembers}" Margin="0,6,0,0" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Members}" Spacing="6" IsVisible="{Binding HasMembers}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MemberItem">
+                                <Border Padding="10,8">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                            Command="{Binding OpenMemberCommand, Source={RelativeSource AncestorType={x:Type vm:ExploreViewModel}}, x:DataType=vm:ExploreViewModel}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                        <Border WidthRequest="36" HeightRequest="36" StrokeShape="RoundRectangle 18" Padding="0" StrokeThickness="0"
+                                                BackgroundColor="{DynamicResource Line}">
+                                            <Grid>
+                                                <Label Text="{Binding Initial}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                <Image Source="{Binding AvatarUrl}" Aspect="AspectFill" />
+                                            </Grid>
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                            <Label Text="{Binding Name}" Style="{StaticResource Strong}" />
+                                            <Label Text="{Binding Facts}" Style="{StaticResource MutedText}" FontSize="12" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Label Text="Blog posts" Style="{StaticResource Subheading}" IsVisible="{Binding HasPosts}" Margin="0,6,0,0" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Posts}" Spacing="6" IsVisible="{Binding HasPosts}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="blogs:BlogPostSummaryDto">
+                                <Border Padding="12,8">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                            Command="{Binding OpenPostCommand, Source={RelativeSource AncestorType={x:Type vm:ExploreViewModel}}, x:DataType=vm:ExploreViewModel}" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout>
+                                        <Label Text="{Binding Title}" Style="{StaticResource Strong}" />
+                                        <Label Text="{Binding Author.DisplayName}" Style="{StaticResource MutedText}" FontSize="12" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+                        <Label Text="{Binding PhotosTitle}" Style="{StaticResource Subheading}" />
+                        <Button Grid.Column="1" Text="See all" Style="{StaticResource LinkButton}" Command="{Binding SeeAllPhotosCommand}"
+                                IsVisible="{Binding CanSeeAllPhotos}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dto:PhotoSummaryDto">
+                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{DynamicResource PhotoBackground}" SemanticProperties.Description="{Binding Title}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                Command="{Binding OpenPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:ExploreViewModel}}, x:DataType=vm:ExploreViewModel}" />
+                        </Border.GestureRecognizers>
+                        <Grid HeightRequest="{OnIdiom Phone=170, Tablet=220, Default=200}">
+                            <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill" />
+                            <Grid VerticalOptions="End" Padding="10,24,10,8">
+                                <Grid.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="Transparent" Offset="0" />
+                                        <GradientStop Color="#C0000000" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Grid.Background>
+                                <VerticalStackLayout Spacing="0">
+                                    <Label Text="{Binding Title}" Style="{StaticResource OnPhoto}" FontSize="14" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Owner.DisplayName}" Style="{StaticResource OnPhotoMuted}" FontSize="12" LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

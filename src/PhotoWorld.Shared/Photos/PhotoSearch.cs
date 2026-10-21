@@ -4,12 +4,19 @@ using System.Globalization;
 namespace PhotoWorld.Shared.Photos;
 
 /// <summary>
-/// Gallery filters on the camera settings read from each photo's EXIF data. Every field is optional; photos
-/// that didn't record a setting never match a filter on it. Text matches anywhere in the value, ignoring case.
+/// Gallery filters: words, a tag, and the camera settings read from each photo's EXIF
+/// data. Every field is optional; photos that didn't record a setting never match a filter on it. Text matches anywhere
+/// in the value, ignoring case.
 /// </summary>
 public sealed class PhotoSearch
 {
     public const int TextMax = 100;
+
+    /// <summary>Words in the title or description, or a tag (searching "fog" also finds #fog).</summary>
+    [StringLength(TextMax)] public string? Text { get; set; }
+
+    /// <summary>Only photos with this tag (with or without '#').</summary>
+    [StringLength(PhotoTags.MaxLength + 1)] public string? Tag { get; set; }
 
     /// <summary>Matches the camera's make or model, e.g. "sony" or "X-T5".</summary>
     [StringLength(TextMax)] public string? Camera { get; set; }
@@ -30,6 +37,8 @@ public sealed class PhotoSearch
     /// <summary>The filters that are set, as query-string name/value pairs (names match the properties).</summary>
     public IEnumerable<(string Name, string Value)> QueryValues()
     {
+        if (!string.IsNullOrWhiteSpace(Text)) yield return ("text", Text.Trim());
+        if (PhotoTags.Normalize(Tag) is { } tag) yield return ("tag", tag);
         if (!string.IsNullOrWhiteSpace(Camera)) yield return ("camera", Camera.Trim());
         if (!string.IsNullOrWhiteSpace(Lens)) yield return ("lens", Lens.Trim());
         if (FocalMin is { } focalMin) yield return ("focalMin", Format(focalMin));
@@ -43,6 +52,8 @@ public sealed class PhotoSearch
     /// <summary>The filters that are set, in words: "Sony", "85mm", "16–35 mm", "ƒ/1.4–2.8", "ISO from 800".</summary>
     public IEnumerable<string> Describe()
     {
+        if (!string.IsNullOrWhiteSpace(Text)) yield return $"“{Text.Trim()}”";
+        if (PhotoTags.Normalize(Tag) is { } tag) yield return "#" + tag;
         if (!string.IsNullOrWhiteSpace(Camera)) yield return Camera.Trim();
         if (!string.IsNullOrWhiteSpace(Lens)) yield return Lens.Trim();
         if (Range(FocalMin, FocalMax) is { } focal) yield return focal + " mm";

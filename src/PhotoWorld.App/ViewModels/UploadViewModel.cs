@@ -26,6 +26,10 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
     [ObservableProperty]
     public partial bool ShowOnHome { get; set; }
 
+    /// <summary>Tags as typed ("fog wildlife"); #hashtags in the description are added too.</summary>
+    [ObservableProperty]
+    public partial string Tags { get; set; } = "";
+
     // "Where was it taken?": one of the member's places (index 0 = none), to show the photo on the Spots map.
     private List<PlaceDto> _places = [];
 
@@ -90,7 +94,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         }
 
         var photo = await api.UploadPhotoAsync(stream, _file.FileName, ContentTypeOf(_file), Title.Trim(),
-            Description.Trim(), ShowOnHome, PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : null);
+            Description.Trim(), ShowOnHome, PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : null, Tags);
         Reset();
         WeakReferenceMessenger.Default.Send(new PhotoUploadedMessage(photo.Id));
         await Shell.Current.GoToAsync($"{Routes.Gallery}/{Routes.Photo}", new ShellNavigationQueryParameters { ["id"] = photo.Id });
@@ -101,7 +105,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
     {
         _file = null;
         Preview = null;
-        (Title, Description, ShowOnHome, PlaceIndex) = ("", "", false, 0);
+        (Title, Description, ShowOnHome, PlaceIndex, Tags) = ("", "", false, 0, "");
     }
 
     /// <summary>iOS often reports a UTI rather than a MIME type, so go by the file extension the picker gives.</summary>

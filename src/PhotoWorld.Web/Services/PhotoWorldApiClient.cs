@@ -70,6 +70,12 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return (await GetOrNullAsync<PagedResult<PhotoSummaryDto>>(url, ct))!;
     }
 
+    public async Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default) =>
+        (await GetOrNullAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct))!;
+
+    public async Task<ExploreDto> ExploreAsync(CancellationToken ct = default) =>
+        (await GetOrNullAsync<ExploreDto>(ApiRoutes.Explore, ct))!;
+
     public async Task<IReadOnlyList<PhotoSpotDto>> GetSpotsAsync(Guid? ownerId = null, CancellationToken ct = default) =>
         await GetOrNullAsync<List<PhotoSpotDto>>(ApiRoutes.Spots + (ownerId is null ? "" : $"?ownerId={ownerId}"), ct) ?? [];
 
@@ -82,7 +88,8 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public async Task<IReadOnlyList<ShowcasePhotoDto>> GetShowcaseAsync(CancellationToken ct = default) =>
         await GetOrNullAsync<List<ShowcasePhotoDto>>(ApiRoutes.Showcase, ct) ?? [];
 
-    public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null, CancellationToken ct = default)
+    public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
+        string? tags = null, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var fileContent = new StreamContent(file.OpenReadStream());
@@ -93,6 +100,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         if (description is not null) form.Add(new StringContent(description), "description");
         form.Add(new StringContent(showOnHome ? "true" : "false"), "showOnHome");
         if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
+        if (!string.IsNullOrWhiteSpace(tags)) form.Add(new StringContent(tags), "tags");
 
         using var res = await http.PostAsync(ApiRoutes.Photos, form, ct);
         return await ReadResultAsync<PhotoDetailDto>(res, ct);

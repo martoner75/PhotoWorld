@@ -36,7 +36,10 @@ public interface IPhotoWorldApiClient
         PhotoSearch? search = null, CancellationToken ct = default);
     Task<CameraOptionsDto> GetCameraOptionsAsync(CancellationToken ct = default);
     Task<PhotoDetailDto?> GetPhotoAsync(Guid id, CancellationToken ct = default);
-    Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null, CancellationToken ct = default);
+    Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
+        string? tags = null, CancellationToken ct = default);
+    Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default);
+    Task<ExploreDto> ExploreAsync(CancellationToken ct = default);
     Task<IReadOnlyList<PhotoSpotDto>> GetSpotsAsync(Guid? ownerId = null, CancellationToken ct = default);
 
     /// <summary>Photos featured on the public home page. Works without signing in.</summary>

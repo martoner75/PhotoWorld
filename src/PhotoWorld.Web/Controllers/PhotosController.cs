@@ -13,6 +13,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         ["title"] = nameof(UploadPhotoViewModel.Title),
         ["description"] = nameof(UploadPhotoViewModel.Description),
         ["placeId"] = nameof(UploadPhotoViewModel.PlaceId),
+        ["tags"] = nameof(UploadPhotoViewModel.Tags),
     };
 
     /// <summary>The gallery: everyone's photos or followed members', optionally filtered by camera settings.</summary>
@@ -50,7 +51,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return View(model);
         }
 
-        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, ct);
+        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags, ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
@@ -72,6 +73,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         {
             Id = photo.Id, ThumbnailUrl = photo.ThumbnailUrl, Title = photo.Title, Description = photo.Description,
             ShowOnHome = photo.ShowOnHome, PlaceId = photo.Place?.Id, Places = await api.GetPlacesAsync(ct),
+            Tags = PhotoTags.Join(photo.Tags),
         });
     }
 
@@ -84,7 +86,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return View(model);
         }
 
-        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome, model.PlaceId), ct);
+        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags ?? ""), ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
