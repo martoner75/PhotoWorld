@@ -42,7 +42,7 @@
                 <Border Padding="16">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Activity" Style="{StaticResource Subheading}" />
-                        <Label Text="What shows on your Activity screen (the bell on the Gallery tab)." Style="{StaticResource MutedText}" FontSize="14" />
+                        <Label Text="What shows on your Activity screen (the inbox icon on the Gallery tab)." Style="{StaticResource MutedText}" FontSize="14" />
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Likes on your photos" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityLikes}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Comments on your photos and posts" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityComments}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="New followers" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityFollows}" /></Grid>

@@ -43,13 +43,13 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
     [NotifyPropertyChangedFor(nameof(ChallengeBanner))]
     public partial ChallengeSummaryDto? FeaturedChallenge { get; set; }
 
-    /// <summary>Unread activity, shown on the bell.</summary>
+    /// <summary>Unread activity, shown as a dot on the Activity icon.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActivityIcon), nameof(ActivityDescription))]
     public partial int UnreadActivity { get; set; }
 
-    /// <summary>The outline bell, with a dot while there's something new.</summary>
-    public string ActivityIcon => UnreadActivity > 0 ? "icon_bell_dot.png" : "icon_bell.png";
+    /// <summary>The inbox tray, with a dot while there's something new.</summary>
+    public string ActivityIcon => UnreadActivity > 0 ? "icon_activity_dot.png" : "icon_activity.png";
 
     public string ActivityDescription => UnreadActivity switch { 0 => "Activity", 1 => "Activity, 1 new", var n => $"Activity, {n} new" };
 
@@ -57,7 +57,7 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
     public async Task RefreshUnreadAsync()
     {
         try { UnreadActivity = (await _api.GetUnreadActivityAsync()).Count; }
-        catch (ApiException) { /* the bell just keeps its last count */ }
+        catch (ApiException) { /* the icon just keeps its last state */ }
     }
 
     [RelayCommand]

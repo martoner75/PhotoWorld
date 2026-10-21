@@ -112,8 +112,8 @@ PhotoWorld uses **Gallery White** (white pages, amber accent) and switches to **
 device is in dark mode, on the website and in the apps. Website: the colours are CSS variables at the top of
 `site.css` (`:root` and its `prefers-color-scheme: dark` block), and Bootstrap follows via `data-bs-theme`. App:
 `Resources/Styles/Colors.xaml` holds the light values and `ThemePalette` swaps in the dark ones when the device
-changes (pages use `DynamicResource`). Text drawn on photos stays light in both. Notification and challenge buttons
-in the app's top bar are outline icons (`Resources/Images/icon_*.svg`).
+changes (pages use `DynamicResource`). Text drawn on photos stays light in both. The Activity (inbox tray) and challenge (trophy)
+buttons are outline icons (`Resources/Images/icon_*.svg`).
 
 ## Photos
 
@@ -197,8 +197,8 @@ running one changes which likes count. Deleting a challenge deletes its entries 
 
 ## Activity
 
-Members get notifications (🔔 in the website's menu with an unread count; 🔔 on the app's Gallery tab, and *Activity*
-on the Me tab) when someone likes or comments on their photo, comments on their post or follows them; when a member
+Members get notifications (an inbox icon in the website's menu with an unread count; on the app's Gallery tab, with a dot for
+new items, and *Activity* on the Me tab) when someone likes or comments on their photo, comments on their post or follows them; when a member
 they follow shares a photo or publishes a post (once per item); and for photo challenges: a new one opens, one they
 entered ends within a day, and the results (won, placed #2/#3, or "results are in"). Opening Activity marks it all
 read. Members switch kinds off in account settings or on the Me tab.

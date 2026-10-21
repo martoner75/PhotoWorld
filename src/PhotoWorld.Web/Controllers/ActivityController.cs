@@ -15,7 +15,7 @@ public class ActivityController(IPhotoWorldApiClient api) : Controller
         return View(activity);
     }
 
-    /// <summary>For the bell in the menu (site.js asks once per page).</summary>
+    /// <summary>For the Activity icon's count in the menu (site.js asks once per page).</summary>
     [HttpGet]
     public async Task<IActionResult> Unread(CancellationToken ct) => Json(new UnreadActivityDto(await api.GetUnreadActivityAsync(ct)));
 

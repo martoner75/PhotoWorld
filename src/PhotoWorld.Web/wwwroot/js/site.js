@@ -13,7 +13,7 @@ document.querySelectorAll("form[data-confirm]").forEach((form) => {
   });
 });
 
-// The bell in the menu: how many activity items are unread (asked once per page, after it has loaded).
+// The Activity icon in the menu: how many activity items are unread (asked once per page, after it has loaded).
 const bell = document.querySelector("[data-activity-bell]");
 if (bell && !location.pathname.toLowerCase().startsWith("/activity")) {
   fetch(bell.getAttribute("href").replace(/\/?$/, "/Unread"), { headers: { "X-Requested-With": "fetch" } })
