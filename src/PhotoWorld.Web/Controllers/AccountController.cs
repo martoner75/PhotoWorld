@@ -61,6 +61,8 @@ public class AccountController(
         ];
         if (user.Email is not null) claims.Add(new Claim(ClaimTypes.Email, user.Email));
         if (user.AvatarUrl is not null) claims.Add(new Claim(PhotoWorldClaimTypes.AvatarUrl, user.AvatarUrl));
+        // Only decides whether the menu shows "Admin"; the admin pages and the API check again on every request.
+        if (user.IsAdmin) claims.Add(new Claim(PhotoWorldClaimTypes.IsAdmin, "true"));
 
         // The cookie lives exactly as long as the API token inside it.
         var properties = new AuthenticationProperties { IsPersistent = true, ExpiresUtc = session.ExpiresAt };
@@ -156,7 +158,15 @@ public class AccountController(
             return (null, provider, "Sign-in failed. Please try again.");
         }
 
-        var session = await api.ExternalLoginAsync(new ExternalLoginRequest(provider, providerToken), ct);
+        AuthResponse? session;
+        try
+        {
+            session = await api.ExternalLoginAsync(new ExternalLoginRequest(provider, providerToken), ct);
+        }
+        catch (AccountSuspendedException ex)
+        {
+            return (null, provider, ex.Message + " If you think this is a mistake, contact us (see the Terms of Use).");
+        }
         if (session is null)
         {
             logger.LogWarning("API rejected {Provider} sign-in", provider);

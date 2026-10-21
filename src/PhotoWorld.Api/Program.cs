@@ -47,6 +47,8 @@ builder.Services.AddSingleton<ImageProcessor>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddSingleton<BlogHtml>();
 builder.Services.AddScoped<ChallengeStandings>();
+builder.Services.AddScoped<AdminAccess>();
+builder.Services.AddMemoryCache();
 
 // Email notifications about new blog posts. Without an SMTP host (development) emails are written to .eml files.
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.Section));
@@ -63,11 +65,17 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 builder.Services.AddSingleton<JwtTokenService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o => o.TokenValidationParameters = new TokenValidationParameters
+    .AddJwtBearer(o =>
     {
-        ValidIssuer = jwt.Issuer,
-        ValidAudience = jwt.Audience,
-        IssuerSigningKey = jwt.GetKey(),
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
+            IssuerSigningKey = jwt.GetKey(),
+        };
+        // A token outlives a suspension or a deleted account: check the member is still active (cached briefly),
+        // so a suspended member's website and app sessions end within a minute.
+        o.Events = new JwtBearerEvents { OnTokenValidated = SessionCheck.ValidateAsync };
     });
 builder.Services.AddAuthorization();
 

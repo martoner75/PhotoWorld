@@ -435,6 +435,9 @@ stateDiagram-v2
   upheld report removes it for others. Dismissed reports don't count.
 - The rule is a single expression (`Moderation.*VisibleTo`) that EF translates to SQL, applied to every query that
   lists or shows content. Moderators work in SQL against the `open_reports` view (see the README).
+- **Suspended members** (`users.suspended_at`, set on the admin Users page) are hidden the same way, from everyone.
+  The API's `SessionCheck` rejects their tokens (re-checked against the database, cached 30 s) and sign-in refuses
+  them with the admin's reason. Admins are the members with `users.is_admin` (database only, never config).
 - **Blocking** lives in the same expressions: content whose author the viewer blocked (`blocks`, via
   `users.BlockedBy`) is hidden from that viewer only. Blocking also removes follows both ways, and the API refuses
   follows and comments from a blocked member on the blocker's content. Blocks are private to the blocker.
@@ -582,6 +585,7 @@ production, a git-ignored `Local.props` for the app.
 | Photos re-encoded, originals discarded | Strips GPS and other metadata before files reach a public bucket. |
 | Moderation as one shared expression | The same visibility rule in every query, translated to SQL. |
 | Challenge votes are likes, standings computed on read | No second voting system to build or abuse, no background job, and moderation or deletions are reflected straight away. |
+| Admins in the database (`users.is_admin`) | Managed from the Users page without redeploying; nobody can demote or suspend themselves, so there's always an admin. |
 | Places private by route design | There is no route that takes another member's id, so there's nothing to get wrong. |
 | Migrations by CI, not at startup | Safe with several API instances; schema changes are deliberate. |
 | DTOs and routes in Shared | API, website and app compile against the same contract. |

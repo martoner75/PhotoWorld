@@ -33,7 +33,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 
 | Table | Written by | Contents |
 |---|---|---|
-| `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members and their linked Google accounts |
+| `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members (incl. admin flag and suspension) and their linked Google accounts |
 | `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
 | `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_attachments`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, attached PDFs, and comments |
 | `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates) |
@@ -180,17 +180,29 @@ votes wins (on a tie, the one entered first), and the winner gets a trophy on th
 moderation drop out of the standings; deleting a photo removes its entry. The app shows the open challenge as a
 banner at the top of its Gallery tab.
 
-There's no admin page: add challenges in the Supabase dashboard (**SQL editor**). Times are UTC.
+Admins create, edit and delete challenges on **Admin → Challenges** (or *Manage challenges* on the Challenges
+page): theme, description, start and end (UTC). A new challenge must end in the future; moving the end of a
+running one changes which likes count. Deleting a challenge deletes its entries (the photos stay).
+
+## Admin
+
+Admins see **Admin** in the website's menu (after signing in again once they're made admin):
+
+- **Users**: every member with their email, join and last sign-in dates and photo and post counts, searchable by
+  name or email. **Make admin / Remove admin**, and **Suspend** (with a reason, shown to them when they try to sign
+  in) / **Reactivate**. A suspended member is signed out within 30 seconds on the website and the app (the API
+  re-checks each token against the database, cached briefly), can't sign in, gets no notification emails, and
+  everything they shared is hidden from everyone (it's part of the visibility rule). Nothing is deleted.
+- **Challenges**: see Photo challenges above.
+
+**Who's an admin** lives only in the database: the `is_admin` column of `photoworld.users`. The
+`AddUserAdminAndSuspension` migration made rosario.martone@gmail.com the first admin; after that, admins promote
+others on the Users page. Nobody can remove their own admin rights or suspend themselves, so there's always at
+least one admin. If you ever need to fix it by hand (Supabase **SQL editor**):
 
 ```sql
-insert into photoworld.challenges (title, description, starts_at, ends_at)
-values ('Fog', 'Mist, haze and low cloud: show us the world going soft.', '2026-11-01 00:00+00', '2026-12-01 00:00+00');
-
--- Fix a typo, or move the end date
-update photoworld.challenges set ends_at = '2026-12-08 00:00+00' where title = 'Fog';
+update photoworld.users set is_admin = true where lower(email) = 'someone@example.com';
 ```
-
-Deleting a challenge deletes its entries (the photos stay).
 
 ## My places
 
@@ -265,7 +277,7 @@ keep the rights to what they share, may view and download others' work for perso
 objectionable content; reports are acted on within 24 hours. App Store guideline 1.2 (user-generated content)
 expects exactly this: terms, reporting, blocking and timely moderation. Have the terms reviewed before going live.
 
-There's no admin page: you moderate in the Supabase dashboard.
+Reports are moderated in the Supabase dashboard (suspending a member's account is on the Admin → Users page).
 
 1. **Table Editor → `photoworld` schema → `open_reports` view**: open reports, newest first, with the reported
    photo title or comment text, its owner, the reporter, the reason and how many open reports the item has.

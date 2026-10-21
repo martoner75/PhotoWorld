@@ -31,6 +31,11 @@ public static class ApiRoutes
     public const string BlogPostReports = "api/blog-posts/{id:guid}/reports";
     public const string BlogCommentReports = "api/blog-posts/{id:guid}/comments/{commentId:guid}/reports";
 
+    // Admins only.
+    public const string AdminUsers = "api/admin/users";
+    public const string AdminUserAdmin = "api/admin/users/{id:guid}/admin";
+    public const string AdminUserSuspension = "api/admin/users/{id:guid}/suspension";
+
     public const string Challenges = "api/challenges";
     public const string Challenge = "api/challenges/{id:guid}";
     public const string ChallengeEntries = "api/challenges/{id:guid}/entries";

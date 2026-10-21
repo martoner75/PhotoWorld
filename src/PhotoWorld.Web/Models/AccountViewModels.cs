@@ -30,3 +30,5 @@ public sealed class NotificationsFormViewModel
         Enabled = dto?.Enabled ?? false,
     };
 }
+
+public sealed record AdminUsersViewModel(PagedResult<PhotoWorld.Shared.Admin.AdminUserDto> Users, string? Search);

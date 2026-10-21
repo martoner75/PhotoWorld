@@ -465,3 +465,26 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .blocked-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
 .blocked-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   padding: .5rem .75rem; background: var(--pw-ink); border: 1px solid var(--pw-line); border-radius: 10px; }
+
+/* ---------- Manage challenges (admins) ---------- */
+.manage-table-wrap { overflow-x: auto; border: 1px solid var(--pw-line); border-radius: var(--pw-radius); }
+.manage-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.manage-table th, .manage-table td { padding: .7rem .9rem; border-bottom: 1px solid var(--pw-line); text-align: left; vertical-align: middle; white-space: nowrap; }
+.manage-table th { color: var(--pw-muted); font-weight: 500; background: var(--pw-ink-2); }
+.manage-table tr:last-child td { border-bottom: 0; }
+.manage-table td:first-child { white-space: normal; }
+.manage-actions { display: flex; gap: .4rem; justify-content: flex-end; }
+.challenge-dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.challenge-dates input[type=datetime-local] { color-scheme: dark; }
+
+/* ---------- Admin: users ---------- */
+.admin-search { display: flex; gap: .5rem; }
+.admin-search input { background: var(--pw-ink); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 10px; padding: .45rem .75rem; min-width: 220px; }
+.admin-users tr.is-suspended td { color: var(--pw-muted); }
+.admin-users td .moderation-badge + .moderation-badge { margin-left: .25rem; }
+.suspend-menu { position: relative; }
+.suspend-menu summary { list-style: none; cursor: pointer; }
+.suspend-menu summary::-webkit-details-marker { display: none; }
+.suspend-form { position: absolute; right: 0; top: calc(100% + .35rem); z-index: 5; width: 300px; white-space: normal;
+  display: grid; gap: .5rem; padding: .9rem; background: var(--pw-ink-2); border: 1px solid #6b2a2a; border-radius: 10px; }
+.suspend-form input { background: var(--pw-ink); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 8px; padding: .45rem .6rem; }

@@ -17,6 +17,7 @@ namespace PhotoWorld.Api.Controllers;
 public class ChallengesController(
     PhotoWorldDbContext db,
     ChallengeStandings standings,
+    AdminAccess admins,
     SupabaseStorage storage,
     TimeProvider clock,
     ILogger<ChallengesController> logger) : ControllerBase
@@ -65,6 +66,71 @@ public class ChallengesController(
         var mine = standing.Ranked.Concat(standing.Hidden).Count(s => s.OwnerId == me);
         return new ChallengeDto(summary, entries, mine);
     }
+
+    // ----- Admin: create, change and delete challenges -----
+
+    [HttpPost(ApiRoutes.Challenges)]
+    public async Task<ActionResult<ChallengeSummaryDto>> Create(SaveChallengeRequest request, CancellationToken ct)
+    {
+        if (!await admins.IsAdminAsync(User.GetUserId(), ct)) return Forbid();
+        if (!IsValid(request, isNew: true)) return ValidationProblem(ModelState);
+
+        var challenge = new Challenge
+        {
+            Title = request.Title.Trim(),
+            Description = Clean(request.Description),
+            StartsAt = request.StartsAt.ToUniversalTime(),
+            EndsAt = request.EndsAt.ToUniversalTime(),
+            CreatedAt = clock.GetUtcNow(),
+        };
+        db.Challenges.Add(challenge);
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("Admin {UserId} created challenge {ChallengeId} \"{Title}\"", User.GetUserId(), challenge.Id, challenge.Title);
+        return CreatedAtAction(nameof(Get), new { id = challenge.Id },
+            (await SummariesAsync([challenge], [], ct)).Single());
+    }
+
+    /// <summary>Changes a challenge. Moving the dates of one that's running changes which likes count as votes.</summary>
+    [HttpPut(ApiRoutes.Challenge)]
+    public async Task<ActionResult<ChallengeSummaryDto>> Update(Guid id, SaveChallengeRequest request, CancellationToken ct)
+    {
+        if (!await admins.IsAdminAsync(User.GetUserId(), ct)) return Forbid();
+        var challenge = await db.Challenges.FindAsync([id], ct);
+        if (challenge is null) return NotFound();
+        if (!IsValid(request, isNew: false)) return ValidationProblem(ModelState);
+
+        challenge.Title = request.Title.Trim();
+        challenge.Description = Clean(request.Description);
+        challenge.StartsAt = request.StartsAt.ToUniversalTime();
+        challenge.EndsAt = request.EndsAt.ToUniversalTime();
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("Admin {UserId} changed challenge {ChallengeId}", User.GetUserId(), id);
+        var scores = await standings.ForAsync([id], ct);
+        return (await SummariesAsync([challenge], scores, ct)).Single();
+    }
+
+    /// <summary>Deletes a challenge and its entries; the photos themselves stay.</summary>
+    [HttpDelete(ApiRoutes.Challenge)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        if (!await admins.IsAdminAsync(User.GetUserId(), ct)) return Forbid();
+        var deleted = await db.Challenges.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
+        if (deleted == 0) return NotFound();
+
+        logger.LogInformation("Admin {UserId} deleted challenge {ChallengeId}", User.GetUserId(), id);
+        return NoContent();
+    }
+
+    private bool IsValid(SaveChallengeRequest request, bool isNew)
+    {
+        foreach (var (field, message) in ChallengeRules.CannotSave(request.Title, request.StartsAt, request.EndsAt, clock.GetUtcNow(), isNew))
+            ModelState.AddModelError(field, message);
+        return ModelState.IsValid;
+    }
+
+    private static string? Clean(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 
     [HttpPost(ApiRoutes.ChallengeEntries)]
     public async Task<IActionResult> Enter(Guid id, EnterChallengeRequest request, CancellationToken ct)

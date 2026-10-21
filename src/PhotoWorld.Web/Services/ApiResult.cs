@@ -16,3 +16,6 @@ public enum ReportOutcome { Reported, AlreadyReported, NotAllowed, NotFound }
 
 /// <summary>The API rejected the user's token (expired or user gone). Handled globally by signing out.</summary>
 public sealed class ApiUnauthorizedException() : Exception("The PhotoWorld API session has expired.");
+
+/// <summary>The API refused to sign in a suspended member; the message (with the admin's reason) is for them.</summary>
+public sealed class AccountSuspendedException(string message) : Exception(message);

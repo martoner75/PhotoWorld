@@ -77,7 +77,9 @@ public sealed class BlogNotificationSender(
 
         var now = clock.GetUtcNow();
         var cutoff = now - NotificationRules.PublishSettleTime;
-        var subscriptions = await db.EmailSubscriptions.Where(s => s.Enabled && s.ConfirmedAt != null).ToListAsync(ct);
+        // Suspended members get nothing until they're reactivated.
+        var subscriptions = await db.EmailSubscriptions
+            .Where(s => s.Enabled && s.ConfirmedAt != null && s.User.SuspendedAt == null).ToListAsync(ct);
 
         var sent = 0;
         foreach (var sub in subscriptions)

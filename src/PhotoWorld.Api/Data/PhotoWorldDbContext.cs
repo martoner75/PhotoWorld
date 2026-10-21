@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Notifications;
@@ -43,6 +44,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(u => u.DisplayName).HasMaxLength(200);
             e.Property(u => u.Email).HasMaxLength(320);
             e.Property(u => u.AvatarUrl).HasMaxLength(2048);
+            e.Property(u => u.SuspensionReason).HasMaxLength(AdminLimits.SuspensionReasonMax);
             e.HasIndex(u => u.Email);
         });
 

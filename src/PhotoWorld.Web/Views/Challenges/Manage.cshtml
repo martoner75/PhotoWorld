@@ -1,0 +1,56 @@
+@model IReadOnlyList<ChallengeSummaryDto>
+@{
+    ViewData["Title"] = "Manage challenges";
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Admin</h1>
+            <p class="text-muted">Photo challenges. Times are UTC.</p>
+        </div>
+        <div class="member-actions">
+            <a class="btn btn-ghost" asp-action="Index">View challenges</a>
+            <a class="btn btn-accent" asp-action="New">New challenge</a>
+        </div>
+    </header>
+
+    <partial name="_AdminNav" model='"challenges"' />
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No challenges yet.</p>
+            <a class="btn btn-accent" asp-action="New">Create the first one</a>
+        </div>
+    }
+    else
+    {
+        <div class="manage-table-wrap">
+            <table class="manage-table">
+                <thead>
+                    <tr><th>Theme</th><th>Status</th><th>Starts</th><th>Ends</th><th>Entries</th><th><span class="visually-hidden">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></td>
+                            <td><span class="moderation-badge challenge-badge is-@c.Phase.ToString().ToLowerInvariant()">@ChallengeDisplay.PhaseLabel(c.Phase)</span></td>
+                            <td>@c.StartsAt.UtcDateTime.ToString("d MMM yyyy, HH:mm")</td>
+                            <td>@c.EndsAt.UtcDateTime.ToString("d MMM yyyy, HH:mm")</td>
+                            <td>@c.EntryCount</td>
+                            <td class="manage-actions">
+                                <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@c.Id">Edit</a>
+                                <form asp-action="Delete" asp-route-id="@c.Id" method="post"
+                                      data-confirm="Delete “@c.Title”? Its @c.EntryCount entries are removed from the challenge (the photos stay in members' galleries). This can't be undone.">
+                                    <button type="submit" class="btn btn-danger-ghost btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

@@ -1,3 +1,4 @@
+using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
@@ -14,7 +15,10 @@ namespace PhotoWorld.Web.Services;
 /// </summary>
 public interface IPhotoWorldApiClient
 {
-    /// <summary>Exchanges a provider access token for a PhotoWorld session. Null when the API rejects it.</summary>
+    /// <summary>
+    /// Exchanges a provider access token for a PhotoWorld session. Null when the API rejects it; throws
+    /// <see cref="AccountSuspendedException"/> for a suspended account.
+    /// </summary>
     Task<AuthResponse?> ExternalLoginAsync(ExternalLoginRequest request, CancellationToken ct = default);
 
     Task<UserProfileDto?> GetCurrentUserAsync(CancellationToken ct = default);
@@ -69,6 +73,16 @@ public interface IPhotoWorldApiClient
     Task<string?> EnterChallengeAsync(Guid id, Guid photoId, CancellationToken ct = default);
     /// <summary>Null on success, otherwise a message for the member.</summary>
     Task<string?> WithdrawChallengeEntryAsync(Guid id, Guid photoId, CancellationToken ct = default);
+
+    // Admins only
+    Task<PagedResult<AdminUserDto>?> GetAdminUsersAsync(int page, string? search, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the admin.</summary>
+    Task<string?> SetAdminAsync(Guid id, bool isAdmin, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the admin.</summary>
+    Task<string?> SetSuspensionAsync(Guid id, SetSuspensionRequest request, CancellationToken ct = default);
+    Task<ApiResult<ChallengeSummaryDto>> CreateChallengeAsync(SaveChallengeRequest request, CancellationToken ct = default);
+    Task<ApiResult<ChallengeSummaryDto>> UpdateChallengeAsync(Guid id, SaveChallengeRequest request, CancellationToken ct = default);
+    Task<bool> DeleteChallengeAsync(Guid id, CancellationToken ct = default);
 
     // Places (always the signed-in member's own)
     Task<IReadOnlyList<PlaceDto>> GetPlacesAsync(CancellationToken ct = default);

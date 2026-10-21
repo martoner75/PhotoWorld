@@ -13,6 +13,7 @@ public class AuthController(
     PhotoWorldDbContext db,
     IEnumerable<IExternalIdentityVerifier> verifiers,
     JwtTokenService tokens,
+    AdminAccess admins,
     TimeProvider clock,
     ILogger<AuthController> logger) : ControllerBase
 {
@@ -71,12 +72,17 @@ public class AuthController(
             }).Entity;
             user.ExternalLogins.Add(new ExternalLogin { Provider = provider, ProviderUserId = identity.ProviderUserId });
         }
+        if (user.SuspendedAt is not null)
+        {
+            logger.LogWarning("Suspended member {UserId} tried to sign in", user.Id);
+            return Problem(SessionCheck.SuspendedMessage(user.SuspensionReason), statusCode: StatusCodes.Status403Forbidden);
+        }
         user.LastLoginAt = now;
         await db.SaveChangesAsync(ct);
 
         if (isNewUser) logger.LogInformation("New PhotoWorld member {UserId} registered via {Provider}", user.Id, provider);
 
         var (token, expiresAt) = tokens.Issue(user, provider);
-        return new AuthResponse(token, expiresAt, isNewUser, user.ToDto());
+        return new AuthResponse(token, expiresAt, isNewUser, user.ToDto() with { IsAdmin = await admins.IsAdminAsync(user.Id, ct) });
     }
 }

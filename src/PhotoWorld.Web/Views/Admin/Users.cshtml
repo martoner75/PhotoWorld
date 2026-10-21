@@ -1,0 +1,104 @@
+@model AdminUsersViewModel
+@{
+    ViewData["Title"] = "Users";
+    var me = User.GetUserId();
+    var here = Context.Request.Path + Context.Request.QueryString;
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Admin</h1>
+            <p class="text-muted">@Model.Users.TotalCount @(Model.Users.TotalCount == 1 ? "member" : "members")@(Model.Search is null ? "" : $" matching “{Model.Search}”").</p>
+        </div>
+        <form asp-action="Users" method="get" class="admin-search" role="search">
+            <input name="search" value="@Model.Search" maxlength="@AdminLimits.SearchMax" placeholder="Name or email" aria-label="Search members" />
+            <button type="submit" class="btn btn-ghost">Search</button>
+        </form>
+    </header>
+
+    <partial name="_AdminNav" model='"users"' />
+
+    @if (Model.Users.TotalCount == 0)
+    {
+        <div class="empty-state"><p>No members match that search.</p></div>
+    }
+    else
+    {
+        <div class="manage-table-wrap">
+            <table class="manage-table admin-users">
+                <thead>
+                    <tr>
+                        <th>Member</th><th>Email</th><th>Joined</th><th>Last sign-in</th><th>Photos</th><th>Posts</th><th>Status</th>
+                        <th><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Users.Items)
+                    {
+                        var isMe = u.Id == me;
+                        <tr class="@(u.SuspendedAt is null ? "" : "is-suspended")">
+                            <td>
+                                <a asp-controller="Members" asp-action="Details" asp-route-id="@u.Id" class="photo-card-owner">
+                                    <partial name="_Avatar" model="new UserSummaryDto(u.Id, u.DisplayName, u.AvatarUrl)" /> @u.DisplayName
+                                </a>
+                            </td>
+                            <td>@if (u.Email is not null) { <a href="mailto:@u.Email">@u.Email</a> }</td>
+                            <td>@u.MemberSince.ToString("d MMM yyyy")</td>
+                            <td>@u.LastLoginAt.ToString("d MMM yyyy")</td>
+                            <td>@u.PhotoCount</td>
+                            <td>@u.PostCount</td>
+                            <td>
+                                @if (u.SuspendedAt is { } suspended)
+                                {
+                                    <span class="moderation-badge" title="@u.SuspensionReason">Suspended @suspended.ToString("d MMM")</span>
+                                }
+                                @if (u.IsAdmin)
+                                {
+                                    <span class="moderation-badge draft-badge">Admin</span>
+                                }
+                                @if (isMe)
+                                {
+                                    <span class="text-muted small">(you)</span>
+                                }
+                            </td>
+                            <td class="manage-actions">
+                                @if (u.SuspendedAt is null && !(isMe && u.IsAdmin))
+                                {
+                                    <form asp-action="SetAdmin" asp-route-id="@u.Id" method="post"
+                                          data-confirm="@(u.IsAdmin ? $"Remove {u.DisplayName}'s admin rights?" : $"Make {u.DisplayName} an admin? They'll be able to manage members and challenges.")">
+                                        <input type="hidden" name="isAdmin" value="@(u.IsAdmin ? "false" : "true")" />
+                                        <input type="hidden" name="returnUrl" value="@here" />
+                                        <button type="submit" class="btn btn-ghost btn-sm">@(u.IsAdmin ? "Remove admin" : "Make admin")</button>
+                                    </form>
+                                }
+                                @if (u.SuspendedAt is not null)
+                                {
+                                    <form asp-action="Reactivate" asp-route-id="@u.Id" method="post"
+                                          data-confirm="Reactivate @u.DisplayName? They can sign in again and everything they shared comes back.">
+                                        <input type="hidden" name="returnUrl" value="@here" />
+                                        <button type="submit" class="btn btn-ghost btn-sm">Reactivate</button>
+                                    </form>
+                                }
+                                else if (!isMe)
+                                {
+                                    <details class="suspend-menu">
+                                        <summary class="btn btn-danger-ghost btn-sm">Suspend</summary>
+                                        <form asp-action="Suspend" asp-route-id="@u.Id" method="post" class="suspend-form"
+                                              data-confirm="Suspend @u.DisplayName? They'll be signed out and can't sign in, and everything they shared is hidden until you reactivate them.">
+                                            <label for="reason-@u.Id">Reason <span class="text-muted">(shown to them when they try to sign in)</span></label>
+                                            <input id="reason-@u.Id" name="reason" maxlength="@AdminLimits.SuspensionReasonMax" placeholder="e.g. repeated spam" />
+                                            <input type="hidden" name="returnUrl" value="@here" />
+                                            <button type="submit" class="btn btn-danger btn-sm">Suspend account</button>
+                                        </form>
+                                    </details>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="new PagerViewModel(Model.Users.Page, Model.Users.TotalPages)" />
+    }
+</section>

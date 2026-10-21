@@ -17,6 +17,7 @@ public class UsersController(
     PhotoWorldDbContext db,
     SupabaseStorage storage,
     ChallengeStandings standings,
+    AdminAccess admins,
     TimeProvider clock,
     ILogger<UsersController> logger) : ControllerBase
 {
@@ -26,7 +27,7 @@ public class UsersController(
         if (User.GetUserId() is not { } id) return Unauthorized();
 
         var user = await db.Users.Include(u => u.ExternalLogins).SingleOrDefaultAsync(u => u.Id == id, ct);
-        return user is null ? NotFound() : user.ToDto();
+        return user is null ? NotFound() : user.ToDto() with { IsAdmin = await admins.IsAdminAsync(user.Id, ct) };
     }
 
     /// <summary>

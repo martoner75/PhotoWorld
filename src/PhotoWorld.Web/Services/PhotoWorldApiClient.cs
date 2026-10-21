@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared;
+using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
@@ -18,6 +19,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     {
         using var res = await http.PostAsJsonAsync(ApiRoutes.ExternalLogin, request, ct);
         if (res.IsSuccessStatusCode) return await res.Content.ReadFromJsonAsync<AuthResponse>(ct);
+        if (res.StatusCode == HttpStatusCode.Forbidden) throw new AccountSuspendedException(await ProblemDetailAsync(res, ct));
 
         logger.LogWarning("API rejected {Provider} login: {Status} {Body}",
             request.Provider, (int)res.StatusCode, await res.Content.ReadAsStringAsync(ct));
@@ -229,6 +231,42 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
             ApiRoutes.Format(ApiRoutes.ChallengeEntry, ("id", id), ("photoId", photoId)), ct);
         if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
         return IsSuccess(res) ? null : "That entry no longer exists.";
+    }
+
+    public Task<PagedResult<AdminUserDto>?> GetAdminUsersAsync(int page, string? search, CancellationToken ct = default) =>
+        GetOrNullAsync<PagedResult<AdminUserDto>>($"{ApiRoutes.AdminUsers}?page={page}"
+            + (string.IsNullOrWhiteSpace(search) ? "" : $"&search={Uri.EscapeDataString(search.Trim())}"), ct);
+
+    public async Task<string?> SetAdminAsync(Guid id, bool isAdmin, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminUserAdmin, ("id", id)), new SetAdminRequest(isAdmin), ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That member no longer exists, or you're not an admin.";
+    }
+
+    public async Task<string?> SetSuspensionAsync(Guid id, SetSuspensionRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminUserSuspension, ("id", id)), request, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That member no longer exists, or you're not an admin.";
+    }
+
+    public async Task<ApiResult<ChallengeSummaryDto>> CreateChallengeAsync(SaveChallengeRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Challenges, request, ct);
+        return await ReadResultAsync<ChallengeSummaryDto>(res, ct, "Only admins can manage challenges.");
+    }
+
+    public async Task<ApiResult<ChallengeSummaryDto>> UpdateChallengeAsync(Guid id, SaveChallengeRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Challenge, ("id", id)), request, ct);
+        return await ReadResultAsync<ChallengeSummaryDto>(res, ct, "That challenge no longer exists, or you can't change it.");
+    }
+
+    public async Task<bool> DeleteChallengeAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Challenge, ("id", id)), ct);
+        return IsSuccess(res);
     }
 
     public async Task<IReadOnlyList<PlaceDto>> GetPlacesAsync(CancellationToken ct = default) =>

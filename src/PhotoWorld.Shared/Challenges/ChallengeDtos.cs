@@ -40,3 +40,10 @@ public sealed record ChallengeDto(
     int MyEntryCount);
 
 public sealed record EnterChallengeRequest([Required] Guid PhotoId);
+
+/// <summary>Creates or changes a challenge (admins only). Times are absolute; the website enters them in UTC.</summary>
+public sealed record SaveChallengeRequest(
+    [Required, StringLength(ChallengeLimits.TitleMax)] string Title,
+    [StringLength(ChallengeLimits.DescriptionMax)] string? Description,
+    DateTimeOffset StartsAt,
+    DateTimeOffset EndsAt);

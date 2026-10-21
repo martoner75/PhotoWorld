@@ -1,0 +1,6 @@
+@model string
+@* Tabs across the admin pages; the model is the current one ("users" or "challenges"). *@
+<nav class="feed-tabs" aria-label="Admin pages">
+    <a asp-controller="Admin" asp-action="Users" class="@(Model == "users" ? "active" : "")" aria-current="@(Model == "users" ? "page" : null)">Users</a>
+    <a asp-controller="Challenges" asp-action="Manage" class="@(Model == "challenges" ? "active" : "")" aria-current="@(Model == "challenges" ? "page" : null)">Challenges</a>
+</nav>

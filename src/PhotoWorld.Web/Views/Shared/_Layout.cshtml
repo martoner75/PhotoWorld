@@ -31,6 +31,10 @@
                             <li class="nav-item"><a class="nav-link" asp-controller="Blogs" asp-action="Index">Blogs</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Challenges" asp-action="Index">Challenges</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Places" asp-action="Index">My places</a></li>
+                            @if (User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true"))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">Admin</a></li>
+                            }
                             <li class="nav-item"><a class="btn btn-accent btn-sm" asp-controller="Photos" asp-action="Upload">Upload</a></li>
                             <li class="nav-item">
                                 <a class="nav-link nav-user" asp-controller="Members" asp-action="Me">

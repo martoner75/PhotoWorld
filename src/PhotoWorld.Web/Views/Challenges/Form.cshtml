@@ -1,0 +1,55 @@
+@model ChallengeFormViewModel
+@{
+    var isNew = Model.Id is null;
+    ViewData["Title"] = isNew ? "New challenge" : "Edit challenge";
+}
+
+<section class="container page narrow">
+    <h1>@ViewData["Title"]</h1>
+
+    <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" class="form-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="field">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" maxlength="@ChallengeLimits.TitleMax" placeholder="Fog" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+
+        <div class="field">
+            <label asp-for="Description">Description <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Description" rows="4" maxlength="@ChallengeLimits.DescriptionMax"
+                      placeholder="Mist, haze and low cloud: show us the world going soft."></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+
+        <div class="challenge-dates">
+            <div class="field">
+                <label asp-for="StartsAt"></label>
+                <input asp-for="StartsAt" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="StartsAt" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="EndsAt"></label>
+                <input asp-for="EndsAt" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="EndsAt" class="field-error"></span>
+            </div>
+        </div>
+        <p class="text-muted small mb-0">
+            Members can enter photos between these times, and likes count as votes until the end. Times are UTC
+            (UK winter time; in summer, UK time is an hour ahead).
+            @if (!isNew && Model.EntryCount > 0)
+            {
+                <strong>This challenge has @Model.EntryCount @(Model.EntryCount == 1 ? "entry" : "entries"):</strong>
+                @: moving the end changes which likes count as votes.
+            }
+        </p>
+
+        <input asp-for="EntryCount" type="hidden" />
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="Manage">Cancel</a>
+            <button type="submit" class="btn btn-accent">@(isNew ? "Create challenge" : "Save changes")</button>
+        </div>
+    </form>
+</section>

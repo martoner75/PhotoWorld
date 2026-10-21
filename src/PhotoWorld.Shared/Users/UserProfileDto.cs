@@ -7,4 +7,5 @@ public sealed record UserProfileDto(
     string? AvatarUrl,
     IReadOnlyList<string> LinkedProviders,
     DateTimeOffset MemberSince,
-    DateTimeOffset LastLoginAt);
+    DateTimeOffset LastLoginAt,
+    bool IsAdmin = false);
