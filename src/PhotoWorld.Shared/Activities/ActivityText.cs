@@ -40,6 +40,7 @@ public static class ActivityText
         [nameof(ActivitySettingsDto.Follows)] = "New followers",
         [nameof(ActivitySettingsDto.FollowedPosts)] = "New photos and posts from members you follow",
         [nameof(ActivitySettingsDto.Challenges)] = "Photo challenges: new ones, closing soon, results",
+        [nameof(ActivitySettingsDto.Push)] = "Also send them to my phone (in the PhotoWorld app)",
     };
 
     /// <summary>"just now", "5 min ago", "3 h ago", "2 days ago", then the date.</summary>

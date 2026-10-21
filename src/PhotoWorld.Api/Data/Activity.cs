@@ -28,6 +28,9 @@ public class Activity
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? ReadAt { get; set; }
+
+    /// <summary>When PushDispatcher dealt with it (sent to the recipient's phones, or found there was nothing to send).</summary>
+    public DateTimeOffset? PushedAt { get; set; }
 }
 
 /// <summary>A member's choice of activity (one row, created when they first change it; no row = everything on).</summary>
@@ -40,4 +43,17 @@ public class ActivitySettings
     public bool Follows { get; set; } = true;
     public bool FollowedPosts { get; set; } = true;
     public bool Challenges { get; set; } = true;
+    public bool Push { get; set; } = true;
+}
+
+/// <summary>A member's phone that receives push notifications. Goes with the account; dead tokens are removed when sending.</summary>
+public class DeviceRegistration
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid UserId { get; set; }
+    public User User { get; set; } = null!;
+    public required string Platform { get; set; }
+    public required string Token { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset LastSeenAt { get; set; }
 }

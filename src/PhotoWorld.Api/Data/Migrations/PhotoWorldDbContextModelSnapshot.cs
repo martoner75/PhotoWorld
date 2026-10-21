@@ -54,6 +54,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("post_id");
 
+                    b.Property<DateTimeOffset?>("PushedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pushed_at");
+
                     b.Property<DateTimeOffset?>("ReadAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("read_at");
@@ -90,6 +94,9 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.HasIndex("PostId")
                         .HasDatabaseName("ix_activities_post_id");
+
+                    b.HasIndex("PushedAt")
+                        .HasDatabaseName("ix_activities_pushed_at");
 
                     b.HasIndex("RecipientId", "CreatedAt")
                         .IsDescending(false, true)
@@ -129,6 +136,12 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Property<bool>("Likes")
                         .HasColumnType("boolean")
                         .HasColumnName("likes");
+
+                    b.Property<bool>("Push")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("push");
 
                     b.HasKey("UserId")
                         .HasName("pk_activity_settings");
@@ -510,6 +523,53 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasDatabaseName("ix_collection_photos_photo_id");
 
                     b.ToTable("collection_photos", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.DeviceRegistration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("platform");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("token");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_devices");
+
+                    b.HasIndex("Token")
+                        .IsUnique()
+                        .HasDatabaseName("ix_devices_token");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_devices_user_id");
+
+                    b.ToTable("devices", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_devices_platform", "platform in ('ios', 'android')");
+                        });
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>
@@ -1464,6 +1524,18 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Collection");
 
                     b.Navigation("Photo");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.DeviceRegistration", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_devices_users_user_id");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>

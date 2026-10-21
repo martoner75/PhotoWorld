@@ -11,6 +11,7 @@ using PhotoWorld.Api.Services.Identity;
 using PhotoWorld.Api.Services.Moderation;
 using PhotoWorld.Api.Services.Notifications;
 using PhotoWorld.Api.Services.Photos;
+using PhotoWorld.Api.Services.Push;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Logging;
 
@@ -51,6 +52,14 @@ builder.Services.AddScoped<ChallengeStandings>();
 builder.Services.AddScoped<AdminAccess>();
 builder.Services.AddScoped<ActivityFeed>();
 builder.Services.AddHostedService<ScheduledActivitySender>();
+
+// Push notifications to phones: off until APNs / FCM keys are set (README → Push notifications).
+builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.Section));
+builder.Services.AddHttpClient<ApnsChannel>().ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { EnableMultipleHttp2Connections = true });
+builder.Services.AddHttpClient<FcmChannel>();
+builder.Services.AddSingleton<IPushChannel>(sp => sp.GetRequiredService<ApnsChannel>());
+builder.Services.AddSingleton<IPushChannel>(sp => sp.GetRequiredService<FcmChannel>());
+builder.Services.AddHostedService<PushDispatcher>();
 builder.Services.AddMemoryCache();
 
 // Email notifications about new blog posts. Without an SMTP host (development) emails are written to .eml files.

@@ -48,6 +48,8 @@ public static class ApiRoutes
     public const string ActivityUnread = "api/activity/unread";
     public const string ActivityRead = "api/activity/read";
     public const string ActivitySettings = "api/activity/settings";
+    /// <summary>PUT registers the caller's phone for push notifications; DELETE (?token=) forgets it (signing out).</summary>
+    public const string Devices = "api/devices";
 
     // Admins only.
     public const string AdminUsers = "api/admin/users";

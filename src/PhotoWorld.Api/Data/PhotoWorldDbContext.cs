@@ -36,6 +36,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Collection> Collections => Set<Collection>();
     public DbSet<CollectionPhoto> CollectionPhotos => Set<CollectionPhoto>();
     public DbSet<ActivitySettings> ActivitySettings => Set<ActivitySettings>();
+    public DbSet<DeviceRegistration> Devices => Set<DeviceRegistration>();
     public DbSet<Challenge> Challenges => Set<Challenge>();
     public DbSet<ChallengeEntry> ChallengeEntries => Set<ChallengeEntry>();
 
@@ -286,6 +287,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(a => new { a.RecipientId, a.CreatedAt }).IsDescending(false, true);
             e.HasIndex(a => new { a.RecipientId, a.ReadAt });
             e.HasIndex(a => a.CreatedAt);
+            e.HasIndex(a => a.PushedAt);
         });
 
         modelBuilder.Entity<Collection>(e =>
@@ -304,9 +306,21 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(x => x.PhotoId);
         });
 
+        modelBuilder.Entity<DeviceRegistration>(e =>
+        {
+            e.ToTable("devices", t => t.HasCheckConstraint("ck_devices_platform",
+                $"platform in ('{DevicePlatforms.Ios}', '{DevicePlatforms.Android}')"));
+            e.Property(d => d.Platform).HasMaxLength(16);
+            e.Property(d => d.Token).HasMaxLength(512);
+            e.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId);
+            e.HasIndex(d => d.Token).IsUnique();
+            e.HasIndex(d => d.UserId);
+        });
+
         modelBuilder.Entity<ActivitySettings>(e =>
         {
             e.HasKey(s => s.UserId);
+            e.Property(s => s.Push).HasDefaultValue(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 
