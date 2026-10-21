@@ -32,6 +32,12 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task<FollowStateDto> SetFollowAsync(Guid id, bool follow, CancellationToken ct = default) =>
         SendAsync<FollowStateDto>(follow ? HttpMethod.Post : HttpMethod.Delete, WithId(ApiRoutes.MemberFollow, id), null, ct);
 
+    public Task SetBlockAsync(Guid id, bool block, CancellationToken ct = default) =>
+        SendAsync(block ? HttpMethod.Post : HttpMethod.Delete, WithId(ApiRoutes.MemberBlock, id), null, ct);
+
+    public Task<List<UserSummaryDto>> GetBlockedMembersAsync(CancellationToken ct = default) =>
+        GetAsync<List<UserSummaryDto>>(ApiRoutes.MyBlocks, ct);
+
     // ----- Photos -----
     /// <summary>Newest photos: optionally one member's, only followed members', and/or matching camera settings.</summary>
     public Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, bool following = false,

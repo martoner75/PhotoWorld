@@ -175,7 +175,8 @@ public class AccountController(
         var me = await api.GetCurrentUserAsync(ct);
         if (me is null) return RedirectToAction(nameof(Login));
         var current = await api.GetNotificationsAsync(ct);
-        return View(new AccountSettingsViewModel(me, NotificationsFormViewModel.From(current), current));
+        return View(new AccountSettingsViewModel(me, NotificationsFormViewModel.From(current), current,
+            await api.GetBlockedMembersAsync(ct)));
     }
 
     /// <summary>Saves the email notification settings (the form on the settings page).</summary>
@@ -205,7 +206,8 @@ public class AccountController(
 
         var me = await api.GetCurrentUserAsync(ct);
         if (me is null) return RedirectToAction(nameof(Login));
-        return View(nameof(Settings), new AccountSettingsViewModel(me, model, await api.GetNotificationsAsync(ct)));
+        return View(nameof(Settings), new AccountSettingsViewModel(me, model, await api.GetNotificationsAsync(ct),
+            await api.GetBlockedMembersAsync(ct)));
     }
 
     [HttpPost, ValidateAntiForgeryToken]

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using PhotoWorld.Shared.Notifications;
+using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Users;
 
 namespace PhotoWorld.Web.Models;
@@ -7,7 +8,8 @@ namespace PhotoWorld.Web.Models;
 public sealed record AccountSettingsViewModel(
     UserProfileDto Profile,
     NotificationsFormViewModel Notifications,
-    EmailNotificationsDto? Current);
+    EmailNotificationsDto? Current,
+    IReadOnlyList<UserSummaryDto> Blocked);
 
 /// <summary>The "Email notifications" form on the account settings page.</summary>
 public sealed class NotificationsFormViewModel

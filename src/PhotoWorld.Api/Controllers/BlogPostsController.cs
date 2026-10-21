@@ -254,7 +254,11 @@ public class BlogPostsController(
     {
         if (CurrentUserId() is not { } me) return Unauthorized();
         // Comments only on published posts (an author previewing a draft can't comment on it yet).
-        if (!await VisiblePosts(me).AnyAsync(p => p.Id == id && p.Status == BlogPostStatus.Published, ct)) return NotFound();
+        var authorId = await VisiblePosts(me).Where(p => p.Id == id && p.Status == BlogPostStatus.Published)
+            .Select(p => (Guid?)p.AuthorId).SingleOrDefaultAsync(ct);
+        if (authorId is null) return NotFound();
+        if (await db.Blocks.AnyAsync(b => b.BlockerId == authorId && b.BlockedId == me, ct))
+            return Problem("You can't comment on this post.", statusCode: StatusCodes.Status400BadRequest);
 
         var text = request.Text.Trim();
         if (text.Length == 0)

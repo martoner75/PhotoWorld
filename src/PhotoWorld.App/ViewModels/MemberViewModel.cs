@@ -11,7 +11,8 @@ public partial class MemberViewModel(PhotoWorldApi api) : PagedListViewModel<Pho
     private Guid _id;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Facts), nameof(FollowCounts), nameof(CanFollow), nameof(HasWins), nameof(Wins), nameof(Initial))]
+    [NotifyPropertyChangedFor(nameof(Facts), nameof(FollowCounts), nameof(CanFollow), nameof(HasWins), nameof(Wins), nameof(Initial),
+        nameof(CanBlock), nameof(IsBlocked), nameof(BlockButtonText))]
     public partial MemberProfileDto? Member { get; set; }
 
     [ObservableProperty]
@@ -30,7 +31,10 @@ public partial class MemberViewModel(PhotoWorldApi api) : PagedListViewModel<Pho
     public string FollowCounts => Member is not { } m ? ""
         : $"{FollowerCount} {(FollowerCount == 1 ? "follower" : "followers")} · following {m.FollowingCount}";
 
-    public bool CanFollow => Member is { IsMe: false };
+    public bool CanFollow => Member is { IsMe: false, BlockedByMe: false };
+    public bool CanBlock => Member is { IsMe: false };
+    public bool IsBlocked => Member is { BlockedByMe: true };
+    public string BlockButtonText => IsBlocked ? "Unblock" : "Block";
     public string FollowButtonText => FollowedByMe ? "Following ✓" : "Follow";
 
     public IReadOnlyList<ChallengeWinDto> Wins => Member?.Wins ?? [];
@@ -73,6 +77,22 @@ public partial class MemberViewModel(PhotoWorldApi api) : PagedListViewModel<Pho
             await Ui.ShowAsync(ex);
         }
     }
+
+    /// <summary>Blocking hides their photos, posts and comments from you and stops them following you or commenting on your work.</summary>
+    [RelayCommand]
+    private Task ToggleBlockAsync() => RunAsync(async () =>
+    {
+        if (Member is null) return;
+        var block = !Member.BlockedByMe;
+        if (block && !await Ui.ConfirmAsync($"Block {Member.DisplayName}?",
+                "You won't see their photos, posts or comments, and they won't be able to follow you or comment on your work. They aren't told.",
+                "Block")) return;
+        await api.SetBlockAsync(Member.Id, block);
+        Member = await api.GetMemberAsync(_id);
+        (FollowedByMe, FollowerCount) = (Member.FollowedByMe, Member.FollowerCount);
+        Items.Clear();
+        IsRefreshing = true; // their photos disappear (or come back)
+    });
 
     [RelayCommand]
     private Task OpenWinAsync(ChallengeWinDto win) => Routes.OpenChallengeAsync(win.ChallengeId);

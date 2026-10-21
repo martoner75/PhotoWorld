@@ -24,6 +24,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Place> Places => Set<Place>();
     public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
     public DbSet<Follow> Follows => Set<Follow>();
+    public DbSet<Block> Blocks => Set<Block>();
     public DbSet<Challenge> Challenges => Set<Challenge>();
     public DbSet<ChallengeEntry> ChallengeEntries => Set<ChallengeEntry>();
 
@@ -198,6 +199,16 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(f => f.Follower).WithMany().HasForeignKey(f => f.FollowerId);
             e.HasOne(f => f.Followee).WithMany().HasForeignKey(f => f.FolloweeId);
             e.HasIndex(f => f.FolloweeId);
+        });
+
+        modelBuilder.Entity<Block>(e =>
+        {
+            e.HasKey(b => new { b.BlockerId, b.BlockedId });
+            e.ToTable(t => t.HasCheckConstraint("ck_blocks_not_self", "blocker_id <> blocked_id"));
+            // Either account going takes the block with it.
+            e.HasOne(b => b.Blocker).WithMany().HasForeignKey(b => b.BlockerId);
+            e.HasOne(b => b.Blocked).WithMany(u => u.BlockedBy).HasForeignKey(b => b.BlockedId);
+            e.HasIndex(b => b.BlockedId);
         });
 
         modelBuilder.Entity<Challenge>(e =>

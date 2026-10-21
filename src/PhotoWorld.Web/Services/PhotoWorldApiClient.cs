@@ -45,6 +45,16 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res) ? await res.Content.ReadFromJsonAsync<FollowStateDto>(ct) : null;
     }
 
+    public async Task<bool> SetBlockAsync(Guid id, bool block, CancellationToken ct = default)
+    {
+        var url = ApiRoutes.Format(ApiRoutes.MemberBlock, ("id", id));
+        using var res = block ? await http.PostAsync(url, null, ct) : await http.DeleteAsync(url, ct);
+        return res.StatusCode != HttpStatusCode.BadRequest && IsSuccess(res);
+    }
+
+    public async Task<IReadOnlyList<UserSummaryDto>> GetBlockedMembersAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<List<UserSummaryDto>>(ApiRoutes.MyBlocks, ct) ?? [];
+
     public async Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, bool following = false,
         PhotoSearch? search = null, CancellationToken ct = default)
     {

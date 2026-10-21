@@ -459,3 +459,9 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .enter-tile-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.25rem .6rem .5rem; text-align: left; font-size: .85rem;
   color: var(--pw-text); background: linear-gradient(transparent, rgba(0, 0, 0, .8)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .enter-tile.is-entered .enter-tile-label { color: var(--pw-accent); font-weight: 600; }
+
+/* ---------- Blocking ---------- */
+.member-block { margin-top: 2rem; text-align: right; }
+.blocked-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.blocked-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: .5rem .75rem; background: var(--pw-ink); border: 1px solid var(--pw-line); border-radius: 10px; }

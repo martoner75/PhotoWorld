@@ -21,6 +21,9 @@ public interface IPhotoWorldApiClient
     Task<bool> DeleteAccountAsync(CancellationToken ct = default);
     Task<MemberProfileDto?> GetMemberAsync(Guid id, CancellationToken ct = default);
     Task<FollowStateDto?> SetFollowAsync(Guid id, bool follow, CancellationToken ct = default);
+    /// <summary>False when the member doesn't exist (or is the caller).</summary>
+    Task<bool> SetBlockAsync(Guid id, bool block, CancellationToken ct = default);
+    Task<IReadOnlyList<UserSummaryDto>> GetBlockedMembersAsync(CancellationToken ct = default);
 
     /// <summary>Newest photos; <paramref name="following"/> limits them to members the caller follows.</summary>
     Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, bool following = false,

@@ -10,6 +10,9 @@ public class User
     public DateTimeOffset LastLoginAt { get; set; } = DateTimeOffset.UtcNow;
 
     public List<ExternalLogin> ExternalLogins { get; set; } = [];
+
+    /// <summary>Blocks against this member, so visibility rules can ask "has the viewer blocked the author?".</summary>
+    public List<Block> BlockedBy { get; set; } = [];
 }
 
 /// <summary>Links a PhotoWorld user to an external identity provider account (e.g. Google).</summary>

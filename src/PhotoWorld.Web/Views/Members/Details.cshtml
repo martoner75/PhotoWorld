@@ -30,6 +30,13 @@
                 <a class="btn btn-accent" asp-controller="Photos" asp-action="Upload">Upload a photo</a>
             </div>
         }
+        else if (m.BlockedByMe)
+        {
+            <form class="member-actions" asp-action="Block" asp-route-id="@m.Id" method="post">
+                <input type="hidden" name="block" value="false" />
+                <button type="submit" class="btn btn-ghost">Unblock</button>
+            </form>
+        }
         else
         {
             <form class="member-actions" asp-action="Follow" asp-route-id="@m.Id" method="post">
@@ -47,6 +54,14 @@
             </form>
         }
     </header>
+
+    @if (m.BlockedByMe)
+    {
+        <div class="alert moderation-banner" role="status">
+            <strong>Blocked.</strong> You don't see @m.DisplayName's photos, posts or comments, and they can't follow you
+            or comment on your photos and posts. They aren't told.
+        </div>
+    }
 
     @if (m.Wins is { Count: > 0 } wins)
     {
@@ -70,6 +85,10 @@
                 <p>You haven't shared any photos yet.</p>
                 <a class="btn btn-accent" asp-controller="Photos" asp-action="Upload">Share your first photo</a>
             }
+            else if (m.BlockedByMe)
+            {
+                <p>Their photos are hidden because you blocked them.</p>
+            }
             else
             {
                 <p>@m.DisplayName hasn't shared any photos yet.</p>
@@ -79,5 +98,14 @@
     else
     {
         <partial name="_PhotoGrid" model="Model.Photos" />
+    }
+
+    @if (!m.IsMe && !m.BlockedByMe)
+    {
+        <form asp-action="Block" asp-route-id="@m.Id" method="post" class="report-link member-block"
+              data-confirm="Block @m.DisplayName? You won't see their photos, posts or comments, and they won't be able to follow you or comment on your work.">
+            <input type="hidden" name="block" value="true" />
+            <button type="submit" class="btn-link-muted">Block @m.DisplayName</button>
+        </form>
     }
 </section>

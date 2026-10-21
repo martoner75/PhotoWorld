@@ -75,7 +75,8 @@ public sealed record MemberProfileDto(
     int FollowerCount = 0,
     int FollowingCount = 0,
     bool FollowedByMe = false,
-    IReadOnlyList<ChallengeWinDto>? Wins = null);
+    IReadOnlyList<ChallengeWinDto>? Wins = null,
+    bool BlockedByMe = false);
 
 public sealed record FollowStateDto(bool FollowedByMe, int FollowerCount);
 

@@ -7,6 +7,9 @@ public static class ApiRoutes
     public const string CurrentUser = "api/users/me";
     public const string Member = "api/users/{id:guid}";
     public const string MemberFollow = "api/users/{id:guid}/follow";
+    public const string MemberBlock = "api/users/{id:guid}/block";
+    /// <summary>The members the signed-in member has blocked.</summary>
+    public const string MyBlocks = "api/users/me/blocks";
 
     public const string Showcase = "api/showcase";
     public const string Photos = "api/photos";

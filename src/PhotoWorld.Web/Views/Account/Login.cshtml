@@ -51,6 +51,10 @@
                 <text>New to PhotoWorld? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a></text>
             }
         </p>
-        <p class="auth-legal">We only use your Google account to identify you. We never post on your behalf.</p>
+        <p class="auth-legal">
+            By continuing, you agree to the <a asp-controller="Home" asp-action="Terms">Terms of Use</a> and the
+            <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a>. You keep the rights to everything you share.
+            We only use your Google account to identify you and never post on your behalf.
+        </p>
     </div>
 </section>

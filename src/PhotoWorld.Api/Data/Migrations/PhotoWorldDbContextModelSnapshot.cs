@@ -23,6 +23,32 @@ namespace PhotoWorld.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Block", b =>
+                {
+                    b.Property<Guid>("BlockerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("blocker_id");
+
+                    b.Property<Guid>("BlockedId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("blocked_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("BlockerId", "BlockedId")
+                        .HasName("pk_blocks");
+
+                    b.HasIndex("BlockedId")
+                        .HasDatabaseName("ix_blocks_blocked_id");
+
+                    b.ToTable("blocks", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_blocks_not_self", "blocker_id <> blocked_id");
+                        });
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Blog", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -892,6 +918,27 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("users", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Block", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Blocked")
+                        .WithMany("BlockedBy")
+                        .HasForeignKey("BlockedId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blocks_users_blocked_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.User", "Blocker")
+                        .WithMany()
+                        .HasForeignKey("BlockerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blocks_users_blocker_id");
+
+                    b.Navigation("Blocked");
+
+                    b.Navigation("Blocker");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Blog", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.User", "User")
@@ -1191,6 +1238,8 @@ namespace PhotoWorld.Api.Data.Migrations
 
             modelBuilder.Entity("PhotoWorld.Api.Data.User", b =>
                 {
+                    b.Navigation("BlockedBy");
+
                     b.Navigation("ExternalLogins");
                 });
 #pragma warning restore 612, 618

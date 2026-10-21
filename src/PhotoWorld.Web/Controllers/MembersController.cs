@@ -23,6 +23,16 @@ public class MembersController(IPhotoWorldApiClient api) : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Block(Guid id, bool block, string? returnUrl, CancellationToken ct)
+    {
+        if (!await api.SetBlockAsync(id, block, ct)) return NotFound();
+        TempData["Flash"] = block
+            ? "Blocked. You won't see their photos, posts or comments, and they can't follow you or comment on your work."
+            : "Unblocked.";
+        return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Details), new { id });
+    }
+
     /// <summary>Shortcut to the signed-in member's own page.</summary>
     [HttpGet]
     public IActionResult Me() => RedirectToAction(nameof(Details), new { id = User.GetUserId() });

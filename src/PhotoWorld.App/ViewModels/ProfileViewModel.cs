@@ -1,7 +1,9 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoWorld.App.Services;
 using PhotoWorld.Shared.Notifications;
+using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Users;
 
 namespace PhotoWorld.App.ViewModels;
@@ -41,6 +43,12 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
         _ => "Off.",
     };
 
+    /// <summary>Members the signed-in member blocked, to unblock from here.</summary>
+    public ObservableCollection<UserSummaryDto> Blocked { get; } = [];
+
+    [ObservableProperty]
+    public partial bool HasBlocked { get; set; }
+
     public async Task LoadAsync()
     {
         User ??= auth.User;
@@ -48,6 +56,7 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
         {
             User = await api.GetMeAsync();
             ShowNotifications(await api.GetNotificationsAsync());
+            await LoadBlockedAsync();
         }
         catch (ApiException)
         {
@@ -92,6 +101,24 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
 
     [RelayCommand]
     private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);
+
+    private async Task LoadBlockedAsync()
+    {
+        Blocked.Clear();
+        foreach (var member in await api.GetBlockedMembersAsync()) Blocked.Add(member);
+        HasBlocked = Blocked.Count > 0;
+    }
+
+    [RelayCommand]
+    private Task UnblockAsync(UserSummaryDto member) => RunAsync(async () =>
+    {
+        if (!await Ui.ConfirmAsync("Unblock", $"Unblock {member.DisplayName}? You'll see their photos, posts and comments again.", "Unblock")) return;
+        await api.SetBlockAsync(member.Id, block: false);
+        await LoadBlockedAsync();
+    });
+
+    [RelayCommand]
+    private Task OpenTermsAsync() => Ui.OpenInBrowserAsync(AppConfig.TermsUrl);
 
     [RelayCommand]
     private Task OpenPrivacyAsync() => Ui.OpenInBrowserAsync(AppConfig.PrivacyUrl);

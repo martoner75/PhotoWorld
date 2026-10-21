@@ -274,6 +274,7 @@ erDiagram
     users ||--o| email_subscriptions : "gets emails"
     users ||--o{ reports : files
     users ||--o{ follows : "follows / is followed"
+    users ||--o{ blocks : "blocks / is blocked"
     photos ||--o{ challenge_entries : "entered as"
     challenges ||--o{ challenge_entries : has
     photos ||--o{ photo_likes : receives
@@ -385,6 +386,11 @@ erDiagram
         uuid followee_id PK
         timestamptz created_at
     }
+    blocks {
+        uuid blocker_id PK
+        uuid blocked_id PK
+        timestamptz created_at
+    }
     challenges {
         uuid id PK
         text title
@@ -429,6 +435,9 @@ stateDiagram-v2
   upheld report removes it for others. Dismissed reports don't count.
 - The rule is a single expression (`Moderation.*VisibleTo`) that EF translates to SQL, applied to every query that
   lists or shows content. Moderators work in SQL against the `open_reports` view (see the README).
+- **Blocking** lives in the same expressions: content whose author the viewer blocked (`blocks`, via
+  `users.BlockedBy`) is hidden from that viewer only. Blocking also removes follows both ways, and the API refuses
+  follows and comments from a blocked member on the blocker's content. Blocks are private to the blocker.
 
 ## 8. Places and maps
 

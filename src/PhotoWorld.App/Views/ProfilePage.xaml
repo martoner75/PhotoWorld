@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
              x:Class="PhotoWorld.App.Views.ProfilePage"
              x:DataType="vm:ProfileViewModel"
              Title="Me">
@@ -27,6 +28,8 @@
                                 Command="{Binding OpenChallengesCommand}" />
                         <Button Text="Open PhotoWorld on the web" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenWebsiteCommand}" />
+                        <Button Text="Terms of use" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenTermsCommand}" />
                         <Button Text="Privacy policy" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenPrivacyCommand}" />
                     </VerticalStackLayout>
@@ -56,6 +59,25 @@
                                     TextColor="{StaticResource Text}" Title="How often" />
                         </Border>
                         <Button Text="Save notification settings" Command="{Binding SaveNotificationsCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="16">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Blocked members" Style="{StaticResource Subheading}" />
+                        <Label Text="You haven't blocked anyone. To block a member, open their page and tap Block."
+                               Style="{StaticResource MutedText}" FontSize="14" IsVisible="{Binding HasBlocked, Converter={StaticResource Not}}" />
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Blocked}" Spacing="4">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="dto:UserSummaryDto">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="{Binding DisplayName}" VerticalOptions="Center" />
+                                        <Button Grid.Column="1" Text="Unblock" Style="{StaticResource LinkButton}" CommandParameter="{Binding .}"
+                                                Command="{Binding UnblockCommand, Source={RelativeSource AncestorType={x:Type vm:ProfileViewModel}}, x:DataType=vm:ProfileViewModel}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 

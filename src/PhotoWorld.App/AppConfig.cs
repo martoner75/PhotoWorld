@@ -17,6 +17,7 @@ public static class AppConfig
 #endif
 
     public static Uri PrivacyUrl => new(WebBaseUrl, "Home/Privacy");
+    public static Uri TermsUrl => new(WebBaseUrl, "Home/Terms");
 
     /// <summary>
     /// Development only: trust the ASP.NET Core dev certificate on localhost, which the Simulator doesn't know.

@@ -39,6 +39,8 @@ public class HomeController(IPhotoWorldApiClient api, IMemoryCache cache, ILogge
         return View();
     }
 
+    public IActionResult Terms() => View();
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

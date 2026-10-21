@@ -82,7 +82,8 @@ public class UsersController(
                 db.Follows.Count(f => f.FolloweeId == u.Id),
                 db.Follows.Count(f => f.FollowerId == u.Id),
                 db.Follows.Any(f => f.FolloweeId == u.Id && f.FollowerId == me),
-                null))
+                null,
+                db.Blocks.Any(b => b.BlockerId == me && b.BlockedId == u.Id)))
             .SingleOrDefaultAsync(ct);
         return member is null ? NotFound() : member with { Wins = await WinsAsync(id, ct) };
     }
@@ -93,6 +94,8 @@ public class UsersController(
         if (User.GetUserId() is not { } me) return Unauthorized();
         if (id == me) return Problem("You can't follow yourself.", statusCode: StatusCodes.Status400BadRequest);
         if (!await db.Users.AnyAsync(u => u.Id == id, ct)) return NotFound();
+        if (await db.Blocks.AnyAsync(b => (b.BlockerId == id && b.BlockedId == me) || (b.BlockerId == me && b.BlockedId == id), ct))
+            return Problem("You can't follow this member.", statusCode: StatusCodes.Status400BadRequest);
 
         if (!await db.Follows.AnyAsync(f => f.FollowerId == me && f.FolloweeId == id, ct))
         {
@@ -111,6 +114,49 @@ public class UsersController(
 
         await db.Follows.Where(f => f.FollowerId == me && f.FolloweeId == id).ExecuteDeleteAsync(ct);
         return await FollowStateAsync(id, me, ct);
+    }
+
+    /// <summary>
+    /// Blocks a member: the caller stops seeing their photos, posts and comments, they can't follow the caller or
+    /// comment on the caller's photos and posts, and any follows between the two are removed.
+    /// </summary>
+    [HttpPost(ApiRoutes.MemberBlock)]
+    public async Task<IActionResult> Block(Guid id, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        if (id == me) return Problem("You can't block yourself.", statusCode: StatusCodes.Status400BadRequest);
+        if (!await db.Users.AnyAsync(u => u.Id == id, ct)) return NotFound();
+
+        if (!await db.Blocks.AnyAsync(b => b.BlockerId == me && b.BlockedId == id, ct))
+        {
+            db.Blocks.Add(new Block { BlockerId = me, BlockedId = id, CreatedAt = clock.GetUtcNow() });
+            try { await db.SaveChangesAsync(ct); }
+            catch (DbUpdateException) { /* Blocked twice at the same moment: the block already exists. */ }
+        }
+        await db.Follows.Where(f => (f.FollowerId == me && f.FolloweeId == id) || (f.FollowerId == id && f.FolloweeId == me))
+            .ExecuteDeleteAsync(ct);
+
+        logger.LogInformation("User {UserId} blocked user {BlockedId}", me, id);
+        return NoContent();
+    }
+
+    [HttpDelete(ApiRoutes.MemberBlock)]
+    public async Task<IActionResult> Unblock(Guid id, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        await db.Blocks.Where(b => b.BlockerId == me && b.BlockedId == id).ExecuteDeleteAsync(ct);
+        return NoContent();
+    }
+
+    [HttpGet(ApiRoutes.MyBlocks)]
+    public async Task<ActionResult<IReadOnlyList<UserSummaryDto>>> MyBlocks(CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        return await db.Blocks.AsNoTracking()
+            .Where(b => b.BlockerId == me)
+            .OrderBy(b => b.Blocked.DisplayName)
+            .Select(b => new UserSummaryDto(b.Blocked.Id, b.Blocked.DisplayName, b.Blocked.AvatarUrl))
+            .ToListAsync(ct);
     }
 
     private async Task<FollowStateDto> FollowStateAsync(Guid id, Guid me, CancellationToken ct) => new(

@@ -231,7 +231,10 @@ public class PhotosController(
     public async Task<ActionResult<CommentDto>> AddComment(Guid id, CreateCommentRequest request, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId) return Unauthorized();
-        if (!await VisiblePhotos(userId).AnyAsync(p => p.Id == id, ct)) return NotFound();
+        var ownerId = await VisiblePhotos(userId).Where(p => p.Id == id).Select(p => (Guid?)p.OwnerId).SingleOrDefaultAsync(ct);
+        if (ownerId is null) return NotFound();
+        if (await db.Blocks.AnyAsync(b => b.BlockerId == ownerId && b.BlockedId == userId, ct))
+            return Problem("You can't comment on this photo.", statusCode: StatusCodes.Status400BadRequest);
 
         var text = request.Text.Trim();
         if (text.Length == 0)

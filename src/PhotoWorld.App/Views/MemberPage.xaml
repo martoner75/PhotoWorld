@@ -41,6 +41,14 @@
                         </Button.Triggers>
                     </Button>
 
+                    <Border Padding="12,8" BackgroundColor="#2A1414" Stroke="#6B2A2A" IsVisible="{Binding IsBlocked}">
+                        <Label Text="Blocked. You don't see their photos, posts or comments, and they can't follow you or comment on your work."
+                               FontSize="13" />
+                    </Border>
+                    <Button Text="{Binding BlockButtonText}" Command="{Binding ToggleBlockCommand}" IsVisible="{Binding CanBlock}"
+                            Style="{StaticResource LinkButton}" TextColor="{StaticResource Muted}" FontSize="13" HorizontalOptions="End"
+                            Padding="4,0" MinimumHeightRequest="30" Margin="0,-6,0,0" />
+
                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding Wins}" Spacing="6" IsVisible="{Binding HasWins}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="dto:ChallengeWinDto">

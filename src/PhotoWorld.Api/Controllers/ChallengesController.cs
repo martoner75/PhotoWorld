@@ -53,7 +53,9 @@ public class ChallengesController(
             .ToList();
 
         var photoIds = shown.Select(s => s.Score.PhotoId).ToList();
-        var photos = (await db.Photos.AsNoTracking().Where(p => photoIds.Contains(p.Id)).ToSummariesAsync(me, storage, ct))
+        // Entries by members the viewer blocked are left out (their places still count for everyone else).
+        var photos = (await db.Photos.AsNoTracking().Where(Moderation.PhotoVisibleTo(me))
+                .Where(p => photoIds.Contains(p.Id)).ToSummariesAsync(me, storage, ct))
             .ToDictionary(p => p.Id);
         var entries = shown.Where(s => photos.ContainsKey(s.Score.PhotoId))
             .Select(s => new ChallengeEntryDto(photos[s.Score.PhotoId], s.Score.Votes, s.Rank, s.Score.OwnerId == me, s.Score.EnteredAt))

@@ -38,6 +38,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_attachments`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, attached PDFs, and comments |
 | `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates) |
 | `photoworld.follows` | API (EF Core) | Who follows whom (for the Following tabs and follower counts) |
+| `photoworld.blocks` | API (EF Core) | Who blocked whom (hides the blocked member's content from the blocker) |
 | `photoworld.challenges`, `challenge_entries` | You (Supabase dashboard) / API | Photo challenge themes and dates, and the photos entered in each |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
@@ -252,6 +253,17 @@ copyright, other), once per item, but not their own. Content is **hidden** from 
 - a moderator marked one of its reports **upheld** (removed).
 
 Owners see a banner ("Hidden while we review reports" / "Removed by a moderator") and can still delete it.
+
+**Blocking.** Members can block another member from that member's page (website and app). The blocker stops
+seeing the blocked member's photos, posts and comments everywhere (including challenge entries and notification
+emails), any follows between the two are removed, and the blocked member can't follow the blocker or comment on
+their photos and posts. It's part of the same visibility rule as moderation. Blocked members are listed, with
+**Unblock**, in account settings and on the app's **Me** tab. Blocked members aren't told.
+
+**Terms of Use** (`/Home/Terms`, linked in the footer, on the sign-in page and from the app's Me tab) say members
+keep the rights to what they share, may view and download others' work for personal use only, and must not share
+objectionable content; reports are acted on within 24 hours. App Store guideline 1.2 (user-generated content)
+expects exactly this: terms, reporting, blocking and timely moderation. Have the terms reviewed before going live.
 
 There's no admin page: you moderate in the Supabase dashboard.
 

@@ -1,0 +1,100 @@
+@inject IConfiguration Configuration
+@{
+    ViewData["Title"] = "Terms of Use";
+    var contactEmail = Configuration["Site:ContactEmail"];
+}
+
+<article class="container legal">
+    <h1>Terms of Use</h1>
+    <p class="legal-updated">Last updated: 21 October 2026</p>
+
+    <p>
+        PhotoWorld is a community for people who love photography. These terms explain what you agree to when you
+        join and use PhotoWorld, on the website or in the app. By creating an account or using PhotoWorld, you
+        accept them. How we handle your personal information is covered by our
+        <a asp-action="Privacy">Privacy Policy</a>.
+    </p>
+
+    <h2>Your account</h2>
+    <p>
+        You sign in with your Google account and you're responsible for what's shared from your PhotoWorld account.
+        You must be at least 13 to join. You can delete your account at any time from <strong>Account settings</strong>;
+        everything you shared is deleted with it.
+    </p>
+
+    <h2>Your photos and posts stay yours</h2>
+    <p>
+        You keep the copyright and every other right you have in the photos, blog posts, captions, comments and PDF
+        attachments you share on PhotoWorld ("your content"). PhotoWorld doesn't become the owner of any of it.
+    </p>
+    <p>
+        So that PhotoWorld can work, you give us a non-exclusive, royalty-free, worldwide permission to store, copy,
+        resize and display your content, only to run PhotoWorld: showing it to other signed-in members, in your posts
+        and challenge entries, in notification emails to members, and on the public home page for photos you choose
+        to feature there. This permission ends when you delete the content or your account, apart from copies that
+        take a short while to disappear from backups and caches.
+    </p>
+
+    <h2>What other members may do with your content</h2>
+    <p>
+        By sharing on PhotoWorld, you're happy for other members to see your content, like it, comment on it and
+        download it for their own personal, non-commercial viewing (for example, saving a photo or a PDF guide to look
+        at later).
+    </p>
+    <p>
+        Members may <strong>not</strong> reuse someone else's content in any other way without the owner's
+        permission: for example republishing it, posting it elsewhere, editing it, selling it, using it in
+        advertising, claiming it as their own, or using it to train AI models. Ask the photographer first. A
+        member's page and their comments are a good way to reach them.
+    </p>
+
+    <h2>What you can share</h2>
+    <p>Only share content you have the right to share. That means it's your own work, or you have the owner's permission. Don't share anything that:</p>
+    <ul>
+        <li>infringes someone else's copyright or other rights,</li>
+        <li>is sexually explicit, or shows nudity of anyone who hasn't agreed to it,</li>
+        <li>harasses, threatens, bullies or demeans anyone, or promotes hatred or violence,</li>
+        <li>shows identifiable people in private situations without their agreement,</li>
+        <li>is spam, advertising or a scam, or contains malicious links,</li>
+        <li>is illegal where you live or in the UK.</li>
+    </ul>
+    <p>We don't tolerate objectionable content or abusive behaviour.</p>
+
+    <h2>Reporting, blocking and moderation</h2>
+    <p>
+        Use <strong>Report</strong> on any photo, comment, blog post or blog comment that breaks these terms. Content
+        reported by several members is hidden while we review it, and we remove content that breaks these terms,
+        usually within 24 hours of a report. We may suspend or delete accounts that repeatedly or seriously break them.
+    </p>
+    <p>
+        You can also <strong>block</strong> a member from their page. You'll stop seeing their photos, posts and
+        comments, and they can't follow you or comment on your photos and posts. You can unblock them from
+        <strong>Account settings</strong> at any time.
+    </p>
+
+    <h2>Photo challenges</h2>
+    <p>
+        Entering a challenge shows your photo in it with its votes and place. Votes are likes from other members.
+        Don't try to game the results, for example with extra accounts. We may remove entries that do. Winning a
+        challenge doesn't come with a prize unless we announce one.
+    </p>
+
+    <h2>The service</h2>
+    <p>
+        We work to keep PhotoWorld available and your content safe, but we provide it "as is" and can't promise it will
+        always be available or free of errors. Keep your own copies of your photos: PhotoWorld only stores resized
+        versions, never your original files. We may change or stop features, and we'll update these terms
+        (and the date above) if we change them. Nothing in these terms limits rights you have by law as a consumer.
+    </p>
+
+    <h2>Contact</h2>
+    @if (!string.IsNullOrWhiteSpace(contactEmail))
+    {
+        <p>Questions about these terms, or a report about your own work being used without permission:
+            <a href="mailto:@contactEmail">@contactEmail</a>.</p>
+    }
+    else
+    {
+        <p class="alert alert-warning">Set <code>Site:ContactEmail</code> in configuration to show a contact address here.</p>
+    }
+</article>
