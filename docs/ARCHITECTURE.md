@@ -250,7 +250,7 @@ sequenceDiagram
 - Deleting a photo deletes its row (likes, comments and reports cascade) and then its files. Deleting an account
   does the same for all of a member's photos.
 - **Blog posts** embed photos as references (`data-photo-id`), not as uploads. The API's `BlogHtml` sanitizer keeps
-  basic formatting, safe links and the author's own photos only, re-pointed at their real storage URLs.
+  basic formatting, text colour, safe links and the author's own photos only, re-pointed at their real storage URLs.
 - **Post PDFs** are real uploads: `POST api/blog-posts/{id}/attachments` (author only, checked by `%PDF-` header,
   5 per post, 20 MB each) stores them in the public `attachments` bucket; readers get `?download=` URLs.
   Deleting an attachment, its post or the account removes the row first, then the file.

@@ -29,15 +29,16 @@ public sealed partial class BlogHtml
             AllowedTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "p", "br", "h2", "h3", "strong", "em", "u", "s", "a", "ul", "ol", "li", "blockquote",
-                "figure", "figcaption", "img",
+                "figure", "figcaption", "img", "span",
             },
             AllowedAttributes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "href", "src", "alt", "class", PhotoIdAttribute,
+                "href", "src", "alt", "class", "style", PhotoIdAttribute,
             },
             AllowedSchemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "http", "https", "mailto" },
             UriAttributes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "href", "src" },
-            AllowedCssProperties = new HashSet<string>(),
+            // Text colour from the editor (<span style="color: …">); only plain colour values are kept.
+            AllowedCssProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "color" },
         });
         // With "class" allowed, only this class survives (keeps the photo embeds recognisable).
         _sanitizer.AllowedClasses.Add(PhotoClass);
@@ -48,6 +49,8 @@ public sealed partial class BlogHtml
                 link.SetAttribute("rel", "nofollow noopener noreferrer");
                 link.SetAttribute("target", "_blank");
             }
+            if (e.Node is IElement element && element.GetAttribute("style") is { } style && !ColorStyle().IsMatch(style))
+                element.RemoveAttribute("style");
         };
     }
 
@@ -134,4 +137,8 @@ public sealed partial class BlogHtml
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
+
+    // A single colour as a hex code or rgb()/rgba() numbers, e.g. "color: rgba(255, 138, 128, 1)".
+    [GeneratedRegex(@"^\s*color:\s*(#[0-9a-f]{3,8}|rgba?\(\s*[\d.]+%?(\s*,\s*[\d.]+%?){2,3}\s*\))\s*;?\s*$", RegexOptions.IgnoreCase)]
+    private static partial Regex ColorStyle();
 }

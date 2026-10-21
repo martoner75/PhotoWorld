@@ -151,8 +151,9 @@ a PDF (by its `%PDF-` header), cleans the file name, and stores it in the public
 browsers save the file instead of opening it from the storage domain. Deleting a post, or the account, deletes its PDFs.
 
 **Safety.** The API never trusts post HTML. `BlogHtml` runs every body through HtmlSanitizer, which keeps
-only basic formatting, http(s)/mailto links (opened with `rel="nofollow noopener"`) and the author's own
-photos, re-pointed at their real storage URL. Scripts, styles, event handlers and foreign images are removed.
+only basic formatting, text colour (a `color` style with a hex or rgb value, nothing else), http(s)/mailto
+links (opened with `rel="nofollow noopener"`) and the author's own photos, re-pointed at their real storage
+URL. Scripts, other styles, event handlers and foreign images are removed.
 When a post is shown, photos that were since deleted or hidden by moderation are dropped from it.
 
 **Cover photo.** The photo on a post's tile (in blog lists, the app and notification emails) is the one the author

@@ -54,6 +54,8 @@
         container: [
           [{ header: [2, 3, false] }],
           ["bold", "italic", "underline", "strike"],
+          // Light shades that stay readable on the dark post pages; the blank swatch resets to the default colour.
+          [{ color: [false, "#ffffff", "#9e9e9e", "#ff8a80", "#ffb74d", "#fff176", "#a5d6a7", "#80deea", "#90caf9", "#ce93d8", "#f48fb1"] }],
           [{ list: "ordered" }, { list: "bullet" }],
           ["blockquote", "link"],
           ["photo"],

@@ -27,13 +27,27 @@ public class BlogHtmlTests
     [Theory]
     [InlineData("<p>Hi<script>alert(1)</script></p>", "script")]
     [InlineData("<p onclick=\"alert(1)\">Hi</p>", "onclick")]
-    [InlineData("<p style=\"color:red\">Hi</p>", "style")]
+    [InlineData("<p style=\"position:fixed\">Hi</p>", "style")]
+    [InlineData("<p><span style=\"background-image:url(https://evil.example/x.png)\">Hi</span></p>", "evil.example")]
+    [InlineData("<p><span style=\"color:red;position:fixed;top:0\">Hi</span></p>", "position")]
     [InlineData("<p><a href=\"javascript:alert(1)\">x</a></p>", "javascript:")]
     [InlineData("<p><iframe src=\"https://evil.example\"></iframe>Hi</p>", "iframe")]
     [InlineData("<p class=\"evil\">Hi</p>", "evil")]
     public void Strips_dangerous_markup(string input, string forbidden)
     {
         Assert.DoesNotContain(forbidden, Clean(input).Html, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("<p>A <span style=\"color: rgb(255, 138, 128);\">red</span> word</p>")]
+    [InlineData("<p>A <span style=\"color: #ff8a80\">red</span> word</p>")]
+    [InlineData("<p>A <strong><span style=\"color: #ff8a80\">red</span></strong> word</p>")]
+    public void Keeps_text_colour(string input)
+    {
+        var result = Clean(input);
+
+        Assert.Matches("<span style=\"color: [^\"]+\">red</span>", result.Html);
+        Assert.Equal("A red word", result.Excerpt);
     }
 
     [Fact]
