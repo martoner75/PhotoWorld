@@ -58,6 +58,9 @@
                         </Grid>
                     </Border>
 
+                    <Button Text="🗺  Photo spots map" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                            Padding="4,0" MinimumHeightRequest="30" Command="{Binding OpenSpotsCommand}" />
+
                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsFiltered}">
                         <Label Text="{Binding FilterSummary}" Style="{StaticResource MutedText}" VerticalOptions="Center" />
                         <Button Grid.Column="1" Text="Clear" Style="{StaticResource LinkButton}" Command="{Binding ClearFiltersCommand}" />

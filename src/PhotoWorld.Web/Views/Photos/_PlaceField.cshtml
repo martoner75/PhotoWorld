@@ -1,0 +1,26 @@
+@model PlaceFieldViewModel
+<div class="field">
+    <label for="place-id">Where was it taken? <span class="text-muted">(optional)</span></label>
+    @if (Model.Places.Count == 0)
+    {
+        <p class="text-muted small mb-0">
+            Pin places on <a asp-controller="Places" asp-action="Index">My places</a> to show your photos on the
+            <a asp-controller="Spots" asp-action="Index">Spots map</a>.
+        </p>
+    }
+    else
+    {
+        <select id="place-id" name="PlaceId" class="field-select">
+            <option value="">Don't show it on the map</option>
+            @foreach (var place in Model.Places.OrderBy(p => p.Name))
+            {
+                <option value="@place.Id" selected="@(place.Id == Model.Selected)">@place.Name</option>
+            }
+        </select>
+        <span class="text-muted small">
+            Shows this photo on the <a asp-controller="Spots" asp-action="Index">Spots map</a> for members, with the
+            place's name and pin. Your other places, notes and dates stay private.
+        </span>
+    }
+    @Html.ValidationMessage("PlaceId", new { @class = "field-error" })
+</div>

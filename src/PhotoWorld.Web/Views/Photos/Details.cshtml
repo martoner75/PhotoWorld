@@ -33,6 +33,13 @@
             }
         </p>
 
+        @if (p.Place is { } place)
+        {
+            <p class="photo-place">
+                <a asp-controller="Spots" asp-action="Index" asp-route-photo="@p.Id">📍 @place.Name</a>
+            </p>
+        }
+
         @if (p.Description is not null)
         {
             <p class="photo-description">@p.Description</p>

@@ -12,6 +12,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         ["file"] = nameof(UploadPhotoViewModel.Photo),
         ["title"] = nameof(UploadPhotoViewModel.Title),
         ["description"] = nameof(UploadPhotoViewModel.Description),
+        ["placeId"] = nameof(UploadPhotoViewModel.PlaceId),
     };
 
     /// <summary>The gallery: everyone's photos or followed members', optionally filtered by camera settings.</summary>
@@ -33,7 +34,8 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     }
 
     [HttpGet]
-    public IActionResult Upload() => View(new UploadPhotoViewModel());
+    public async Task<IActionResult> Upload(CancellationToken ct) =>
+        View(new UploadPhotoViewModel { Places = await api.GetPlacesAsync(ct) });
 
     [HttpPost, ValidateAntiForgeryToken]
     [RequestSizeLimit(PhotoUploadLimits.MaxBytes + 1024 * 1024)]
@@ -42,12 +44,17 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     {
         if (model.Photo is { Length: > PhotoUploadLimits.MaxBytes })
             ModelState.AddModelError(nameof(model.Photo), $"Photos can be up to {PhotoUploadLimits.MaxBytes / (1024 * 1024)} MB.");
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            model.Places = await api.GetPlacesAsync(ct);
+            return View(model);
+        }
 
-        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, ct);
+        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
+            model.Places = await api.GetPlacesAsync(ct);
             return View(model);
         }
 
@@ -64,19 +71,24 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         return View(new EditPhotoViewModel
         {
             Id = photo.Id, ThumbnailUrl = photo.ThumbnailUrl, Title = photo.Title, Description = photo.Description,
-            ShowOnHome = photo.ShowOnHome,
+            ShowOnHome = photo.ShowOnHome, PlaceId = photo.Place?.Id, Places = await api.GetPlacesAsync(ct),
         });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(Guid id, EditPhotoViewModel model, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            model.Places = await api.GetPlacesAsync(ct);
+            return View(model);
+        }
 
-        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome), ct);
+        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome, model.PlaceId), ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
+            model.Places = await api.GetPlacesAsync(ct);
             return View(model);
         }
 

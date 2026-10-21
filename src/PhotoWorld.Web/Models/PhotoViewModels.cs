@@ -23,6 +23,12 @@ public sealed class UploadPhotoViewModel
     public string? Description { get; set; }
 
     public bool ShowOnHome { get; set; }
+
+    /// <summary>One of the member's places, to show the photo on the Spots map. Optional.</summary>
+    public Guid? PlaceId { get; set; }
+
+    /// <summary>The member's places for the picker (filled in by the controller).</summary>
+    public IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places { get; set; } = [];
 }
 
 public sealed class EditPhotoViewModel
@@ -38,7 +44,16 @@ public sealed class EditPhotoViewModel
     public string? Description { get; set; }
 
     public bool ShowOnHome { get; set; }
+
+    public Guid? PlaceId { get; set; }
+    public IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places { get; set; } = [];
 }
+
+/// <summary>The Spots map; <see cref="Focus"/> is a photo to open on arrival.</summary>
+public sealed record SpotsPageViewModel(IReadOnlyList<PhotoSpotDto> Spots, Guid? Focus);
+
+/// <summary>One of the member's own places for a photo's "where was it taken" picker.</summary>
+public sealed record PlaceFieldViewModel(Guid? Selected, IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places);
 
 /// <summary>One comment plus the photo it belongs to (needed for the delete form).</summary>
 public sealed record CommentItemViewModel(Guid PhotoId, CommentDto Comment);

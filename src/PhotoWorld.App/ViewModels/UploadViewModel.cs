@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using PhotoWorld.App.Services;
 using PhotoWorld.Shared.Photos;
+using PhotoWorld.Shared.Places;
 
 namespace PhotoWorld.App.ViewModels;
 
@@ -24,6 +25,36 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
 
     [ObservableProperty]
     public partial bool ShowOnHome { get; set; }
+
+    // "Where was it taken?": one of the member's places (index 0 = none), to show the photo on the Spots map.
+    private List<PlaceDto> _places = [];
+
+    [ObservableProperty]
+    public partial IReadOnlyList<string> PlaceOptions { get; set; } = [NoPlace];
+
+    [ObservableProperty]
+    public partial int PlaceIndex { get; set; }
+
+    public bool HasPlaces => _places.Count > 0;
+
+    private const string NoPlace = "Don't show it on the map";
+
+    /// <summary>Called when the tab shows: places may have been added on the Places tab.</summary>
+    public async Task LoadPlacesAsync()
+    {
+        try
+        {
+            var selected = PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : (Guid?)null;
+            _places = (await api.GetPlacesAsync()).OrderBy(p => p.Name).ToList();
+            PlaceOptions = [NoPlace, .. _places.Select(p => p.Name)];
+            PlaceIndex = selected is { } id ? _places.FindIndex(p => p.Id == id) + 1 : 0;
+            OnPropertyChanged(nameof(HasPlaces));
+        }
+        catch (ApiException)
+        {
+            // Without places the picker just isn't shown.
+        }
+    }
 
     public bool HasPhoto => Preview is not null;
 
@@ -59,7 +90,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         }
 
         var photo = await api.UploadPhotoAsync(stream, _file.FileName, ContentTypeOf(_file), Title.Trim(),
-            Description.Trim(), ShowOnHome);
+            Description.Trim(), ShowOnHome, PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : null);
         Reset();
         WeakReferenceMessenger.Default.Send(new PhotoUploadedMessage(photo.Id));
         await Shell.Current.GoToAsync($"{Routes.Gallery}/{Routes.Photo}", new ShellNavigationQueryParameters { ["id"] = photo.Id });
@@ -70,7 +101,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
     {
         _file = null;
         Preview = null;
-        (Title, Description, ShowOnHome) = ("", "", false);
+        (Title, Description, ShowOnHome, PlaceIndex) = ("", "", false, 0);
     }
 
     /// <summary>iOS often reports a UTI rather than a MIME type, so go by the file extension the picker gives.</summary>

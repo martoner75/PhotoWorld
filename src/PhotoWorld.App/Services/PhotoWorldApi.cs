@@ -52,6 +52,9 @@ public sealed class PhotoWorldApi(HttpClient http)
             $"{ApiRoutes.Photos}?" + string.Join("&", query.Select(q => $"{q.Name}={Uri.EscapeDataString(q.Value)}")), ct);
     }
 
+    public Task<List<PhotoSpotDto>> GetSpotsAsync(CancellationToken ct = default) =>
+        GetAsync<List<PhotoSpotDto>>(ApiRoutes.Spots, ct);
+
     public Task<CameraOptionsDto> GetCameraOptionsAsync(CancellationToken ct = default) =>
         GetAsync<CameraOptionsDto>(ApiRoutes.PhotoCameraOptions, ct);
 
@@ -59,7 +62,7 @@ public sealed class PhotoWorldApi(HttpClient http)
         GetAsync<PhotoDetailDto>(WithId(ApiRoutes.Photo, id), ct);
 
     public async Task<PhotoDetailDto> UploadPhotoAsync(Stream file, string fileName, string contentType, string title,
-        string? description, bool showOnHome, CancellationToken ct = default)
+        string? description, bool showOnHome, Guid? placeId = null, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var content = new StreamContent(file);
@@ -68,6 +71,7 @@ public sealed class PhotoWorldApi(HttpClient http)
         form.Add(new StringContent(title), "title");
         if (!string.IsNullOrWhiteSpace(description)) form.Add(new StringContent(description), "description");
         form.Add(new StringContent(showOnHome ? "true" : "false"), "showOnHome");
+        if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
         return await SendAsync<PhotoDetailDto>(HttpMethod.Post, ApiRoutes.Photos, form, ct);
     }
 

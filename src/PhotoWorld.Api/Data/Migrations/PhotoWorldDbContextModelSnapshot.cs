@@ -742,6 +742,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("owner_id");
 
+                    b.Property<Guid?>("PlaceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("place_id");
+
                     b.Property<bool>("ShowOnHome")
                         .HasColumnType("boolean")
                         .HasColumnName("show_on_home");
@@ -780,6 +784,9 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasIndex("CreatedAt")
                         .IsDescending()
                         .HasDatabaseName("ix_photos_created_at");
+
+                    b.HasIndex("PlaceId")
+                        .HasDatabaseName("ix_photos_place_id");
 
                     b.HasIndex("OwnerId", "CreatedAt")
                         .IsDescending(false, true)
@@ -1294,7 +1301,15 @@ namespace PhotoWorld.Api.Data.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_photos_users_owner_id");
 
+                    b.HasOne("PhotoWorld.Api.Data.Place", "Place")
+                        .WithMany()
+                        .HasForeignKey("PlaceId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_photos_places_place_id");
+
                     b.Navigation("Owner");
+
+                    b.Navigation("Place");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoComment", b =>

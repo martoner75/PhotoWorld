@@ -120,6 +120,9 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
     private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);
 
     [RelayCommand]
+    private Task OpenSpotsAsync() => Shell.Current.GoToAsync(Routes.Spots);
+
+    [RelayCommand]
     private Task OpenAsync(PhotoSummaryDto photo) =>
         Shell.Current.GoToAsync(Routes.Photo, new ShellNavigationQueryParameters { ["id"] = photo.Id });
 }
@@ -226,7 +229,7 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(AspectHeight),
-        nameof(HasCamera), nameof(HasLens))]
+        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel))]
     public partial PhotoDetailDto? Photo { get; set; }
 
     public bool HasCamera => Photo?.Camera is { } c && (c.Model ?? c.Make) is not null;
@@ -325,6 +328,12 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         await api.DeleteCommentAsync(Photo!.Id, comment.Id);
         Comments.Remove(comment);
     });
+
+    public string? PlaceLabel => Photo?.Place is { } p ? $"📍 {p.Name}" : null;
+
+    [RelayCommand]
+    private Task OpenPlaceAsync() => Photo is null ? Task.CompletedTask
+        : Shell.Current.GoToAsync(Routes.Spots, new ShellNavigationQueryParameters { ["photo"] = Photo.Id });
 
     [RelayCommand]
     private Task OpenOwnerAsync() => Photo is null ? Task.CompletedTask : Routes.OpenMemberAsync(Photo.Owner.Id);

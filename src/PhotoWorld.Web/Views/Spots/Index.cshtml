@@ -1,0 +1,43 @@
+@model SpotsPageViewModel
+@{
+    ViewData["Title"] = "Photo spots";
+    var places = Model.Spots.Select(s => (s.Latitude, s.Longitude)).Distinct().Count();
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Photo spots</h1>
+            <p class="text-muted">
+                @(Model.Spots.Count == 0 ? "No spots yet" : $"{Model.Spots.Count} {(Model.Spots.Count == 1 ? "photo" : "photos")} at {places} {(places == 1 ? "place" : "places")}") ·
+                Where members' photos were taken, when they chose to share it.
+            </p>
+        </div>
+        <a class="btn btn-ghost" asp-controller="Photos" asp-action="Index">Gallery</a>
+    </header>
+
+    @if (Model.Spots.Count == 0)
+    {
+        <div class="empty-state mb-4">
+            <p>No spots yet. Edit one of your photos and choose where it was taken to put it on the map.</p>
+        </div>
+    }
+
+    <div id="spots-map" class="places-map spots-map" aria-label="Map of where photos were taken"></div>
+
+    <p class="places-credit text-muted">
+        Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors.
+    </p>
+</section>
+
+@* Read by spots.js. Json.Serialize escapes '<', so titles can't close this tag. *@
+<script type="application/json" id="spots-data">@Json.Serialize(new { spots = Model.Spots, focus = Model.Focus })</script>
+
+@section Scripts {
+    <script src="~/lib/leaflet/leaflet.js"></script>
+    <script src="~/js/spots.js" asp-append-version="true"></script>
+}

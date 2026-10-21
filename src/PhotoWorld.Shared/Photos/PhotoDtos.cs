@@ -49,7 +49,22 @@ public sealed record PhotoDetailDto(
     DateTimeOffset UpdatedAt,
     ModerationState Moderation = ModerationState.Visible,
     bool CanReport = false,
-    bool ShowOnHome = false);
+    bool ShowOnHome = false,
+    PhotoPlaceDto? Place = null);
+
+/// <summary>Where a photo was taken: one of its owner's places, which they chose to show with it.</summary>
+public sealed record PhotoPlaceDto(Guid Id, string Name, double Latitude, double Longitude);
+
+/// <summary>A photo on the Spots map. Only the linked place's name and position are shared, never its notes or date.</summary>
+public sealed record PhotoSpotDto(
+    Guid PhotoId,
+    string Title,
+    string ThumbnailUrl,
+    Guid OwnerId,
+    string OwnerName,
+    string PlaceName,
+    double Latitude,
+    double Longitude);
 
 /// <summary>A photo its owner chose to feature in the public home-page slideshow.</summary>
 public sealed record ShowcasePhotoDto(Guid Id, string Title, string ImageUrl, int Width, int Height, string OwnerName);
@@ -93,7 +108,8 @@ public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSi
 public sealed record UpdatePhotoRequest(
     [Required, StringLength(PhotoUploadLimits.MaxTitleLength)] string Title,
     [StringLength(PhotoUploadLimits.MaxDescriptionLength)] string? Description,
-    bool ShowOnHome = false);
+    bool ShowOnHome = false,
+    Guid? PlaceId = null);
 
 public sealed record CreateCommentRequest(
     [Required, StringLength(PhotoUploadLimits.MaxCommentLength, MinimumLength = 1)] string Text);

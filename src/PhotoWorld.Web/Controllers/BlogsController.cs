@@ -208,7 +208,7 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
         if (photo is null || photo.Length == 0) return BadRequest(new { error = "Choose a photo to upload." });
         if (string.IsNullOrWhiteSpace(title)) return BadRequest(new { error = "Give your photo a title." });
 
-        var result = await api.UploadPhotoAsync(photo, title.Trim(), null, showOnHome: false, ct);
+        var result = await api.UploadPhotoAsync(photo, title.Trim(), null, showOnHome: false, ct: ct);
         return result.Succeeded
             ? Json(new { id = result.Value!.Id, title = result.Value.Title, thumbnailUrl = result.Value.ThumbnailUrl })
             : BadRequest(new { error = result.Errors.Values.SelectMany(m => m).FirstOrDefault() ?? "Upload failed." });

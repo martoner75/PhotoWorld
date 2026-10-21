@@ -69,6 +69,9 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return (await GetOrNullAsync<PagedResult<PhotoSummaryDto>>(url, ct))!;
     }
 
+    public async Task<IReadOnlyList<PhotoSpotDto>> GetSpotsAsync(Guid? ownerId = null, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<PhotoSpotDto>>(ApiRoutes.Spots + (ownerId is null ? "" : $"?ownerId={ownerId}"), ct) ?? [];
+
     public async Task<CameraOptionsDto> GetCameraOptionsAsync(CancellationToken ct = default) =>
         await GetOrNullAsync<CameraOptionsDto>(ApiRoutes.PhotoCameraOptions, ct) ?? new CameraOptionsDto([], []);
 
@@ -78,7 +81,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public async Task<IReadOnlyList<ShowcasePhotoDto>> GetShowcaseAsync(CancellationToken ct = default) =>
         await GetOrNullAsync<List<ShowcasePhotoDto>>(ApiRoutes.Showcase, ct) ?? [];
 
-    public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, CancellationToken ct = default)
+    public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var fileContent = new StreamContent(file.OpenReadStream());
@@ -88,6 +91,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         form.Add(new StringContent(title), "title");
         if (description is not null) form.Add(new StringContent(description), "description");
         form.Add(new StringContent(showOnHome ? "true" : "false"), "showOnHome");
+        if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
 
         using var res = await http.PostAsync(ApiRoutes.Photos, form, ct);
         return await ReadResultAsync<PhotoDetailDto>(res, ct);

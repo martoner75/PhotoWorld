@@ -28,6 +28,8 @@
             <span asp-validation-for="Description" class="field-error"></span>
         </div>
 
+        <partial name="_PlaceField" model="new PlaceFieldViewModel(Model.PlaceId, Model.Places)" />
+
         <partial name="_ShowOnHomeField" model="Model.ShowOnHome" />
 
         <div class="form-actions">

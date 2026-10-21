@@ -446,7 +446,9 @@ stateDiagram-v2
 ## 8. Places and maps
 
 Places are **private**: `api/places` only ever reads or writes the caller's own rows, and another member's place
-answers `404`. Locations are entered by the member (search or a pin), never taken from photos.
+answers `404`. The one way out is a member's choice: linking one of their places to a photo (`photos.place_id`,
+checked to be their own) shows that place's name and position with the photo and on the Spots map (`api/spots`),
+through the photo's visibility rule. Locations are entered by the member (search or a pin), never taken from photos.
 
 | Client | Map | Search and suggested names |
 |---|---|---|

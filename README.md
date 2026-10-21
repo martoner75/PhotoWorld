@@ -36,7 +36,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.users`, `photoworld.external_logins` | API (EF Core) | Members (incl. admin flag and suspension) and their linked Google accounts |
 | `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
 | `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_attachments`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, attached PDFs, and comments |
-| `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates) |
+| `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates); a photo can link to one (Spots map) |
 | `photoworld.follows` | API (EF Core) | Who follows whom (for the Following tabs and follower counts) |
 | `photoworld.blocks` | API (EF Core) | Who blocked whom (hides the blocked member's content from the blocker) |
 | `photoworld.activities`, `activity_settings` | API (EF Core) | Members' notifications (kept 90 days) and which kinds they want |
@@ -218,6 +218,14 @@ least one admin. If you ever need to fix it by hand (Supabase **SQL editor**):
 ```sql
 update photoworld.users set is_admin = true where lower(email) = 'someone@example.com';
 ```
+
+## Photo spots
+
+When uploading or editing a photo, its owner can choose **where it was taken** from their own places (My places).
+The photo then shows "📍 place" and appears on the **Spots** map (button on the Gallery; in the app, on the Gallery tab
+and from the photo), one pin per place with its photos. Only the linked place's name and position are shared, with
+members who may see the photo; its notes and date, and all other places, stay private. `photos.place_id` is cleared
+if the place is deleted. `GET api/spots` returns the newest 2,000 visible photos with a place.
 
 ## My places
 

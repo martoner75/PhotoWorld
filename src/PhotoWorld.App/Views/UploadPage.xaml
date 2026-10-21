@@ -35,6 +35,15 @@
                     <Editor Text="{Binding Description}" Placeholder="Where, when, the story behind the shot…"
                             AutoSize="TextChanges" MinimumHeightRequest="90" MaxLength="{Binding DescriptionMaxLength}" />
                 </Border>
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding HasPlaces}">
+                    <Label Text="Where was it taken? (optional)" Style="{StaticResource Strong}" />
+                    <Border Style="{StaticResource Field}">
+                        <Picker ItemsSource="{Binding PlaceOptions}" SelectedIndex="{Binding PlaceIndex}" Title="Where was it taken?"
+                                TextColor="{StaticResource Text}" />
+                    </Border>
+                    <Label Text="Shows the photo on the Spots map for members, with the place's name and pin. Your other places stay private."
+                           Style="{StaticResource MutedText}" />
+                </VerticalStackLayout>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout>
                         <Label Text="Show on the PhotoWorld home page" Style="{StaticResource Strong}" />

@@ -26,6 +26,13 @@ public class Photo
     public int? Iso { get; set; }
     public DateTimeOffset? TakenAt { get; set; }
 
+    /// <summary>
+    /// One of the owner's places, chosen to show where the photo was taken (Spots map). Cleared if the place is
+    /// deleted. Only the place's name and position are shown with the photo.
+    /// </summary>
+    public Guid? PlaceId { get; set; }
+    public Place? Place { get; set; }
+
     /// <summary>The owner opted in to the public home-page slideshow.</summary>
     public bool ShowOnHome { get; set; }
 

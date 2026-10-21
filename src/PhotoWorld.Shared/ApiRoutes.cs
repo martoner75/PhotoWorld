@@ -14,6 +14,8 @@ public static class ApiRoutes
     public const string Showcase = "api/showcase";
     public const string Photos = "api/photos";
     public const string PhotoCameraOptions = "api/photos/camera-options";
+    /// <summary>Photos whose owners linked them to a place, for the Spots map.</summary>
+    public const string Spots = "api/spots";
     public const string Photo = "api/photos/{id:guid}";
     public const string PhotoLike = "api/photos/{id:guid}/like";
     public const string PhotoComments = "api/photos/{id:guid}/comments";

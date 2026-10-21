@@ -75,7 +75,7 @@ public class PhotosController(
     [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
     public async Task<ActionResult<PhotoDetailDto>> Upload(
         [FromForm] IFormFile? file, [FromForm] string? title, [FromForm] string? description,
-        [FromForm] bool showOnHome, CancellationToken ct)
+        [FromForm] bool showOnHome, [FromForm] Guid? placeId, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId || !await db.Users.AnyAsync(u => u.Id == userId, ct)) return Unauthorized();
 
@@ -85,6 +85,7 @@ public class PhotosController(
         if (string.IsNullOrEmpty(title)) ModelState.AddModelError(nameof(title), "Give your photo a title.");
         else if (title.Length > PhotoUploadLimits.MaxTitleLength) ModelState.AddModelError(nameof(title), "That title is too long.");
         if (description?.Length > PhotoUploadLimits.MaxDescriptionLength) ModelState.AddModelError(nameof(description), "That description is too long.");
+        if (!await IsOwnPlaceAsync(placeId, userId, ct)) ModelState.AddModelError(nameof(placeId), "Choose one of your own places.");
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
         ProcessedPhoto processed;
@@ -120,6 +121,7 @@ public class PhotosController(
             Iso = processed.Camera.Iso,
             TakenAt = processed.Camera.TakenAt,
             ShowOnHome = showOnHome,
+            PlaceId = placeId,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -152,8 +154,14 @@ public class PhotosController(
         var photo = await db.Photos.FindAsync([id], ct);
         if (photo is null) return NotFound();
         if (photo.OwnerId != CurrentUserId()) return Forbid();
+        if (!await IsOwnPlaceAsync(request.PlaceId, photo.OwnerId, ct))
+        {
+            ModelState.AddModelError(nameof(request.PlaceId), "Choose one of your own places.");
+            return ValidationProblem(ModelState);
+        }
 
         photo.Title = request.Title.Trim();
+        photo.PlaceId = request.PlaceId;
         photo.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         photo.ShowOnHome = request.ShowOnHome;
         photo.UpdatedAt = clock.GetUtcNow();
@@ -308,6 +316,10 @@ public class PhotosController(
 
     private Guid? CurrentUserId() => User.GetUserId();
 
+    /// <summary>No place, or one of the member's own (places are private, so nobody can link someone else's).</summary>
+    private async Task<bool> IsOwnPlaceAsync(Guid? placeId, Guid ownerId, CancellationToken ct) =>
+        placeId is null || await db.Places.AnyAsync(p => p.Id == placeId && p.UserId == ownerId, ct);
+
     /// <summary>Photos this user may see: everything that isn't hidden by moderation, plus their own.</summary>
     private IQueryable<Photo> VisiblePhotos(Guid? userId) =>
         db.Photos.AsNoTracking().Where(Moderation.PhotoVisibleTo(userId));
@@ -328,6 +340,7 @@ public class PhotosController(
                 Upheld = p.Reports.Any(r => r.Status == ReportStatus.Upheld),
                 OpenReports = p.Reports.Count(r => r.Status == ReportStatus.Open),
                 ReportedByMe = p.Reports.Any(r => r.ReporterId == me),
+                Place = p.Place == null ? null : new PhotoPlaceDto(p.Place.Id, p.Place.Name, p.Place.Latitude, p.Place.Longitude),
             })
             .SingleOrDefaultAsync(ct);
         if (row is null) return null;
@@ -339,7 +352,8 @@ public class PhotosController(
             row.Likes, row.Comments, row.LikedByMe, p.OwnerId == me, p.CreatedAt, p.UpdatedAt,
             Moderation.State(row.Upheld, row.OpenReports),
             CanReport: p.OwnerId != me && !row.ReportedByMe,
-            ShowOnHome: p.ShowOnHome);
+            ShowOnHome: p.ShowOnHome,
+            Place: row.Place);
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(

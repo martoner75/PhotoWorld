@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+             x:Class="PhotoWorld.App.Views.SpotsPage"
+             x:DataType="vm:SpotsViewModel"
+             Title="Photo spots">
+    <Grid RowDefinitions="Auto,*">
+        <Label Text="Where members' photos were taken, when they chose to share it. Tap a pin, then its label to open the photo."
+               Style="{StaticResource MutedText}" Margin="16,10" />
+        <maps:Map x:Name="Map" Grid.Row="1" MapType="Street" IsShowingUser="False" ItemsSource="{Binding Spots}">
+            <maps:Map.ItemTemplate>
+                <DataTemplate x:DataType="vm:SpotGroup">
+                    <maps:Pin Location="{Binding Location}" Label="{Binding Name}" Address="{Binding Subtitle}"
+                              Type="Place" InfoWindowClicked="OnPinInfoClicked" />
+                </DataTemplate>
+            </maps:Map.ItemTemplate>
+        </maps:Map>
+        <Label Grid.Row="1" Text="No spots yet. Choose where a photo was taken when you upload it."
+               Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center" VerticalOptions="Center"
+               Margin="32" IsVisible="{Binding IsEmpty}" BackgroundColor="#C00E0F12" Padding="12" />
+        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

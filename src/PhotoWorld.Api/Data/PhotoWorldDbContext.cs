@@ -73,6 +73,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(p => p.Aperture).HasPrecision(4, 1);
             e.Property(p => p.ExposureTime).HasMaxLength(20);
             e.HasOne(p => p.Owner).WithMany().HasForeignKey(p => p.OwnerId);
+            e.HasOne(p => p.Place).WithMany().HasForeignKey(p => p.PlaceId).OnDelete(DeleteBehavior.SetNull);
             e.HasIndex(p => p.CreatedAt).IsDescending();
             e.HasIndex(p => new { p.OwnerId, p.CreatedAt }).IsDescending(false, true);
             e.HasIndex(p => new { p.ShowOnHome, p.CreatedAt }).IsDescending(false, true);

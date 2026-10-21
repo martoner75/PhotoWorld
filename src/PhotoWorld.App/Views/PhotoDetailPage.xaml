@@ -42,6 +42,9 @@
                                Text="{Binding Comments.Count, StringFormat='{0} comments'}" />
                     </HorizontalStackLayout>
 
+                    <Button Text="{Binding PlaceLabel}" Style="{StaticResource LinkButton}" TextColor="{StaticResource Text}"
+                            HorizontalOptions="Start" Padding="0,2" Command="{Binding OpenPlaceCommand}"
+                            IsVisible="{Binding PlaceLabel, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding Photo.Description}" FontSize="16"
                            IsVisible="{Binding Photo.Description, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding CameraSummary}" Style="{StaticResource MutedText}"
