@@ -123,6 +123,9 @@ public partial class ExploreViewModel(PhotoWorldApi api) : ViewModelBase
     private Task OpenTagAsync(TagCountDto tag) => ShowInGalleryAsync(new PhotoSearch { Tag = tag.Name });
 
     [RelayCommand]
+    private Task OpenFeedbackWantedAsync() => ShowInGalleryAsync(new PhotoSearch { WantsFeedback = true });
+
+    [RelayCommand]
     private Task SeeAllPhotosAsync() => ShowInGalleryAsync(new PhotoSearch { Text = Query.Trim() });
 
     private static async Task ShowInGalleryAsync(PhotoSearch search)

@@ -56,6 +56,17 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default) =>
         GetAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct);
 
+    public Task<PhotoFeedbackDto> GetFeedbackAsync(Guid photoId, CancellationToken ct = default) =>
+        GetAsync<PhotoFeedbackDto>(WithId(ApiRoutes.PhotoFeedback, photoId), ct);
+
+    public Task SaveFeedbackAsync(Guid photoId, SaveFeedbackRequest request, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Put, WithId(ApiRoutes.PhotoFeedback, photoId), JsonContent.Create(request, options: Json), ct);
+
+    public Task DeleteFeedbackAsync(Guid photoId, Guid? feedbackId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, feedbackId is { } id
+            ? ApiRoutes.Format(ApiRoutes.PhotoFeedbackItem, ("id", photoId), ("feedbackId", id))
+            : WithId(ApiRoutes.PhotoFeedback, photoId), null, ct);
+
     /// <summary>Today's photo of the day (or the latest), or null when there isn't one.</summary>
     public async Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default)
     {
@@ -75,7 +86,8 @@ public sealed class PhotoWorldApi(HttpClient http)
         GetAsync<PhotoDetailDto>(WithId(ApiRoutes.Photo, id), ct);
 
     public async Task<PhotoDetailDto> UploadPhotoAsync(Stream file, string fileName, string contentType, string title,
-        string? description, bool showOnHome, Guid? placeId = null, string? tags = null, CancellationToken ct = default)
+        string? description, bool showOnHome, Guid? placeId = null, string? tags = null, bool wantsFeedback = false,
+        CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var content = new StreamContent(file);
@@ -86,6 +98,7 @@ public sealed class PhotoWorldApi(HttpClient http)
         form.Add(new StringContent(showOnHome ? "true" : "false"), "showOnHome");
         if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
         if (!string.IsNullOrWhiteSpace(tags)) form.Add(new StringContent(tags), "tags");
+        form.Add(new StringContent(wantsFeedback ? "true" : "false"), "wantsFeedback");
         return await SendAsync<PhotoDetailDto>(HttpMethod.Post, ApiRoutes.Photos, form, ct);
     }
 

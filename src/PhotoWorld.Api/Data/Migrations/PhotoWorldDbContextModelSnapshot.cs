@@ -100,7 +100,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback')");
                         });
                 });
 
@@ -841,6 +841,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<bool>("WantsFeedback")
+                        .HasColumnType("boolean")
+                        .HasColumnName("wants_feedback");
+
                     b.Property<int>("Width")
                         .HasColumnType("integer")
                         .HasColumnName("width");
@@ -901,6 +905,62 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasDatabaseName("ix_photo_comments_photo_id_created_at");
 
                     b.ToTable("photo_comments", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoFeedback", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("comment");
+
+                    b.Property<int>("Composition")
+                        .HasColumnType("integer")
+                        .HasColumnName("composition");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Focus")
+                        .HasColumnType("integer")
+                        .HasColumnName("focus");
+
+                    b.Property<int>("Light")
+                        .HasColumnType("integer")
+                        .HasColumnName("light");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_photo_feedback");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_photo_feedback_author_id");
+
+                    b.HasIndex("PhotoId", "AuthorId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_photo_feedback_photo_id_author_id");
+
+                    b.ToTable("photo_feedback", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_photo_feedback_ratings", "composition between 1 and 5 and light between 1 and 5 and focus between 1 and 5");
+                        });
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoLike", b =>
@@ -1492,6 +1552,27 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Photo");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoFeedback", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_feedback_users_author_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany("Feedback")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_feedback_photos_photo_id");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Photo");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoLike", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
@@ -1630,6 +1711,8 @@ namespace PhotoWorld.Api.Data.Migrations
             modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Feedback");
 
                     b.Navigation("Likes");
 

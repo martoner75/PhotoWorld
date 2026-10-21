@@ -33,6 +33,11 @@ public class Photo
     public Guid? PlaceId { get; set; }
     public Place? Place { get; set; }
 
+    /// <summary>The owner asks other members for feedback (composition, light, focus, comment).</summary>
+    public bool WantsFeedback { get; set; }
+
+    public List<PhotoFeedback> Feedback { get; set; } = [];
+
     /// <summary>The owner opted in to the public home-page slideshow.</summary>
     public bool ShowOnHome { get; set; }
 
@@ -43,6 +48,22 @@ public class Photo
     public List<PhotoLike> Likes { get; set; } = [];
     public List<PhotoComment> Comments { get; set; } = [];
     public List<Report> Reports { get; set; } = [];
+}
+
+/// <summary>One member's feedback on a photo (one each; they can change it). Private between them and the owner.</summary>
+public class PhotoFeedback
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PhotoId { get; set; }
+    public Photo Photo { get; set; } = null!;
+    public Guid AuthorId { get; set; }
+    public User Author { get; set; } = null!;
+    public int Composition { get; set; }
+    public int Light { get; set; }
+    public int Focus { get; set; }
+    public string? Comment { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 /// <summary>A tag on a photo, stored normalised without '#' (see PhotoTags).</summary>

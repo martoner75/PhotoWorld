@@ -51,6 +51,14 @@
                 </VerticalStackLayout>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout>
+                        <Label Text="Ask for feedback" Style="{StaticResource Strong}" />
+                        <Label Text="Members can rate composition, light and focus and comment. Only you see it."
+                               Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding WantsFeedback}" VerticalOptions="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
                         <Label Text="Show on the PhotoWorld home page" Style="{StaticResource Strong}" />
                         <Label Text="Anyone can see it in the public slideshow, with your name. Off by default."
                                Style="{StaticResource MutedText}" />

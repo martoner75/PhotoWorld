@@ -27,6 +27,10 @@ public static class ApiRoutes
     public const string PhotoComments = "api/photos/{id:guid}/comments";
     public const string PhotoComment = "api/photos/{id:guid}/comments/{commentId:guid}";
     public const string PhotoReports = "api/photos/{id:guid}/reports";
+    /// <summary>GET the feedback panel; PUT / DELETE the caller's own feedback.</summary>
+    public const string PhotoFeedback = "api/photos/{id:guid}/feedback";
+    /// <summary>The photo's owner removing someone's feedback.</summary>
+    public const string PhotoFeedbackItem = "api/photos/{id:guid}/feedback/{feedbackId:guid}";
     public const string CommentReports = "api/photos/{id:guid}/comments/{commentId:guid}/reports";
 
     public const string Blog = "api/blogs/{userId:guid}";

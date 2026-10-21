@@ -19,6 +19,7 @@ public static class PhotoFilters
                                        || p.Tags.Any(t => t.Name == asTag));
         }
         if (PhotoTags.Normalize(search.Tag) is { } tag) photos = photos.Where(p => p.Tags.Any(t => t.Name == tag));
+        if (search.WantsFeedback == true) photos = photos.Where(p => p.WantsFeedback);
         if (search.Camera?.Trim().ToLowerInvariant() is { Length: > 0 } camera)
             photos = photos.Where(p => (p.CameraMake != null && p.CameraMake.ToLower().Contains(camera))
                                        || (p.CameraModel != null && p.CameraModel.ToLower().Contains(camera)));

@@ -18,6 +18,7 @@ public static class ActivityText
             ActivityTypes.Follow => $"{who} started following you",
             ActivityTypes.NewPhoto => $"{who} shared a new photo, {photo}",
             ActivityTypes.NewPost => $"{who} published a new post, {post}",
+            ActivityTypes.Feedback => $"{who} gave feedback on your photo {photo}",
             ActivityTypes.PhotoOfTheDay => $"Your photo {photo} is today's photo of the day! ⭐",
             ActivityTypes.ChallengeOpen => $"New photo challenge: {challenge} is open for entries",
             ActivityTypes.ChallengeEnding => $"The {challenge} challenge ends in less than a day",

@@ -33,7 +33,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     {
         var photo = await api.GetPhotoAsync(id, ct);
         if (photo is null) return NotFound();
-        return View(new PhotoPageViewModel(photo, await api.GetCommentsAsync(id, ct)));
+        return View(new PhotoPageViewModel(photo, await api.GetCommentsAsync(id, ct), await api.GetFeedbackAsync(id, ct)));
     }
 
     [HttpGet]
@@ -53,7 +53,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return View(model);
         }
 
-        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags, ct);
+        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags, model.WantsFeedback, ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
@@ -75,7 +75,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         {
             Id = photo.Id, ThumbnailUrl = photo.ThumbnailUrl, Title = photo.Title, Description = photo.Description,
             ShowOnHome = photo.ShowOnHome, PlaceId = photo.Place?.Id, Places = await api.GetPlacesAsync(ct),
-            Tags = PhotoTags.Join(photo.Tags),
+            Tags = PhotoTags.Join(photo.Tags), WantsFeedback = photo.WantsFeedback,
         });
     }
 
@@ -88,7 +88,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return View(model);
         }
 
-        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags ?? ""), ct);
+        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags ?? "", model.WantsFeedback), ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
@@ -160,6 +160,21 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         };
         if (outcome == ReportOutcome.NotFound) return RedirectToAction(nameof(Index));
         return Redirect(Url.Action(nameof(Details), new { id }) + (model.CommentId is null ? "" : "#comments"));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Feedback(Guid id, int composition, int light, int focus, string? comment, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.SaveFeedbackAsync(id, new SaveFeedbackRequest(composition, light, focus, comment), ct)
+            ?? "Thanks! Your feedback is with the photographer (only they can see it).";
+        return Redirect(Url.Action(nameof(Details), new { id }) + "#feedback");
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteFeedback(Guid id, Guid? feedbackId, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.DeleteFeedbackAsync(id, feedbackId, ct) ? "Feedback removed." : "That feedback no longer exists.";
+        return Redirect(Url.Action(nameof(Details), new { id }) + "#feedback");
     }
 
     [HttpPost, ValidateAntiForgeryToken]

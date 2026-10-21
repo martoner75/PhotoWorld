@@ -18,6 +18,9 @@ public sealed class PhotoSearch
     /// <summary>Only photos with this tag (with or without '#').</summary>
     [StringLength(PhotoTags.MaxLength + 1)] public string? Tag { get; set; }
 
+    /// <summary>Only photos whose owners are asking for feedback.</summary>
+    public bool? WantsFeedback { get; set; }
+
     /// <summary>Matches the camera's make or model, e.g. "sony" or "X-T5".</summary>
     [StringLength(TextMax)] public string? Camera { get; set; }
     [StringLength(TextMax)] public string? Lens { get; set; }
@@ -39,6 +42,7 @@ public sealed class PhotoSearch
     {
         if (!string.IsNullOrWhiteSpace(Text)) yield return ("text", Text.Trim());
         if (PhotoTags.Normalize(Tag) is { } tag) yield return ("tag", tag);
+        if (WantsFeedback == true) yield return ("wantsFeedback", "true");
         if (!string.IsNullOrWhiteSpace(Camera)) yield return ("camera", Camera.Trim());
         if (!string.IsNullOrWhiteSpace(Lens)) yield return ("lens", Lens.Trim());
         if (FocalMin is { } focalMin) yield return ("focalMin", Format(focalMin));
@@ -54,6 +58,7 @@ public sealed class PhotoSearch
     {
         if (!string.IsNullOrWhiteSpace(Text)) yield return $"“{Text.Trim()}”";
         if (PhotoTags.Normalize(Tag) is { } tag) yield return "#" + tag;
+        if (WantsFeedback == true) yield return "asking for feedback";
         if (!string.IsNullOrWhiteSpace(Camera)) yield return Camera.Trim();
         if (!string.IsNullOrWhiteSpace(Lens)) yield return Lens.Trim();
         if (Range(FocalMin, FocalMax) is { } focal) yield return focal + " mm";

@@ -123,6 +123,11 @@
             <p class="report-link"><a asp-action="Report" asp-route-id="@p.Id">Report this photo</a></p>
         }
 
+        @if (Model.Feedback is { } feedback && (feedback.WantsFeedback || feedback.Count > 0 || p.CanEdit))
+        {
+            <partial name="_Feedback" model="Model" />
+        }
+
         <section class="comments" id="comments">
             <h2>Comments <span class="text-muted" data-comment-count>@Model.Comments.Count</span></h2>
             <ul class="comment-list" id="comment-list">

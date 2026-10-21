@@ -70,6 +70,24 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return (await GetOrNullAsync<PagedResult<PhotoSummaryDto>>(url, ct))!;
     }
 
+    public Task<PhotoFeedbackDto?> GetFeedbackAsync(Guid photoId, CancellationToken ct = default) =>
+        GetOrNullAsync<PhotoFeedbackDto>(ApiRoutes.Format(ApiRoutes.PhotoFeedback, ("id", photoId)), ct);
+
+    public async Task<string?> SaveFeedbackAsync(Guid photoId, SaveFeedbackRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.PhotoFeedback, ("id", photoId)), request, ct);
+        if (res.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That photo is no longer available.";
+    }
+
+    public async Task<bool> DeleteFeedbackAsync(Guid photoId, Guid? feedbackId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(feedbackId is { } fid
+            ? ApiRoutes.Format(ApiRoutes.PhotoFeedbackItem, ("id", photoId), ("feedbackId", fid))
+            : ApiRoutes.Format(ApiRoutes.PhotoFeedback, ("id", photoId)), ct);
+        return IsSuccess(res);
+    }
+
     public async Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default) =>
         (await GetOrNullAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct))!;
 
@@ -111,7 +129,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         await GetOrNullAsync<List<ShowcasePhotoDto>>(ApiRoutes.Showcase, ct) ?? [];
 
     public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
-        string? tags = null, CancellationToken ct = default)
+        string? tags = null, bool wantsFeedback = false, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var fileContent = new StreamContent(file.OpenReadStream());
@@ -123,6 +141,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         form.Add(new StringContent(showOnHome ? "true" : "false"), "showOnHome");
         if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
         if (!string.IsNullOrWhiteSpace(tags)) form.Add(new StringContent(tags), "tags");
+        form.Add(new StringContent(wantsFeedback ? "true" : "false"), "wantsFeedback");
 
         using var res = await http.PostAsync(ApiRoutes.Photos, form, ct);
         return await ReadResultAsync<PhotoDetailDto>(res, ct);

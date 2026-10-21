@@ -3,7 +3,7 @@ using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Web.Models;
 
-public sealed record PhotoPageViewModel(PhotoDetailDto Photo, IReadOnlyList<CommentDto> Comments);
+public sealed record PhotoPageViewModel(PhotoDetailDto Photo, IReadOnlyList<CommentDto> Comments, PhotoFeedbackDto? Feedback = null);
 
 public sealed record MemberPageViewModel(MemberProfileDto Member, PagedResult<PhotoSummaryDto> Photos);
 
@@ -34,6 +34,8 @@ public sealed class UploadPhotoViewModel
     [StringLength(600)]
     public string? Tags { get; set; }
 
+    public bool WantsFeedback { get; set; }
+
     /// <summary>The member's places for the picker (filled in by the controller).</summary>
     public IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places { get; set; } = [];
 }
@@ -57,6 +59,8 @@ public sealed class EditPhotoViewModel
 
     [StringLength(600)]
     public string? Tags { get; set; }
+
+    public bool WantsFeedback { get; set; }
 }
 
 /// <summary>The Spots map; <see cref="Focus"/> is a photo to open on arrival.</summary>

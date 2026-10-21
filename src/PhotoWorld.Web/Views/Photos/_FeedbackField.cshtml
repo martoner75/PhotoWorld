@@ -1,0 +1,9 @@
+@model bool
+<label class="check-row">
+    <input type="checkbox" name="WantsFeedback" value="true" @(Model ? "checked" : "") />
+    <span>
+        <strong>Ask for feedback</strong>
+        <span class="text-muted small d-block">Members can rate the composition, light and focus and leave a comment. Only you see it.</span>
+    </span>
+</label>
+<input type="hidden" name="WantsFeedback" value="false" />

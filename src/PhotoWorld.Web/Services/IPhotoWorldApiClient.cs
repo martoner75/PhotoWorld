@@ -37,7 +37,12 @@ public interface IPhotoWorldApiClient
     Task<CameraOptionsDto> GetCameraOptionsAsync(CancellationToken ct = default);
     Task<PhotoDetailDto?> GetPhotoAsync(Guid id, CancellationToken ct = default);
     Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
-        string? tags = null, CancellationToken ct = default);
+        string? tags = null, bool wantsFeedback = false, CancellationToken ct = default);
+    Task<PhotoFeedbackDto?> GetFeedbackAsync(Guid photoId, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the member.</summary>
+    Task<string?> SaveFeedbackAsync(Guid photoId, SaveFeedbackRequest request, CancellationToken ct = default);
+    /// <summary>Deletes the caller's feedback, or (for the photo's owner) <paramref name="feedbackId"/>.</summary>
+    Task<bool> DeleteFeedbackAsync(Guid photoId, Guid? feedbackId, CancellationToken ct = default);
     Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default);
     /// <summary>Today's photo of the day (or the latest), or null.</summary>
     Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default);

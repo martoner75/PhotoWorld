@@ -17,7 +17,7 @@ public static class ActivityRules
     public static bool Wants(ActivitySettingsDto settings, string type) => type switch
     {
         ActivityTypes.Like => settings.Likes,
-        ActivityTypes.Comment or ActivityTypes.PostComment => settings.Comments,
+        ActivityTypes.Comment or ActivityTypes.PostComment or ActivityTypes.Feedback => settings.Comments,
         ActivityTypes.Follow => settings.Follows,
         ActivityTypes.NewPhoto or ActivityTypes.NewPost => settings.FollowedPosts,
         ActivityTypes.PhotoOfTheDay => true, // rare and always good news
@@ -25,7 +25,7 @@ public static class ActivityRules
     };
 
     /// <summary>Likes and follows are one-per-person: liking again (after an unlike) doesn't notify twice.</summary>
-    public static bool IsOncePerActor(string type) => type is ActivityTypes.Like or ActivityTypes.Follow;
+    public static bool IsOncePerActor(string type) => type is ActivityTypes.Like or ActivityTypes.Follow or ActivityTypes.Feedback;
 
     public static string? Snippet(string? text)
     {

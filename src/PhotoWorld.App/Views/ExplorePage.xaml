@@ -35,6 +35,9 @@
                     <Label Text="Nothing matches that search. Try another word." Style="{StaticResource MutedText}" FontSize="15"
                            IsVisible="{Binding NothingFound}" Margin="0,20" HorizontalTextAlignment="Center" />
 
+                    <Button Text="Photos asking for feedback" Style="{StaticResource GhostButton}" HorizontalOptions="Start" Padding="14,6"
+                            Command="{Binding OpenFeedbackWantedCommand}" IsVisible="{Binding IsSearch, Converter={StaticResource Not}}" />
+
                     <Label Text="{Binding TagsTitle}" Style="{StaticResource Subheading}" IsVisible="{Binding HasTags}" />
                     <FlexLayout BindableLayout.ItemsSource="{Binding Tags}" Wrap="Wrap" IsVisible="{Binding HasTags}">
                         <BindableLayout.ItemTemplate>

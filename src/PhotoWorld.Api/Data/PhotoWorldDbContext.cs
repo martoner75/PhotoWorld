@@ -20,6 +20,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<PhotoLike> PhotoLikes => Set<PhotoLike>();
     public DbSet<PhotoTag> PhotoTags => Set<PhotoTag>();
     public DbSet<PhotoOfTheDay> PhotosOfTheDay => Set<PhotoOfTheDay>();
+    public DbSet<PhotoFeedback> PhotoFeedback => Set<PhotoFeedback>();
     public DbSet<PhotoComment> PhotoComments => Set<PhotoComment>();
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<Blog> Blogs => Set<Blog>();
@@ -90,6 +91,16 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(t => t.Name).HasMaxLength(Shared.Photos.PhotoTags.MaxLength);
             e.HasOne(t => t.Photo).WithMany(p => p.Tags).HasForeignKey(t => t.PhotoId);
             e.HasIndex(t => t.Name);
+        });
+
+        modelBuilder.Entity<PhotoFeedback>(e =>
+        {
+            e.ToTable("photo_feedback", t => t.HasCheckConstraint("ck_photo_feedback_ratings",
+                "composition between 1 and 5 and light between 1 and 5 and focus between 1 and 5"));
+            e.Property(f => f.Comment).HasMaxLength(FeedbackLimits.CommentMax);
+            e.HasOne(f => f.Photo).WithMany(p => p.Feedback).HasForeignKey(f => f.PhotoId);
+            e.HasOne(f => f.Author).WithMany().HasForeignKey(f => f.AuthorId);
+            e.HasIndex(f => new { f.PhotoId, f.AuthorId }).IsUnique();
         });
 
         modelBuilder.Entity<PhotoOfTheDay>(e =>

@@ -75,7 +75,8 @@ public class PhotosController(
     [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
     public async Task<ActionResult<PhotoDetailDto>> Upload(
         [FromForm] IFormFile? file, [FromForm] string? title, [FromForm] string? description,
-        [FromForm] bool showOnHome, [FromForm] Guid? placeId, [FromForm] string? tags, CancellationToken ct)
+        [FromForm] bool showOnHome, [FromForm] Guid? placeId, [FromForm] string? tags, [FromForm] bool wantsFeedback,
+        CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId || !await db.Users.AnyAsync(u => u.Id == userId, ct)) return Unauthorized();
 
@@ -122,6 +123,7 @@ public class PhotosController(
             TakenAt = processed.Camera.TakenAt,
             ShowOnHome = showOnHome,
             PlaceId = placeId,
+            WantsFeedback = wantsFeedback,
             Tags = PhotoTags.Parse(tags, description).Select(name => new PhotoTag { Name = name }).ToList(),
             CreatedAt = now,
             UpdatedAt = now,
@@ -165,6 +167,7 @@ public class PhotosController(
         photo.PlaceId = request.PlaceId;
         photo.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         photo.ShowOnHome = request.ShowOnHome;
+        if (request.WantsFeedback is { } wants) photo.WantsFeedback = wants;
         // Clients that don't send tags (older apps) leave them alone; #hashtags in the description always count.
         var tagNames = PhotoTags.Parse(request.Tags ?? PhotoTags.Join(photo.Tags.Select(t => t.Name)), photo.Description);
         photo.Tags.RemoveAll(t => !tagNames.Contains(t.Name));
@@ -364,7 +367,8 @@ public class PhotosController(
             ShowOnHome: p.ShowOnHome,
             Place: row.Place,
             Tags: row.Tags,
-            PhotoOfTheDay: row.Featured);
+            PhotoOfTheDay: row.Featured,
+            WantsFeedback: p.WantsFeedback);
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(

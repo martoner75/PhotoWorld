@@ -54,6 +54,15 @@ public class PhotoTagsTests
     }
 
     [Fact]
+    public void Feedback_filter_keeps_photos_asking_for_it()
+    {
+        var photos = new[] { Shot("Asking", null), Shot("Not asking", null) };
+        photos[0].WantsFeedback = true;
+        Assert.Equal(["Asking"], photos.AsQueryable().Matching(new PhotoSearch { WantsFeedback = true }).Select(p => p.Title));
+        Assert.Equal(2, photos.AsQueryable().Matching(new PhotoSearch { WantsFeedback = false }).Count());
+    }
+
+    [Fact]
     public void Tag_filter_matches_exact_tags_with_or_without_hash()
     {
         Assert.Equal(["Misty morning", "Bridge"], Find(new PhotoSearch { Tag = "#London" }));

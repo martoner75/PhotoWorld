@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.FeedbackPage"
+             x:DataType="vm:FeedbackViewModel"
+             Title="{Binding Title}">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="12" MaximumWidthRequest="560">
+                <Label Text="{Binding Summary}" Style="{StaticResource MutedText}" FontSize="14" />
+
+                <!-- Giving feedback -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding CanGive}">
+                    <Label Text="Composition" Style="{StaticResource Strong}" />
+                    <Label Text="Framing, balance, where the eye goes" Style="{StaticResource MutedText}" Margin="0,-8,0,0" />
+                    <Border Style="{StaticResource Field}">
+                        <Picker ItemsSource="{Binding Scale}" SelectedIndex="{Binding Composition}" Title="1 to 5" TextColor="{DynamicResource Text}" />
+                    </Border>
+                    <Label Text="Light" Style="{StaticResource Strong}" />
+                    <Label Text="Exposure, mood, use of the light" Style="{StaticResource MutedText}" Margin="0,-8,0,0" />
+                    <Border Style="{StaticResource Field}">
+                        <Picker ItemsSource="{Binding Scale}" SelectedIndex="{Binding Light}" Title="1 to 5" TextColor="{DynamicResource Text}" />
+                    </Border>
+                    <Label Text="Focus" Style="{StaticResource Strong}" />
+                    <Label Text="Sharpness where it matters, depth of field" Style="{StaticResource MutedText}" Margin="0,-8,0,0" />
+                    <Border Style="{StaticResource Field}">
+                        <Picker ItemsSource="{Binding Scale}" SelectedIndex="{Binding Focus}" Title="1 to 5" TextColor="{DynamicResource Text}" />
+                    </Border>
+                    <Label Text="Comment (optional)" Style="{StaticResource Strong}" />
+                    <Border Style="{StaticResource Field}">
+                        <Editor Text="{Binding Comment}" Placeholder="What works, and one thing you'd try next time…" AutoSize="TextChanges"
+                                MinimumHeightRequest="90" MaxLength="{Binding CommentMax}" />
+                    </Border>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Button Text="Delete mine" Style="{StaticResource DangerButton}" Command="{Binding DeleteMineCommand}" IsVisible="{Binding HasMine}" />
+                        <Button Grid.Column="1" Text="Send feedback" Command="{Binding SaveCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- The owner's view -->
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}" Spacing="8" IsVisible="{Binding IsOwner}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FeedbackItem">
+                            <Border Padding="12,10">
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+                                    <Label Text="{Binding Feedback.Author.DisplayName}" Style="{StaticResource Strong}" />
+                                    <Label Grid.Row="1" Text="{Binding Ratings}" Style="{StaticResource MutedText}" />
+                                    <Label Grid.Row="2" Text="{Binding Feedback.Comment}" IsVisible="{Binding Feedback.Comment, Converter={StaticResource HasValue}}" />
+                                    <Button Grid.Column="1" Grid.RowSpan="3" Text="Remove" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Danger}"
+                                            VerticalOptions="Start" CommandParameter="{Binding .}"
+                                            Command="{Binding RemoveCommand, Source={RelativeSource AncestorType={x:Type vm:FeedbackViewModel}}, x:DataType=vm:FeedbackViewModel}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

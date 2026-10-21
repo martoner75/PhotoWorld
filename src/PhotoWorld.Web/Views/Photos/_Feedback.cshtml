@@ -1,0 +1,85 @@
+@model PhotoPageViewModel
+@{
+    var p = Model.Photo;
+    var f = Model.Feedback!;
+    var mine = f.Mine;
+    int Value(string key) => key switch { "composition" => mine?.Composition ?? 0, "light" => mine?.Light ?? 0, _ => mine?.Focus ?? 0 };
+    string Stars(double v) => $"{v:0.0} / 5";
+}
+<section class="feedback" id="feedback">
+    <h2>Feedback @if (f.Count > 0) { <span class="text-muted">@f.Count</span> }</h2>
+
+    @if (p.CanEdit)
+    {
+        @if (!f.WantsFeedback && f.Count == 0)
+        {
+            <p class="text-muted small">Want tips from other photographers? <a asp-action="Edit" asp-route-id="@p.Id">Edit the photo</a> and tick “Ask for feedback”.</p>
+        }
+        else if (f.Count == 0)
+        {
+            <p class="text-muted small">You're asking for feedback. Nobody has given any yet; only you will see it.</p>
+        }
+        else
+        {
+            <dl class="feedback-averages">
+                <dt>Composition</dt><dd>@Stars(f.Averages!.Composition)</dd>
+                <dt>Light</dt><dd>@Stars(f.Averages.Light)</dd>
+                <dt>Focus</dt><dd>@Stars(f.Averages.Focus)</dd>
+            </dl>
+            <ul class="comment-list">
+                @foreach (var item in f.Items)
+                {
+                    <li class="comment">
+                        <partial name="_Avatar" model="item.Author" />
+                        <div class="comment-body">
+                            <div class="comment-head">
+                                <a asp-controller="Members" asp-action="Details" asp-route-id="@item.Author.Id">@item.Author.DisplayName</a>
+                                <span class="text-muted">@item.Composition · @item.Light · @item.Focus</span>
+                                <form asp-action="DeleteFeedback" asp-route-id="@p.Id" method="post" class="comment-delete" data-confirm="Remove this feedback?">
+                                    <input type="hidden" name="feedbackId" value="@item.Id" />
+                                    <button type="submit" class="btn-link-muted">Remove</button>
+                                </form>
+                            </div>
+                            @if (item.Comment is not null) { <p>@item.Comment</p> }
+                        </div>
+                    </li>
+                }
+            </ul>
+            <p class="text-muted small">Ratings are composition · light · focus, out of 5. Only you can see feedback on your photos.</p>
+        }
+    }
+    else if (f.CanGive)
+    {
+        <p class="text-muted small">@p.Owner.DisplayName is asking for feedback. Be kind and specific: only they will see it.</p>
+        <form asp-action="Feedback" asp-route-id="@p.Id" method="post" class="feedback-form">
+            @foreach (var (key, label, hint) in FeedbackLimits.Criteria)
+            {
+                <fieldset class="rating">
+                    <legend>@label <span class="text-muted small">@hint</span></legend>
+                    <div class="rating-scale">
+                        @for (var i = FeedbackLimits.MinRating; i <= FeedbackLimits.MaxRating; i++)
+                        {
+                            <label><input type="radio" name="@key" value="@i" required checked="@(Value(key) == i)" /><span>@i</span></label>
+                        }
+                    </div>
+                </fieldset>
+            }
+            <textarea name="comment" rows="3" maxlength="@FeedbackLimits.CommentMax" placeholder="What works, and one thing you'd try next time…">@mine?.Comment</textarea>
+            <div class="form-actions">
+                @if (mine is not null)
+                {
+                    <button type="submit" form="delete-my-feedback" class="btn btn-ghost btn-sm">Delete mine</button>
+                }
+                <button type="submit" class="btn btn-accent btn-sm">@(mine is null ? "Send feedback" : "Update feedback")</button>
+            </div>
+        </form>
+        @if (mine is not null)
+        {
+            <form id="delete-my-feedback" asp-action="DeleteFeedback" asp-route-id="@p.Id" method="post" data-confirm="Delete your feedback?"></form>
+        }
+    }
+    else if (f.Count > 0)
+    {
+        <p class="text-muted small">@f.Count @(f.Count == 1 ? "member has" : "members have") given feedback. It's private to the photographer.</p>
+    }
+</section>

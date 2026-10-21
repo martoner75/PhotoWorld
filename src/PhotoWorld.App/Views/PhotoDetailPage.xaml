@@ -56,6 +56,8 @@
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </FlexLayout>
+                    <Button Text="{Binding FeedbackButton}" Style="{StaticResource GhostButton}" HorizontalOptions="Start" Padding="14,8"
+                            Command="{Binding OpenFeedbackCommand}" IsVisible="{Binding HasFeedbackButton}" />
                     <Label Text="{Binding Photo.Description}" FontSize="16"
                            IsVisible="{Binding Photo.Description, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding CameraSummary}" Style="{StaticResource MutedText}"

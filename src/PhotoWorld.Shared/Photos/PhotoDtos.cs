@@ -52,7 +52,8 @@ public sealed record PhotoDetailDto(
     bool ShowOnHome = false,
     PhotoPlaceDto? Place = null,
     IReadOnlyList<string>? Tags = null,
-    DateOnly? PhotoOfTheDay = null);
+    DateOnly? PhotoOfTheDay = null,
+    bool WantsFeedback = false);
 
 /// <summary>Where a photo was taken: one of its owner's places, which they chose to show with it.</summary>
 public sealed record PhotoPlaceDto(Guid Id, string Name, double Latitude, double Longitude);
@@ -112,7 +113,8 @@ public sealed record UpdatePhotoRequest(
     [StringLength(PhotoUploadLimits.MaxDescriptionLength)] string? Description,
     bool ShowOnHome = false,
     Guid? PlaceId = null,
-    [StringLength(600)] string? Tags = null);
+    [StringLength(600)] string? Tags = null,
+    bool? WantsFeedback = null);
 
 public sealed record CreateCommentRequest(
     [Required, StringLength(PhotoUploadLimits.MaxCommentLength, MinimumLength = 1)] string Text);

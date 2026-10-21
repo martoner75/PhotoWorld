@@ -256,7 +256,8 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(AspectHeight),
-        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags), nameof(FeaturedLabel))]
+        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags), nameof(FeaturedLabel),
+        nameof(FeedbackButton), nameof(HasFeedbackButton))]
     public partial PhotoDetailDto? Photo { get; set; }
 
     public bool HasCamera => Photo?.Camera is { } c && (c.Model ?? c.Make) is not null;
@@ -355,6 +356,23 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         await api.DeleteCommentAsync(Photo!.Id, comment.Id);
         Comments.Remove(comment);
     });
+
+    /// <summary>"Give feedback" on photos asking for it; "Feedback" (with what's come in) on the member's own.</summary>
+    public string? FeedbackButton => Photo switch
+    {
+        { CanEdit: true } => "Feedback on your photo",
+        { WantsFeedback: true } => "Give feedback",
+        _ => null,
+    };
+
+    public bool HasFeedbackButton => FeedbackButton is not null;
+
+    [RelayCommand]
+    private Task OpenFeedbackAsync() => Photo is null ? Task.CompletedTask
+        : Shell.Current.GoToAsync(Routes.Feedback, new ShellNavigationQueryParameters
+        {
+            ["id"] = Photo.Id, ["title"] = Photo.Title, ["owner"] = Photo.CanEdit,
+        });
 
     public string? FeaturedLabel => Photo?.PhotoOfTheDay is { } day ? $"⭐ Photo of the day · {day:d MMMM yyyy}" : null;
 

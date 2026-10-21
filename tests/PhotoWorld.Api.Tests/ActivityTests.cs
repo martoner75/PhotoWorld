@@ -13,6 +13,7 @@ public class ActivityTests
     [InlineData(ActivityTypes.Like, nameof(ActivitySettingsDto.Likes))]
     [InlineData(ActivityTypes.Comment, nameof(ActivitySettingsDto.Comments))]
     [InlineData(ActivityTypes.PostComment, nameof(ActivitySettingsDto.Comments))]
+    [InlineData(ActivityTypes.Feedback, nameof(ActivitySettingsDto.Comments))]
     [InlineData(ActivityTypes.Follow, nameof(ActivitySettingsDto.Follows))]
     [InlineData(ActivityTypes.NewPhoto, nameof(ActivitySettingsDto.FollowedPosts))]
     [InlineData(ActivityTypes.NewPost, nameof(ActivitySettingsDto.FollowedPosts))]
