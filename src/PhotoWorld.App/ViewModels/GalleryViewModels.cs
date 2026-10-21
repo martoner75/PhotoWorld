@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using PhotoWorld.App.Services;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.App.ViewModels;
@@ -334,6 +335,35 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
     [RelayCommand]
     private Task OpenPlaceAsync() => Photo is null ? Task.CompletedTask
         : Shell.Current.GoToAsync(Routes.Spots, new ShellNavigationQueryParameters { ["photo"] = Photo.Id });
+
+    /// <summary>
+    /// Save to a collection: a sheet of the member's collections (✓ = already in it; choosing toggles), plus starting
+    /// a new one.
+    /// </summary>
+    [RelayCommand]
+    private Task SaveToCollectionAsync() => RunAsync(async () =>
+    {
+        if (Photo is null) return;
+        const string newOne = "＋ New collection…";
+        var choices = await api.GetCollectionChoicesAsync(Photo.Id);
+        var labels = choices.Select(c => (c.ContainsPhoto ? "✓ " : "") + c.Title + (c.IsPublic ? "" : " (private)")).ToList();
+        var picked = await Shell.Current.DisplayActionSheetAsync("Save to a collection", "Cancel", null, [.. labels, newOne]);
+        if (picked == newOne)
+        {
+            var title = await Shell.Current.DisplayPromptAsync("New collection", "Name it, e.g. “Fog inspiration”. It starts private; " +
+                "make it public on the website to show it on your page.", "Create", "Cancel", maxLength: CollectionLimits.TitleMax);
+            if (string.IsNullOrWhiteSpace(title)) return;
+            var created = await api.CreateCollectionAsync(new SaveCollectionRequest(title.Trim(), null, IsPublic: false));
+            await api.SetCollectionPhotoAsync(created.Id, Photo.Id, true);
+            await Ui.AlertAsync($"Saved to “{created.Title}”.");
+            return;
+        }
+        var index = labels.IndexOf(picked ?? "");
+        if (index < 0) return;
+        var choice = choices[index];
+        await api.SetCollectionPhotoAsync(choice.Id, Photo.Id, !choice.ContainsPhoto);
+        await Ui.AlertAsync(choice.ContainsPhoto ? $"Removed from “{choice.Title}”." : $"Saved to “{choice.Title}”.");
+    });
 
     [RelayCommand]
     private Task OpenOwnerAsync() => Photo is null ? Task.CompletedTask : Routes.OpenMemberAsync(Photo.Owner.Id);

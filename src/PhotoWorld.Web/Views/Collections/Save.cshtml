@@ -1,0 +1,55 @@
+@model SavePhotoViewModel
+@{
+    var p = Model.Photo;
+    ViewData["Title"] = "Save to a collection";
+}
+
+<section class="container page narrow">
+    <h1>Save to a collection</h1>
+
+    <div class="form-card">
+        <div class="report-target">
+            <img src="@p.ThumbnailUrl" alt="" />
+            <div>
+                <strong>@p.Title</strong>
+                <p class="text-muted small mb-0">by @p.Owner.DisplayName</p>
+                <p class="small mb-0"><a asp-controller="Photos" asp-action="Details" asp-route-id="@p.Id">Back to the photo</a></p>
+            </div>
+        </div>
+
+        @if (Model.Choices.Count > 0)
+        {
+            <ul class="blocked-list">
+                @foreach (var c in Model.Choices)
+                {
+                    <li>
+                        <span>@c.Title @if (!c.IsPublic) { <span class="text-muted small">· private</span> }</span>
+                        <form asp-action="Toggle" asp-route-id="@c.Id" method="post">
+                            <input type="hidden" name="photoId" value="@p.Id" />
+                            <input type="hidden" name="add" value="@(c.ContainsPhoto ? "false" : "true")" />
+                            <button type="submit" class="btn @(c.ContainsPhoto ? "btn-ghost" : "btn-accent") btn-sm">
+                                @(c.ContainsPhoto ? "✓ Saved · Remove" : "Save here")
+                            </button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        }
+
+        <form asp-action="New" asp-route-photoId="@p.Id" method="post" class="notify-form">
+            <h2 class="settings-heading">@(Model.Choices.Count == 0 ? "Start a collection" : "Or start a new one")</h2>
+            <div class="field">
+                <label for="new-title">Name</label>
+                <input id="new-title" name="Title" maxlength="@CollectionLimits.TitleMax" placeholder="Fog inspiration" required />
+            </div>
+            <label class="check-row">
+                <input type="checkbox" name="IsPublic" value="true" />
+                <input type="hidden" name="IsPublic" value="false" />
+                <span>Public: show it on my member page</span>
+            </label>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-accent">Create and save</button>
+            </div>
+        </form>
+    </div>
+</section>

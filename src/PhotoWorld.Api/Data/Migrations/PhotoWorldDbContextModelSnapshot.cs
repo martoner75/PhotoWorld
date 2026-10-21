@@ -445,6 +445,73 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("challenge_entries", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Collection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_public");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_collections");
+
+                    b.HasIndex("OwnerId", "UpdatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_collections_owner_id_updated_at");
+
+                    b.ToTable("collections", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollectionPhoto", b =>
+                {
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("collection_id");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("added_at");
+
+                    b.HasKey("CollectionId", "PhotoId")
+                        .HasName("pk_collection_photos");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_collection_photos_photo_id");
+
+                    b.ToTable("collection_photos", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1247,6 +1314,39 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Photo");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Collection", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collections_users_owner_id");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollectionPhoto", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Collection", "Collection")
+                        .WithMany("Photos")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collection_photos_collections_collection_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collection_photos_photos_photo_id");
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("Photo");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.User", "User")
@@ -1429,6 +1529,11 @@ namespace PhotoWorld.Api.Data.Migrations
             modelBuilder.Entity("PhotoWorld.Api.Data.Challenge", b =>
                 {
                     b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Collection", b =>
+                {
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>

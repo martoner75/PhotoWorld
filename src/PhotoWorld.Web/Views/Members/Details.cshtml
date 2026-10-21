@@ -12,7 +12,15 @@
             <p class="text-muted">
                 Member since @m.MemberSince.ToString("MMMM yyyy") ·
                 @m.PhotoCount @(m.PhotoCount == 1 ? "photo" : "photos") ·
-                <a asp-controller="Blogs" asp-action="Member" asp-route-id="@m.Id">@(m.IsMe ? "My blog" : "Blog")</a>
+                <a asp-controller="Blogs" asp-action="Member" asp-route-id="@m.Id">@(m.IsMe ? "My blog" : "Blog")</a> ·
+                @if (m.IsMe)
+                {
+                    <a asp-controller="Collections" asp-action="Index">My collections</a>
+                }
+                else
+                {
+                    <a asp-controller="Collections" asp-action="Member" asp-route-id="@m.Id">Collections</a>
+                }
                 @if (m.IsMe)
                 {
                     @:· <a asp-controller="Places" asp-action="Index">My places</a>

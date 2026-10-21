@@ -7,6 +7,7 @@ using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
@@ -237,6 +238,41 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
         return IsSuccess(res) ? null : "That entry no longer exists.";
     }
+
+    public async Task<IReadOnlyList<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<CollectionSummaryDto>>(ApiRoutes.Collections + (ownerId is null ? "" : $"?ownerId={ownerId}"), ct) ?? [];
+
+    public Task<CollectionDto?> GetCollectionAsync(Guid id, int page, CancellationToken ct = default) =>
+        GetOrNullAsync<CollectionDto>($"{ApiRoutes.Format(ApiRoutes.Collection, ("id", id))}?page={page}", ct);
+
+    public async Task<ApiResult<CollectionSummaryDto>> CreateCollectionAsync(SaveCollectionRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Collections, request, ct);
+        return await ReadResultAsync<CollectionSummaryDto>(res, ct, "We couldn't create that collection.");
+    }
+
+    public async Task<ApiResult<CollectionSummaryDto>> UpdateCollectionAsync(Guid id, SaveCollectionRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Collection, ("id", id)), request, ct);
+        return await ReadResultAsync<CollectionSummaryDto>(res, ct, "That collection no longer exists.");
+    }
+
+    public async Task<bool> DeleteCollectionAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Collection, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<string?> SetCollectionPhotoAsync(Guid id, Guid photoId, bool inCollection, CancellationToken ct = default)
+    {
+        var url = ApiRoutes.Format(ApiRoutes.CollectionPhoto, ("id", id), ("photoId", photoId));
+        using var res = inCollection ? await http.PutAsync(url, null, ct) : await http.DeleteAsync(url, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That collection or photo no longer exists.";
+    }
+
+    public async Task<IReadOnlyList<CollectionChoiceDto>> GetCollectionChoicesAsync(Guid photoId, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<CollectionChoiceDto>>(ApiRoutes.Format(ApiRoutes.PhotoCollections, ("id", photoId)), ct) ?? [];
 
     public async Task<PagedResult<ActivityDto>> GetActivityAsync(int page, CancellationToken ct = default) =>
         (await GetOrNullAsync<PagedResult<ActivityDto>>($"{ApiRoutes.Activity}?page={page}", ct))!;

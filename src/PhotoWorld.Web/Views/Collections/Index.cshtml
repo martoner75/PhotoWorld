@@ -1,0 +1,48 @@
+@model CollectionsPageViewModel
+@{
+    var mine = Model.Owner is null;
+    ViewData["Title"] = mine ? "My collections" : $"{Model.Owner!.DisplayName}'s collections";
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>@ViewData["Title"]</h1>
+            <p class="text-muted">
+                @(mine ? "Photos you saved, yours and other members'. Private collections are only for you."
+                       : "Their public collections.")
+            </p>
+        </div>
+        @if (mine)
+        {
+            <a class="btn btn-accent" asp-action="New">New collection</a>
+        }
+        else
+        {
+            <a class="btn btn-ghost" asp-controller="Members" asp-action="Details" asp-route-id="@Model.Owner!.Id">Back to their page</a>
+        }
+    </header>
+
+    @if (Model.Collections.Count == 0)
+    {
+        <div class="empty-state">
+            @if (mine)
+            {
+                <p>No collections yet. Use <strong>Save</strong> on any photo to start one.</p>
+            }
+            else
+            {
+                <p>@Model.Owner!.DisplayName hasn't made any collections public.</p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="post-grid">
+            @foreach (var c in Model.Collections)
+            {
+                <partial name="_CollectionCard" model="c" />
+            }
+        </div>
+    }
+</section>

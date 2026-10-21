@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             x:Class="PhotoWorld.App.Views.CollectionPage"
+             x:DataType="vm:CollectionViewModel"
+             Title="{Binding Collection.Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem x:Name="DeleteItem" Text="Delete" Command="{Binding DeleteCommand}" />
+    </ContentPage.ToolbarItems>
+    <Grid>
+        <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8"
+                            RemainingItemsThreshold="6" RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=2, Tablet=4, Default=3}"
+                                     HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.Header>
+                    <VerticalStackLayout Spacing="4" Padding="4,4,4,12">
+                        <Label Text="{Binding Byline}" Style="{StaticResource MutedText}" />
+                        <Label Text="{Binding Collection.Description}" FontSize="15"
+                               IsVisible="{Binding Collection.Description, Converter={StaticResource HasValue}}" />
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+                <CollectionView.EmptyView>
+                    <Label Text="Nothing here yet. Use ＋ Save on any photo to add it." Style="{StaticResource MutedText}"
+                           FontSize="15" HorizontalTextAlignment="Center" Margin="32,60" IsVisible="{Binding IsEmpty}" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:PhotoSummaryDto">
+                        <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                                SemanticProperties.Description="{Binding Title}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:CollectionViewModel}}, x:DataType=vm:CollectionViewModel}"
+                                                      CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid HeightRequest="{OnIdiom Phone=180, Tablet=230, Default=210}">
+                                <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill" />
+                                <Grid VerticalOptions="End" Padding="10,24,10,4">
+                                    <Grid.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="Transparent" Offset="0" />
+                                            <GradientStop Color="#C0000000" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Grid.Background>
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="{Binding Title}" Style="{StaticResource Strong}" FontSize="14" LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding Owner.DisplayName}" Style="{StaticResource MutedText}" FontSize="12" />
+                                        <Button Text="Remove" Style="{StaticResource LinkButton}" TextColor="{StaticResource Danger}" FontSize="12"
+                                                Padding="0,4" MinimumHeightRequest="28" HorizontalOptions="Start" CommandParameter="{Binding .}"
+                                                IsVisible="{Binding CanEdit, Source={RelativeSource AncestorType={x:Type vm:CollectionViewModel}}, x:DataType=vm:CollectionViewModel}"
+                                                Command="{Binding RemoveCommand, Source={RelativeSource AncestorType={x:Type vm:CollectionViewModel}}, x:DataType=vm:CollectionViewModel}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

@@ -516,3 +516,9 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .photo-place a { color: var(--pw-text); text-decoration: none; }
 .photo-place a:hover { color: var(--pw-accent); }
 .field-select { width: 100%; background: var(--pw-ink); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 10px; padding: .65rem .8rem; }
+
+/* ---------- Collections ---------- */
+.photo-save { margin: 0 0 1rem; }
+.collection-photo { break-inside: avoid; margin-bottom: 1.25rem; }
+.collection-photo .photo-card { margin-bottom: .25rem; }
+.collection-remove { text-align: right; }

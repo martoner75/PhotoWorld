@@ -41,6 +41,9 @@
                         </Button.Triggers>
                     </Button>
 
+                    <Button Text="Collections" Style="{StaticResource LinkButton}" HorizontalOptions="Start" Padding="4,0"
+                            MinimumHeightRequest="30" Command="{Binding OpenCollectionsCommand}" />
+
                     <Border Padding="12,8" BackgroundColor="#2A1414" Stroke="#6B2A2A" IsVisible="{Binding IsBlocked}">
                         <Label Text="Blocked. You don't see their photos, posts or comments, and they can't follow you or comment on your work."
                                FontSize="13" />

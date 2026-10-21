@@ -23,6 +23,8 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.EnterChallenge, typeof(EnterChallengePage));
         Routing.RegisterRoute(Routes.Activity, typeof(ActivityPage));
         Routing.RegisterRoute(Routes.Spots, typeof(SpotsPage));
+        Routing.RegisterRoute(Routes.Collections, typeof(CollectionsPage));
+        Routing.RegisterRoute(Routes.Collection, typeof(CollectionPage));
 
         // Signed out from anywhere (button, deleted account, expired token): back to the sign-in page.
         auth.SignedOut += (_, _) => MainThread.BeginInvokeOnMainThread(async () => await GoToAsync(Routes.Login, animate: false));

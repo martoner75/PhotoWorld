@@ -1,0 +1,62 @@
+@model CollectionDto
+@{
+    var c = Model.Collection;
+    ViewData["Title"] = c.Title;
+    var here = Context.Request.Path + Context.Request.QueryString;
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <p class="hero-eyebrow">@(c.IsPublic ? "Collection" : "Private collection")</p>
+            <h1>@c.Title</h1>
+            <p class="text-muted">
+                by <a asp-controller="Members" asp-action="Details" asp-route-id="@c.Owner.Id">@c.Owner.DisplayName</a> ·
+                @c.PhotoCount @(c.PhotoCount == 1 ? "photo" : "photos")
+            </p>
+        </div>
+        @if (c.IsMine)
+        {
+            <div class="member-actions">
+                <a class="btn btn-ghost" asp-action="Edit" asp-route-id="@c.Id">Edit</a>
+                <form asp-action="Delete" asp-route-id="@c.Id" method="post"
+                      data-confirm="Delete “@c.Title”? The photos themselves aren't touched.">
+                    <button type="submit" class="btn btn-danger-ghost">Delete</button>
+                </form>
+            </div>
+        }
+    </header>
+
+    @if (!string.IsNullOrEmpty(c.Description))
+    {
+        <p class="blog-intro">@c.Description</p>
+    }
+
+    @if (Model.Photos.TotalCount == 0)
+    {
+        <div class="empty-state">
+            <p>@(c.IsMine ? "Nothing here yet. Use Save on any photo to add it." : "This collection is empty.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="photo-grid">
+            @foreach (var photo in Model.Photos.Items)
+            {
+                <div class="collection-photo">
+                    <partial name="_PhotoCard" model="photo" />
+                    @if (c.IsMine)
+                    {
+                        <form asp-action="Toggle" asp-route-id="@c.Id" method="post" class="collection-remove">
+                            <input type="hidden" name="photoId" value="@photo.Id" />
+                            <input type="hidden" name="add" value="false" />
+                            <input type="hidden" name="returnUrl" value="@here" />
+                            <button type="submit" class="btn-link-muted">Remove</button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+        <partial name="_Pager" model="new PagerViewModel(Model.Photos.Page, Model.Photos.TotalPages)" />
+    }
+</section>

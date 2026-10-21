@@ -38,6 +38,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
+                        <Button Text="＋ Save" Command="{Binding SaveToCollectionCommand}" Style="{StaticResource GhostButton}" Padding="14,8" />
                         <Label VerticalOptions="Center" Style="{StaticResource MutedText}"
                                Text="{Binding Comments.Count, StringFormat='{0} comments'}" />
                     </HorizontalStackLayout>

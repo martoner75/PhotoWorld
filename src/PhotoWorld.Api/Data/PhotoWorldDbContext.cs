@@ -4,6 +4,7 @@ using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Places;
@@ -29,6 +30,8 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Follow> Follows => Set<Follow>();
     public DbSet<Block> Blocks => Set<Block>();
     public DbSet<Activity> Activities => Set<Activity>();
+    public DbSet<Collection> Collections => Set<Collection>();
+    public DbSet<CollectionPhoto> CollectionPhotos => Set<CollectionPhoto>();
     public DbSet<ActivitySettings> ActivitySettings => Set<ActivitySettings>();
     public DbSet<Challenge> Challenges => Set<Challenge>();
     public DbSet<ChallengeEntry> ChallengeEntries => Set<ChallengeEntry>();
@@ -252,6 +255,22 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(a => new { a.RecipientId, a.CreatedAt }).IsDescending(false, true);
             e.HasIndex(a => new { a.RecipientId, a.ReadAt });
             e.HasIndex(a => a.CreatedAt);
+        });
+
+        modelBuilder.Entity<Collection>(e =>
+        {
+            e.Property(c => c.Title).HasMaxLength(CollectionLimits.TitleMax);
+            e.Property(c => c.Description).HasMaxLength(CollectionLimits.DescriptionMax);
+            e.HasOne(c => c.Owner).WithMany().HasForeignKey(c => c.OwnerId);
+            e.HasIndex(c => new { c.OwnerId, c.UpdatedAt }).IsDescending(false, true);
+        });
+
+        modelBuilder.Entity<CollectionPhoto>(e =>
+        {
+            e.HasKey(x => new { x.CollectionId, x.PhotoId });
+            e.HasOne(x => x.Collection).WithMany(c => c.Photos).HasForeignKey(x => x.CollectionId);
+            e.HasOne(x => x.Photo).WithMany().HasForeignKey(x => x.PhotoId);
+            e.HasIndex(x => x.PhotoId);
         });
 
         modelBuilder.Entity<ActivitySettings>(e =>

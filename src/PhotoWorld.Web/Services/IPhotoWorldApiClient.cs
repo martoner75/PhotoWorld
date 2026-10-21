@@ -3,6 +3,7 @@ using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
@@ -75,6 +76,17 @@ public interface IPhotoWorldApiClient
     Task<string?> EnterChallengeAsync(Guid id, Guid photoId, CancellationToken ct = default);
     /// <summary>Null on success, otherwise a message for the member.</summary>
     Task<string?> WithdrawChallengeEntryAsync(Guid id, Guid photoId, CancellationToken ct = default);
+
+    // Collections
+    /// <summary>The caller's own collections, or <paramref name="ownerId"/>'s public ones.</summary>
+    Task<IReadOnlyList<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default);
+    Task<CollectionDto?> GetCollectionAsync(Guid id, int page, CancellationToken ct = default);
+    Task<ApiResult<CollectionSummaryDto>> CreateCollectionAsync(SaveCollectionRequest request, CancellationToken ct = default);
+    Task<ApiResult<CollectionSummaryDto>> UpdateCollectionAsync(Guid id, SaveCollectionRequest request, CancellationToken ct = default);
+    Task<bool> DeleteCollectionAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the member.</summary>
+    Task<string?> SetCollectionPhotoAsync(Guid id, Guid photoId, bool inCollection, CancellationToken ct = default);
+    Task<IReadOnlyList<CollectionChoiceDto>> GetCollectionChoicesAsync(Guid photoId, CancellationToken ct = default);
 
     // Activity (the signed-in member's notifications)
     Task<PagedResult<ActivityDto>> GetActivityAsync(int page, CancellationToken ct = default);

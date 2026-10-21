@@ -6,6 +6,7 @@ using PhotoWorld.Shared;
 using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
@@ -113,6 +114,26 @@ public sealed class PhotoWorldApi(HttpClient http)
         SendAsync(HttpMethod.Post, commentId is null
             ? WithId(ApiRoutes.BlogPostReports, postId)
             : ApiRoutes.Format(ApiRoutes.BlogCommentReports, ("id", postId), ("commentId", commentId)), JsonContent.Create(request, options: Json), ct);
+
+    // ----- Collections -----
+    public Task<List<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>
+        GetAsync<List<CollectionSummaryDto>>(ApiRoutes.Collections + (ownerId is null ? "" : $"?ownerId={ownerId}"), ct);
+
+    public Task<CollectionDto> GetCollectionAsync(Guid id, int page, CancellationToken ct = default) =>
+        GetAsync<CollectionDto>($"{WithId(ApiRoutes.Collection, id)}?page={page}", ct);
+
+    public Task<CollectionSummaryDto> CreateCollectionAsync(SaveCollectionRequest request, CancellationToken ct = default) =>
+        SendAsync<CollectionSummaryDto>(HttpMethod.Post, ApiRoutes.Collections, JsonContent.Create(request, options: Json), ct);
+
+    public Task DeleteCollectionAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Collection, id), null, ct);
+
+    public Task SetCollectionPhotoAsync(Guid id, Guid photoId, bool inCollection, CancellationToken ct = default) =>
+        SendAsync(inCollection ? HttpMethod.Put : HttpMethod.Delete,
+            ApiRoutes.Format(ApiRoutes.CollectionPhoto, ("id", id), ("photoId", photoId)), null, ct);
+
+    public Task<List<CollectionChoiceDto>> GetCollectionChoicesAsync(Guid photoId, CancellationToken ct = default) =>
+        GetAsync<List<CollectionChoiceDto>>(WithId(ApiRoutes.PhotoCollections, photoId), ct);
 
     // ----- Activity -----
     public Task<PagedResult<ActivityDto>> GetActivityAsync(int page, CancellationToken ct = default) =>

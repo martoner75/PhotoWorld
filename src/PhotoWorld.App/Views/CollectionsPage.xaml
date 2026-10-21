@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.CollectionsPage"
+             x:DataType="vm:CollectionsViewModel"
+             Title="{Binding Title}">
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=2, Tablet=4, Default=3}"
+                                 HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.EmptyView>
+                <Label Text="{Binding EmptyMessage}" Style="{StaticResource MutedText}" FontSize="15"
+                       HorizontalTextAlignment="Center" Margin="32,80" IsVisible="{Binding IsEmpty}" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:CollectionItem">
+                    <Border Padding="0">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:CollectionsViewModel}}, x:DataType=vm:CollectionsViewModel}"
+                                                  CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout>
+                            <Image Source="{Binding Collection.CoverUrl}" Aspect="AspectFill" HeightRequest="130"
+                                   BackgroundColor="{StaticResource PhotoBackground}" />
+                            <VerticalStackLayout Padding="10,8" Spacing="2">
+                                <Label Text="{Binding Collection.Title}" Style="{StaticResource Strong}" LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding Facts}" Style="{StaticResource MutedText}" FontSize="12" />
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

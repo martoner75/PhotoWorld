@@ -18,6 +18,8 @@ public static class Routes
     public const string EnterChallenge = "challenge-enter";
     public const string Activity = "activity";
     public const string Spots = "spots";
+    public const string Collections = "collections";
+    public const string Collection = "collection";
 
     public static Task OpenMemberAsync(Guid id) =>
         Shell.Current.GoToAsync(Member, new ShellNavigationQueryParameters { ["id"] = id });

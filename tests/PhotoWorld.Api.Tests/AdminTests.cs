@@ -76,3 +76,33 @@ public class AdminTests
         Assert.Empty(ChallengeRules.CannotSave("Fog", Now.AddDays(-40), Now.AddDays(-10), Now, isNew: false));
     }
 }
+
+public class CollectionTests
+{
+    private static readonly Guid Viewer = Guid.NewGuid();
+
+    private static Collection CollectionBy(User owner, bool isPublic) =>
+        new() { OwnerId = owner.Id, Owner = owner, Title = "Fog", IsPublic = isPublic };
+
+    [Fact]
+    public void Private_collections_are_only_for_their_owner()
+    {
+        var owner = new User { Id = Guid.NewGuid(), DisplayName = "o" };
+        var visible = Moderation.CollectionVisibleTo(Viewer).Compile();
+
+        Assert.False(visible(CollectionBy(owner, isPublic: false)));
+        Assert.True(visible(CollectionBy(owner, isPublic: true)));
+        Assert.True(Moderation.CollectionVisibleTo(owner.Id).Compile()(CollectionBy(owner, isPublic: false)));
+    }
+
+    [Fact]
+    public void Public_collections_of_blocked_or_suspended_members_are_hidden()
+    {
+        var blocked = new User { Id = Guid.NewGuid(), DisplayName = "b", BlockedBy = [new Block { BlockerId = Viewer }] };
+        var suspended = new User { Id = Guid.NewGuid(), DisplayName = "s", SuspendedAt = DateTimeOffset.UtcNow };
+        var visible = Moderation.CollectionVisibleTo(Viewer).Compile();
+
+        Assert.False(visible(CollectionBy(blocked, isPublic: true)));
+        Assert.False(visible(CollectionBy(suspended, isPublic: true)));
+    }
+}

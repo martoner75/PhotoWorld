@@ -39,6 +39,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates); a photo can link to one (Spots map) |
 | `photoworld.follows` | API (EF Core) | Who follows whom (for the Following tabs and follower counts) |
 | `photoworld.blocks` | API (EF Core) | Who blocked whom (hides the blocked member's content from the blocker) |
+| `photoworld.collections`, `collection_photos` | API (EF Core) | Members' photo collections (private or public) and the photos in them |
 | `photoworld.activities`, `activity_settings` | API (EF Core) | Members' notifications (kept 90 days) and which kinds they want |
 | `photoworld.challenges`, `challenge_entries` | You (Supabase dashboard) / API | Photo challenge themes and dates, and the photos entered in each |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
@@ -218,6 +219,15 @@ least one admin. If you ever need to fix it by hand (Supabase **SQL editor**):
 ```sql
 update photoworld.users set is_admin = true where lower(email) = 'someone@example.com';
 ```
+
+## Collections
+
+Members save any photo they can see (theirs or others') to their own **collections**: **Save to a collection** on a
+photo's page (website) or **＋ Save** (app), which also starts a new one. Collections are private unless the owner
+makes them public (website form), in which case they're listed on the owner's member page. A private collection
+answers 404 to everyone else; the photos inside are filtered by the usual visibility rule, so hidden, deleted or
+blocked members' photos never show. Up to 100 collections per member and 1,000 photos per collection. Deleting a
+collection leaves the photos alone.
 
 ## Photo spots
 

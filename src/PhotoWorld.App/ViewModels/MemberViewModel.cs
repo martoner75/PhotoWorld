@@ -95,6 +95,10 @@ public partial class MemberViewModel(PhotoWorldApi api) : PagedListViewModel<Pho
     });
 
     [RelayCommand]
+    private Task OpenCollectionsAsync() => Member is null ? Task.CompletedTask
+        : Shell.Current.GoToAsync(Routes.Collections, new ShellNavigationQueryParameters { ["ownerId"] = Member.Id, ["name"] = Member.DisplayName });
+
+    [RelayCommand]
     private Task OpenWinAsync(ChallengeWinDto win) => Routes.OpenChallengeAsync(win.ChallengeId);
 
     [RelayCommand]

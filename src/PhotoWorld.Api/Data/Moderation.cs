@@ -42,6 +42,11 @@ public static class Moderation
             && c.Author.SuspendedAt == null
             && !c.Author.BlockedBy.Any(b => b.BlockerId == userId));
 
+    /// <summary>Their own collections, and other members' public ones (not by suspended or blocked members).</summary>
+    public static Expression<Func<Collection, bool>> CollectionVisibleTo(Guid? userId) => c =>
+        c.OwnerId == userId
+        || (c.IsPublic && c.Owner.SuspendedAt == null && !c.Owner.BlockedBy.Any(b => b.BlockerId == userId));
+
     /// <summary>The state shown to a content owner, from the same two facts the visibility rule uses.</summary>
     public static ModerationState State(bool anyUpheld, int openReports) =>
         anyUpheld ? ModerationState.Removed

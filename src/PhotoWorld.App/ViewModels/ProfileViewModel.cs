@@ -124,6 +124,9 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     private Task OpenMyPageAsync() => User is null ? Task.CompletedTask : Routes.OpenMemberAsync(User.Id);
 
     [RelayCommand]
+    private Task OpenCollectionsAsync() => Shell.Current.GoToAsync(Routes.Collections);
+
+    [RelayCommand]
     private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);
 
     private async Task LoadBlockedAsync()

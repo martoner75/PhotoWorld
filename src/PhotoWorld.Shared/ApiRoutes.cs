@@ -44,6 +44,13 @@ public static class ApiRoutes
     public const string AdminUserAdmin = "api/admin/users/{id:guid}/admin";
     public const string AdminUserSuspension = "api/admin/users/{id:guid}/suspension";
 
+    // Collections: without ownerId the caller's own (private ones included); with it, that member's public ones.
+    public const string Collections = "api/collections";
+    public const string Collection = "api/collections/{id:guid}";
+    public const string CollectionPhoto = "api/collections/{id:guid}/photos/{photoId:guid}";
+    /// <summary>The caller's collections, each saying whether it holds this photo.</summary>
+    public const string PhotoCollections = "api/photos/{id:guid}/collections";
+
     public const string Challenges = "api/challenges";
     public const string Challenge = "api/challenges/{id:guid}";
     public const string ChallengeEntries = "api/challenges/{id:guid}/entries";
