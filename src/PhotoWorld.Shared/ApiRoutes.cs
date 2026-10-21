@@ -63,6 +63,13 @@ public static class ApiRoutes
     /// <summary>The caller's collections, each saying whether it holds this photo.</summary>
     public const string PhotoCollections = "api/photos/{id:guid}/collections";
 
+    /// <summary>GET ?list=upcoming|past|mine; POST creates.</summary>
+    public const string Walks = "api/walks";
+    public const string Walk = "api/walks/{id:guid}";
+    public const string WalkCancel = "api/walks/{id:guid}/cancel";
+    /// <summary>PUT: I'm going; DELETE: not any more.</summary>
+    public const string WalkAttendance = "api/walks/{id:guid}/attendance";
+
     public const string Challenges = "api/challenges";
     public const string Challenge = "api/challenges/{id:guid}";
     public const string ChallengeEntries = "api/challenges/{id:guid}/entries";

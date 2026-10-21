@@ -27,3 +27,12 @@ if (bell && !location.pathname.toLowerCase().startsWith("/activity")) {
     })
     .catch(() => {});
 }
+
+// Times stored in UTC, shown in the visitor's own time zone: <time datetime="…" data-local-time="full|time">.
+document.querySelectorAll("time[data-local-time]").forEach((el) => {
+  const d = new Date(el.getAttribute("datetime"));
+  if (Number.isNaN(d.getTime())) return;
+  el.textContent = el.dataset.localTime === "time"
+    ? d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+});

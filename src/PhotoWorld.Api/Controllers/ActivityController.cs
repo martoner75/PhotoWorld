@@ -32,18 +32,19 @@ public class ActivityController(PhotoWorldDbContext db, ActivityFeed feed, Supab
             .Skip((page - 1) * PageSize).Take(PageSize)
             .Select(a => new
             {
-                a.Id, a.Type, a.PhotoId, a.PostId, a.ChallengeId, a.Place, a.Snippet, a.CreatedAt, a.ReadAt,
+                a.Id, a.Type, a.PhotoId, a.PostId, a.ChallengeId, a.WalkId, a.Place, a.Snippet, a.CreatedAt, a.ReadAt,
                 Actor = a.Actor == null ? null : new UserSummaryDto(a.Actor.Id, a.Actor.DisplayName, a.Actor.AvatarUrl),
                 PhotoTitle = a.Photo == null ? null : a.Photo.Title,
                 Thumbnail = a.Photo == null ? null : a.Photo.ThumbnailPath,
                 PostTitle = a.Post == null ? null : a.Post.Title,
                 ChallengeTitle = a.Challenge == null ? null : a.Challenge.Title,
+                WalkTitle = a.Walk == null ? null : a.Walk.Title,
             })
             .ToListAsync(ct);
 
         var items = rows.Select(r => new ActivityDto(r.Id, r.Type, r.Actor, r.PhotoId, r.PhotoTitle,
             r.Thumbnail is null ? null : storage.PublicUrl(r.Thumbnail), r.PostId, r.PostTitle, r.ChallengeId, r.ChallengeTitle,
-            r.Place, r.Snippet, r.CreatedAt, r.ReadAt is not null)).ToList();
+            r.Place, r.Snippet, r.CreatedAt, r.ReadAt is not null, r.WalkId, r.WalkTitle)).ToList();
         return new PagedResult<ActivityDto>(items, page, PageSize, total);
     }
 
@@ -75,8 +76,8 @@ public class ActivityController(PhotoWorldDbContext db, ActivityFeed feed, Supab
         if (User.GetUserId() is not { } me) return Unauthorized();
         var settings = await db.ActivitySettings.FindAsync([me], ct);
         if (settings is null) db.ActivitySettings.Add(settings = new ActivitySettings { UserId = me });
-        (settings.Likes, settings.Comments, settings.Follows, settings.FollowedPosts, settings.Challenges, settings.Push) =
-            (request.Likes, request.Comments, request.Follows, request.FollowedPosts, request.Challenges, request.Push);
+        (settings.Likes, settings.Comments, settings.Follows, settings.FollowedPosts, settings.Challenges, settings.Push, settings.Walks) =
+            (request.Likes, request.Comments, request.Follows, request.FollowedPosts, request.Challenges, request.Push, request.Walks);
         await db.SaveChangesAsync(ct);
         return await feed.SettingsAsync(me, ct);
     }

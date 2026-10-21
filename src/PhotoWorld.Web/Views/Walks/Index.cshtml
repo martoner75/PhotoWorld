@@ -1,0 +1,60 @@
+@model WalksPageViewModel
+@{
+    ViewData["Title"] = "Photo walks";
+    var mapped = Model.Walks.Where(w => !w.IsCancelled).Select(w => new { w.Id, w.Title, w.Latitude, w.Longitude, w.MeetingPoint, w.StartsAt });
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Photo walks</h1>
+            <p class="text-muted">Meet other members and shoot together. Afterwards, tag your photos with the walk's tag to see everyone's shots.</p>
+        </div>
+        <a class="btn btn-accent" asp-action="New">Organise a walk</a>
+    </header>
+
+    <nav class="feed-tabs" aria-label="Which walks">
+        @foreach (var (key, label) in new[] { (WalkLists.Upcoming, "Upcoming"), (WalkLists.Mine, "Mine"), (WalkLists.Past, "Past") })
+        {
+            <a asp-action="Index" asp-route-list="@(key == WalkLists.Upcoming ? null : key)" class="@(Model.List == key ? "active" : "")"
+               aria-current="@(Model.List == key ? "page" : null)">@label</a>
+        }
+    </nav>
+
+    @if (Model.Walks.Count == 0)
+    {
+        <div class="empty-state">
+            <p>@(Model.List switch
+            {
+                WalkLists.Mine => "You're not organising or going on any walks yet.",
+                WalkLists.Past => "No past walks yet.",
+                _ => "No walks coming up. Why not organise the first one?",
+            })</p>
+            <a class="btn btn-accent" asp-action="New">Organise a walk</a>
+        </div>
+    }
+    else
+    {
+        @if (Model.List == WalkLists.Upcoming)
+        {
+            <div id="walks-map" class="places-map walks-map mb-4" aria-label="Map of upcoming walks"></div>
+        }
+        <div class="post-grid">
+            @foreach (var w in Model.Walks)
+            {
+                <partial name="_WalkCard" model="w" />
+            }
+        </div>
+    }
+</section>
+
+<script type="application/json" id="walks-data">@Json.Serialize(mapped)</script>
+
+@section Scripts {
+    <script src="~/lib/leaflet/leaflet.js"></script>
+    <script src="~/js/walks.js" asp-append-version="true"></script>
+}

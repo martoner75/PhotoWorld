@@ -8,6 +8,7 @@ using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Places;
+using PhotoWorld.Shared.Walks;
 
 namespace PhotoWorld.Api.Data;
 
@@ -34,6 +35,8 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Block> Blocks => Set<Block>();
     public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<Collection> Collections => Set<Collection>();
+    public DbSet<Walk> Walks => Set<Walk>();
+    public DbSet<WalkAttendee> WalkAttendees => Set<WalkAttendee>();
     public DbSet<CollectionPhoto> CollectionPhotos => Set<CollectionPhoto>();
     public DbSet<ActivitySettings> ActivitySettings => Set<ActivitySettings>();
     public DbSet<DeviceRegistration> Devices => Set<DeviceRegistration>();
@@ -284,10 +287,35 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(a => a.Photo).WithMany().HasForeignKey(a => a.PhotoId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Post).WithMany().HasForeignKey(a => a.PostId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Challenge).WithMany().HasForeignKey(a => a.ChallengeId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Walk).WithMany().HasForeignKey(a => a.WalkId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(a => new { a.RecipientId, a.CreatedAt }).IsDescending(false, true);
             e.HasIndex(a => new { a.RecipientId, a.ReadAt });
             e.HasIndex(a => a.CreatedAt);
             e.HasIndex(a => a.PushedAt);
+        });
+
+        modelBuilder.Entity<Walk>(e =>
+        {
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_walks_times", "ends_at > starts_at");
+                t.HasCheckConstraint("ck_walks_latitude", "latitude between -90 and 90");
+                t.HasCheckConstraint("ck_walks_longitude", "longitude between -180 and 180");
+            });
+            e.Property(w => w.Title).HasMaxLength(WalkLimits.TitleMax);
+            e.Property(w => w.Description).HasMaxLength(WalkLimits.DescriptionMax);
+            e.Property(w => w.MeetingPoint).HasMaxLength(WalkLimits.MeetingPointMax);
+            e.HasOne(w => w.Organizer).WithMany().HasForeignKey(w => w.OrganizerId);
+            e.HasIndex(w => w.StartsAt);
+            e.HasIndex(w => w.OrganizerId);
+        });
+
+        modelBuilder.Entity<WalkAttendee>(e =>
+        {
+            e.HasKey(a => new { a.WalkId, a.UserId });
+            e.HasOne(a => a.Walk).WithMany(w => w.Attendees).HasForeignKey(a => a.WalkId);
+            e.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId);
+            e.HasIndex(a => a.UserId);
         });
 
         modelBuilder.Entity<Collection>(e =>
@@ -321,6 +349,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
         {
             e.HasKey(s => s.UserId);
             e.Property(s => s.Push).HasDefaultValue(true);
+            e.Property(s => s.Walks).HasDefaultValue(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 

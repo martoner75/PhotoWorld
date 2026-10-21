@@ -11,6 +11,7 @@ using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
+using PhotoWorld.Shared.Walks;
 
 namespace PhotoWorld.App.Services;
 
@@ -140,6 +141,25 @@ public sealed class PhotoWorldApi(HttpClient http)
         SendAsync(HttpMethod.Post, commentId is null
             ? WithId(ApiRoutes.BlogPostReports, postId)
             : ApiRoutes.Format(ApiRoutes.BlogCommentReports, ("id", postId), ("commentId", commentId)), JsonContent.Create(request, options: Json), ct);
+
+    // ----- Photo walks -----
+    public Task<List<WalkSummaryDto>> GetWalksAsync(string list, CancellationToken ct = default) =>
+        GetAsync<List<WalkSummaryDto>>($"{ApiRoutes.Walks}?list={list}", ct);
+
+    public Task<WalkDto> GetWalkAsync(Guid id, CancellationToken ct = default) => GetAsync<WalkDto>(WithId(ApiRoutes.Walk, id), ct);
+
+    public Task<WalkSummaryDto> CreateWalkAsync(SaveWalkRequest request, CancellationToken ct = default) =>
+        SendAsync<WalkSummaryDto>(HttpMethod.Post, ApiRoutes.Walks, JsonContent.Create(request, options: Json), ct);
+
+    public Task<WalkSummaryDto> UpdateWalkAsync(Guid id, SaveWalkRequest request, CancellationToken ct = default) =>
+        SendAsync<WalkSummaryDto>(HttpMethod.Put, WithId(ApiRoutes.Walk, id), JsonContent.Create(request, options: Json), ct);
+
+    public Task CancelWalkAsync(Guid id, CancellationToken ct = default) => SendAsync(HttpMethod.Post, WithId(ApiRoutes.WalkCancel, id), null, ct);
+
+    public Task DeleteWalkAsync(Guid id, CancellationToken ct = default) => SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Walk, id), null, ct);
+
+    public Task SetWalkAttendanceAsync(Guid id, bool going, CancellationToken ct = default) =>
+        SendAsync(going ? HttpMethod.Put : HttpMethod.Delete, WithId(ApiRoutes.WalkAttendance, id), null, ct);
 
     // ----- Collections -----
     public Task<List<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>

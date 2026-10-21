@@ -12,6 +12,7 @@ using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
+using PhotoWorld.Shared.Walks;
 
 namespace PhotoWorld.Web.Services;
 
@@ -288,6 +289,44 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
             ApiRoutes.Format(ApiRoutes.ChallengeEntry, ("id", id), ("photoId", photoId)), ct);
         if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
         return IsSuccess(res) ? null : "That entry no longer exists.";
+    }
+
+    public async Task<IReadOnlyList<WalkSummaryDto>> GetWalksAsync(string list, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<WalkSummaryDto>>($"{ApiRoutes.Walks}?list={Uri.EscapeDataString(list)}", ct) ?? [];
+
+    public Task<WalkDto?> GetWalkAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<WalkDto>(ApiRoutes.Format(ApiRoutes.Walk, ("id", id)), ct);
+
+    public async Task<ApiResult<WalkSummaryDto>> CreateWalkAsync(SaveWalkRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Walks, request, ct);
+        return await ReadResultAsync<WalkSummaryDto>(res, ct, "We couldn't create that walk.");
+    }
+
+    public async Task<ApiResult<WalkSummaryDto>> UpdateWalkAsync(Guid id, SaveWalkRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Walk, ("id", id)), request, ct);
+        return await ReadResultAsync<WalkSummaryDto>(res, ct, "That walk no longer exists, or you can't change it.");
+    }
+
+    public async Task<bool> CancelWalkAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.WalkCancel, ("id", id)), null, ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<bool> DeleteWalkAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Walk, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<string?> SetWalkAttendanceAsync(Guid id, bool going, CancellationToken ct = default)
+    {
+        var url = ApiRoutes.Format(ApiRoutes.WalkAttendance, ("id", id));
+        using var res = going ? await http.PutAsync(url, null, ct) : await http.DeleteAsync(url, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That walk no longer exists.";
     }
 
     public async Task<IReadOnlyList<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>

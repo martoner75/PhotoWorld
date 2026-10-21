@@ -84,6 +84,20 @@ public sealed class ScheduledActivitySender(IServiceScopeFactory scopes, TimePro
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.NotifiedAt, now), ct) == 1)
             await AddAsync(db, [new Activity { RecipientId = pick.OwnerId, PhotoId = pick.PhotoId, Type = ActivityTypes.PhotoOfTheDay, CreatedAt = now }], ct);
 
+        // Photo walks starting within a day: remind attendees and the organiser once.
+        var soon = now.AddDays(1);
+        var walks = await db.Walks.AsNoTracking()
+            .Where(w => w.CancelledAt == null && w.ReminderSentAt == null && w.StartsAt > now && w.StartsAt <= soon)
+            .Select(w => new { w.Id, w.OrganizerId, Attendees = w.Attendees.Select(a => a.UserId).ToList() })
+            .ToListAsync(ct);
+        foreach (var w in walks)
+        {
+            if (await db.Walks.Where(x => x.Id == w.Id && x.ReminderSentAt == null)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReminderSentAt, now), ct) != 1) continue;
+            var feed = scope.ServiceProvider.GetRequiredService<ActivityFeed>();
+            await feed.NotifyWalkAsync([w.OrganizerId, .. w.Attendees], null, w.OrganizerId, w.Id, ActivityTypes.WalkReminder, ct);
+        }
+
         var purged = await db.Activities.Where(a => a.CreatedAt < now - ActivityRules.KeepFor).ExecuteDeleteAsync(ct);
         if (purged > 0) logger.LogInformation("Deleted {Count} old activity items", purged);
     }

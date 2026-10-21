@@ -19,6 +19,8 @@ public class Activity
     public BlogPost? Post { get; set; }
     public Guid? ChallengeId { get; set; }
     public Challenge? Challenge { get; set; }
+    public Guid? WalkId { get; set; }
+    public Walk? Walk { get; set; }
 
     /// <summary>Challenge results: 1 = won, 2 or 3 = placed; null = took part.</summary>
     public int? Place { get; set; }
@@ -44,6 +46,7 @@ public class ActivitySettings
     public bool FollowedPosts { get; set; } = true;
     public bool Challenges { get; set; } = true;
     public bool Push { get; set; } = true;
+    public bool Walks { get; set; } = true;
 }
 
 /// <summary>A member's phone that receives push notifications. Goes with the account; dead tokens are removed when sending.</summary>

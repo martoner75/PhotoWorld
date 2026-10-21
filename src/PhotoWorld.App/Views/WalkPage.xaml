@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+             x:Class="PhotoWorld.App.Views.WalkPage"
+             x:DataType="vm:WalkViewModel"
+             Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem x:Name="EditItem" Text="Edit" Command="{Binding EditCommand}" />
+    </ContentPage.ToolbarItems>
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Spacing="10" Padding="0,0,0,24">
+                <maps:Map x:Name="Map" HeightRequest="220" IsShowingUser="False" MapType="Street" />
+                <VerticalStackLayout Padding="18,8" Spacing="10">
+                    <Border Padding="12,8" BackgroundColor="{DynamicResource DangerSoft}" Stroke="{DynamicResource DangerLine}"
+                            IsVisible="{Binding Walk.Walk.IsCancelled}">
+                        <Label Text="Cancelled: this walk isn't happening." FontSize="14" />
+                    </Border>
+                    <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" />
+                    <Label Text="{Binding Title}" Style="{StaticResource Heading}" />
+                    <Label Text="{Binding Facts}" FontSize="15" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Text="I'm going" Command="{Binding JoinCommand}" IsVisible="{Binding Walk.CanJoin}" />
+                        <Button Text="Going ✓ · Leave" Style="{StaticResource GhostButton}" Command="{Binding LeaveCommand}" IsVisible="{Binding CanLeave}" />
+                        <Button Grid.Column="1" Text="Directions" Style="{StaticResource GhostButton}" Command="{Binding DirectionsCommand}" />
+                    </Grid>
+                    <Label Text="{Binding Reason}" Style="{StaticResource MutedText}" IsVisible="{Binding Reason, Converter={StaticResource HasValue}}" />
+                    <Label Text="{Binding Walk.Description}" FontSize="16" IsVisible="{Binding Walk.Description, Converter={StaticResource HasValue}}" />
+                    <Label Text="{Binding TagHint}" Style="{StaticResource MutedText}" />
+                    <Button Text="Cancel walk" Style="{StaticResource DangerButton}" Command="{Binding CancelWalkCommand}" IsVisible="{Binding CanCancel}" />
+
+                    <Label Text="Going" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <FlexLayout BindableLayout.ItemsSource="{Binding Attendees}" Wrap="Wrap">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="dto:UserSummaryDto">
+                                <Button Text="{Binding DisplayName}" Style="{StaticResource ChipButton}" CommandParameter="{Binding .}"
+                                        Command="{Binding OpenMemberCommand, Source={RelativeSource AncestorType={x:Type vm:WalkViewModel}}, x:DataType=vm:WalkViewModel}" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+
+                    <Label Text="{Binding PhotosTitle}" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <FlexLayout BindableLayout.ItemsSource="{Binding Photos}" Wrap="Wrap" JustifyContent="Start">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="dto:PhotoSummaryDto">
+                                <Border Padding="0" StrokeThickness="0" WidthRequest="104" HeightRequest="104" Margin="0,0,6,6"
+                                        StrokeShape="RoundRectangle 8" BackgroundColor="{DynamicResource PhotoBackground}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                            Command="{Binding OpenPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:WalkViewModel}}, x:DataType=vm:WalkViewModel}" />
+                                    </Border.GestureRecognizers>
+                                    <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill" SemanticProperties.Description="{Binding Title}" />
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

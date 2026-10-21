@@ -16,9 +16,15 @@ public static class ActivityTypes
     public const string ChallengeResult = "challenge_result";
     public const string PhotoOfTheDay = "photo_of_the_day";
     public const string Feedback = "feedback";
+    public const string WalkNew = "walk_new";
+    public const string WalkJoined = "walk_joined";
+    public const string WalkChanged = "walk_changed";
+    public const string WalkCancelled = "walk_cancelled";
+    public const string WalkReminder = "walk_reminder";
 
     public static readonly IReadOnlyList<string> All =
-        [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback];
+        [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback,
+         WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder];
 }
 
 /// <summary>
@@ -39,13 +45,16 @@ public sealed record ActivityDto(
     int? Place,
     string? Snippet,
     DateTimeOffset CreatedAt,
-    bool IsRead);
+    bool IsRead,
+    Guid? WalkId = null,
+    string? WalkTitle = null);
 
 /// <summary>Which kinds of activity a member wants. Everything is on until they change it.</summary>
 /// <param name="Push">Also send them to the member's phones (where the app is allowed to show notifications).</param>
-public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows, bool FollowedPosts, bool Challenges, bool Push = true)
+public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows, bool FollowedPosts, bool Challenges, bool Push = true,
+    bool Walks = true)
 {
-    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true);
+    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true);
 }
 
 public static class DevicePlatforms

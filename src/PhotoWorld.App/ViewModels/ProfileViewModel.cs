@@ -50,14 +50,15 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     [ObservableProperty] public partial bool ActivityFollows { get; set; } = true;
     [ObservableProperty] public partial bool ActivityFollowedPosts { get; set; } = true;
     [ObservableProperty] public partial bool ActivityChallenges { get; set; } = true;
+    [ObservableProperty] public partial bool ActivityWalks { get; set; } = true;
 
     // Kept as the member set it on the website; the app gets its own switch once it can receive push.
     private bool _activityPush = true;
 
     private void ShowActivitySettings(ActivitySettingsDto s)
     {
-        (ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges) =
-            (s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges);
+        (ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, ActivityWalks) =
+            (s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Walks);
         _activityPush = s.Push;
     }
 
@@ -65,7 +66,7 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     private Task SaveActivitySettingsAsync() => RunAsync(async () =>
     {
         ShowActivitySettings(await api.SaveActivitySettingsAsync(new ActivitySettingsDto(
-            ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, _activityPush)));
+            ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, _activityPush, ActivityWalks)));
         await Ui.AlertAsync("Activity settings saved.");
     });
 
@@ -131,6 +132,9 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
 
     [RelayCommand]
     private Task OpenCollectionsAsync() => Shell.Current.GoToAsync(Routes.Collections);
+
+    [RelayCommand]
+    private Task OpenWalksAsync() => Shell.Current.GoToAsync(Routes.Walks);
 
     [RelayCommand]
     private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);

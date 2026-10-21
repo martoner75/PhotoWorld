@@ -8,6 +8,7 @@ using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Users;
+using PhotoWorld.Shared.Walks;
 
 namespace PhotoWorld.Web.Services;
 
@@ -90,6 +91,16 @@ public interface IPhotoWorldApiClient
     Task<string?> EnterChallengeAsync(Guid id, Guid photoId, CancellationToken ct = default);
     /// <summary>Null on success, otherwise a message for the member.</summary>
     Task<string?> WithdrawChallengeEntryAsync(Guid id, Guid photoId, CancellationToken ct = default);
+
+    // Photo walks
+    Task<IReadOnlyList<WalkSummaryDto>> GetWalksAsync(string list, CancellationToken ct = default);
+    Task<WalkDto?> GetWalkAsync(Guid id, CancellationToken ct = default);
+    Task<ApiResult<WalkSummaryDto>> CreateWalkAsync(SaveWalkRequest request, CancellationToken ct = default);
+    Task<ApiResult<WalkSummaryDto>> UpdateWalkAsync(Guid id, SaveWalkRequest request, CancellationToken ct = default);
+    Task<bool> CancelWalkAsync(Guid id, CancellationToken ct = default);
+    Task<bool> DeleteWalkAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the member.</summary>
+    Task<string?> SetWalkAttendanceAsync(Guid id, bool going, CancellationToken ct = default);
 
     // Collections
     /// <summary>The caller's own collections, or <paramref name="ownerId"/>'s public ones.</summary>

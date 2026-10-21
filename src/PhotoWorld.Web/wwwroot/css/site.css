@@ -623,3 +623,18 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .upload-item-status { color: var(--pw-muted); }
 .upload-item.is-done .upload-item-status { color: var(--pw-accent); font-weight: 600; }
 .upload-progress { font-weight: 600; text-align: center; margin: 0; }
+
+/* ---------- Photo walks ---------- */
+.walks-map { height: 340px; }
+.walk-map { height: 260px; }
+.walk-pick-map { height: 300px; margin-top: .5rem; }
+.walk-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }
+@media (max-width: 991px) { .walk-layout { grid-template-columns: 1fr; } }
+.walk-title { font-size: clamp(2rem, 5vw, 2.6rem); margin: .2rem 0 .8rem; }
+.walk-facts { line-height: 1.9; }
+.walk-actions { margin: 1rem 0 1.5rem; margin-left: 0; flex-wrap: wrap; align-items: center; }
+.walk-plan { margin: 0 0 1.25rem; }
+.walk-tag { color: var(--pw-muted); }
+.walk-when { color: var(--pw-accent); font-weight: 600; font-size: .85rem; margin: 0; }
+.walk-cover-empty { display: grid; place-items: center; font-size: 2.2rem; }
+.walk-card.is-cancelled { opacity: .65; }

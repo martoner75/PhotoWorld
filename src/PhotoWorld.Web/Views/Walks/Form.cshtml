@@ -1,0 +1,86 @@
+@model WalkFormViewModel
+@{
+    var isNew = Model.Id is null;
+    ViewData["Title"] = isNew ? "Organise a photo walk" : "Edit walk";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+}
+
+<section class="container page narrow">
+    <h1>@ViewData["Title"]</h1>
+
+    <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" class="form-card" data-walk-form>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="field">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" maxlength="@WalkLimits.TitleMax" placeholder="Fog and deer at dawn" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Description">The plan <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Description" rows="4" maxlength="@WalkLimits.DescriptionMax"
+                      placeholder="Route, what to bring, the light we're hoping for…"></textarea>
+        </div>
+        <div class="challenge-dates">
+            <div class="field">
+                <label for="starts-local">Starts (your time)</label>
+                <input id="starts-local" name="StartsLocal" type="datetime-local" required
+                       value="@Model.StartsLocal?.ToString("yyyy-MM-ddTHH:mm", inv)" data-starts-utc="@Model.StartsAtUtc?.ToString("O")" />
+                <span asp-validation-for="StartsLocal" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="DurationMinutes">Lasts</label>
+                <select asp-for="DurationMinutes" class="field-select">
+                    @foreach (var minutes in new[] { 60, 90, 120, 180, 240, 300, 360, 480, 600, 720 })
+                    {
+                        <option value="@minutes">@(minutes < 120 ? $"{minutes} minutes" : $"{minutes / 60.0:0.#} hours")</option>
+                    }
+                </select>
+                <span asp-validation-for="DurationMinutes" class="field-error"></span>
+            </div>
+        </div>
+        <input type="hidden" asp-for="UtcOffsetMinutes" data-utc-offset />
+
+        <div class="field">
+            <label asp-for="MeetingPoint">Meeting point</label>
+            <input asp-for="MeetingPoint" maxlength="@WalkLimits.MeetingPointMax" placeholder="Richmond Gate, Richmond Park" />
+            <span asp-validation-for="MeetingPoint" class="field-error"></span>
+            @if (Model.Places.Count > 0)
+            {
+                <select class="field-select" data-walk-place aria-label="Use one of your places">
+                    <option value="">…or use one of your places</option>
+                    @foreach (var p in Model.Places.OrderBy(p => p.Name))
+                    {
+                        <option value="@p.Latitude.ToString(inv),@p.Longitude.ToString(inv)" data-name="@p.Name">@p.Name</option>
+                    }
+                </select>
+            }
+            <div id="walk-pick-map" class="places-map walk-pick-map" aria-label="Click to set the meeting point"></div>
+            <span class="text-muted small">Click the map to put the pin exactly where to meet. Members see it.</span>
+            <input type="hidden" asp-for="Latitude" data-walk-lat />
+            <input type="hidden" asp-for="Longitude" data-walk-lng />
+            <span asp-validation-for="Latitude" class="field-error"></span>
+        </div>
+
+        <div class="field">
+            <label asp-for="MaxPeople">Group size limit <span class="text-muted">(optional, including you)</span></label>
+            <input asp-for="MaxPeople" type="number" min="2" max="@WalkLimits.MaxPeopleLimit" placeholder="No limit" />
+            <span asp-validation-for="MaxPeople" class="field-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="@(isNew ? "Index" : "Details")" asp-route-id="@Model.Id">Cancel</a>
+            <button type="submit" class="btn btn-accent">@(isNew ? "Organise walk" : "Save changes")</button>
+        </div>
+        <p class="text-muted small mb-0">Followers hear about new walks; people going hear when you change the time or place, and get a reminder the day before.</p>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/leaflet/leaflet.js"></script>
+    <script src="~/js/walks.js" asp-append-version="true"></script>
+}

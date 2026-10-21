@@ -12,7 +12,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 {
     /// <summary>Tells one member that <paramref name="actorId"/> did something.</summary>
     public Task NotifyAsync(Guid recipientId, Guid actorId, string type, Guid? photoId = null, Guid? postId = null,
-        string? snippet = null, CancellationToken ct = default) =>
+        string? snippet = null, Guid? walkId = null, CancellationToken ct = default) =>
         SafelyAsync(type, async () =>
         {
             if (recipientId == actorId) return;
@@ -23,7 +23,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 
             db.Activities.Add(new Activity
             {
-                RecipientId = recipientId, ActorId = actorId, Type = type, PhotoId = photoId, PostId = postId,
+                RecipientId = recipientId, ActorId = actorId, Type = type, PhotoId = photoId, PostId = postId, WalkId = walkId,
                 Snippet = ActivityRules.Snippet(snippet), CreatedAt = clock.GetUtcNow(),
             });
             await db.SaveChangesAsync(ct);
@@ -51,6 +51,28 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
             await db.SaveChangesAsync(ct);
         });
 
+    /// <summary>
+    /// Tells several members about a walk (attendees about a change, followers about a new one), skipping the actor,
+    /// members who switched walks off, and members who blocked the organiser.
+    /// </summary>
+    public Task NotifyWalkAsync(IReadOnlyCollection<Guid> recipients, Guid? actorId, Guid organizerId, Guid walkId, string type,
+        CancellationToken ct = default) =>
+        SafelyAsync(type, async () =>
+        {
+            var ids = await db.Users
+                .Where(u => recipients.Contains(u.Id) && u.Id != actorId && u.SuspendedAt == null)
+                .Where(u => !db.ActivitySettings.Any(s => s.UserId == u.Id && !s.Walks))
+                .Where(u => !db.Blocks.Any(b => b.BlockerId == u.Id && b.BlockedId == organizerId))
+                .Select(u => u.Id).ToListAsync(ct);
+            if (ids.Count == 0) return;
+            var now = clock.GetUtcNow();
+            db.Activities.AddRange(ids.Select(id => new Activity
+            {
+                RecipientId = id, ActorId = actorId, Type = type, WalkId = walkId, CreatedAt = now,
+            }));
+            await db.SaveChangesAsync(ct);
+        });
+
     /// <summary>Takes back an unread like or follow notification (after an unlike or unfollow).</summary>
     public Task RetractAsync(Guid recipientId, Guid actorId, string type, Guid? photoId = null, CancellationToken ct = default) =>
         SafelyAsync(type, () => db.Activities
@@ -59,7 +81,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 
     public async Task<ActivitySettingsDto> SettingsAsync(Guid userId, CancellationToken ct) =>
         await db.ActivitySettings.AsNoTracking().Where(s => s.UserId == userId)
-            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push))
+            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks))
             .SingleOrDefaultAsync(ct) ?? ActivitySettingsDto.AllOn;
 
     private async Task SafelyAsync(string type, Func<Task> work)

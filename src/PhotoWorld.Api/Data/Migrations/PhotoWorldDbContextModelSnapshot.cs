@@ -77,6 +77,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("character varying(24)")
                         .HasColumnName("type");
 
+                    b.Property<Guid?>("WalkId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("walk_id");
+
                     b.HasKey("Id")
                         .HasName("pk_activities");
 
@@ -98,6 +102,9 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasIndex("PushedAt")
                         .HasDatabaseName("ix_activities_pushed_at");
 
+                    b.HasIndex("WalkId")
+                        .HasDatabaseName("ix_activities_walk_id");
+
                     b.HasIndex("RecipientId", "CreatedAt")
                         .IsDescending(false, true)
                         .HasDatabaseName("ix_activities_recipient_id_created_at");
@@ -107,7 +114,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder')");
                         });
                 });
 
@@ -142,6 +149,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("push");
+
+                    b.Property<bool>("Walks")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("walks");
 
                     b.HasKey("UserId")
                         .HasName("pk_activity_settings");
@@ -1309,6 +1322,112 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("users", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Walk", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("latitude");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("longitude");
+
+                    b.Property<int?>("MaxPeople")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_people");
+
+                    b.Property<string>("MeetingPoint")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("meeting_point");
+
+                    b.Property<Guid>("OrganizerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organizer_id");
+
+                    b.Property<DateTimeOffset?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reminder_sent_at");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_walks");
+
+                    b.HasIndex("OrganizerId")
+                        .HasDatabaseName("ix_walks_organizer_id");
+
+                    b.HasIndex("StartsAt")
+                        .HasDatabaseName("ix_walks_starts_at");
+
+                    b.ToTable("walks", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_walks_latitude", "latitude between -90 and 90");
+
+                            t.HasCheckConstraint("ck_walks_longitude", "longitude between -180 and 180");
+
+                            t.HasCheckConstraint("ck_walks_times", "ends_at > starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.WalkAttendee", b =>
+                {
+                    b.Property<Guid>("WalkId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("walk_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("JoinedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("joined_at");
+
+                    b.HasKey("WalkId", "UserId")
+                        .HasName("pk_walk_attendees");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_walk_attendees_user_id");
+
+                    b.ToTable("walk_attendees", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Activity", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.User", "Actor")
@@ -1342,6 +1461,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_activities_users_recipient_id");
 
+                    b.HasOne("PhotoWorld.Api.Data.Walk", "Walk")
+                        .WithMany()
+                        .HasForeignKey("WalkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_activities_walks_walk_id");
+
                     b.Navigation("Actor");
 
                     b.Navigation("Challenge");
@@ -1351,6 +1476,8 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Post");
 
                     b.Navigation("Recipient");
+
+                    b.Navigation("Walk");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.ActivitySettings", b =>
@@ -1754,6 +1881,39 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Reporter");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Walk", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Organizer")
+                        .WithMany()
+                        .HasForeignKey("OrganizerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_walks_users_organizer_id");
+
+                    b.Navigation("Organizer");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.WalkAttendee", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_walk_attendees_users_user_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Walk", "Walk")
+                        .WithMany("Attendees")
+                        .HasForeignKey("WalkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_walk_attendees_walks_walk_id");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Walk");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.BlogComment", b =>
                 {
                     b.Navigation("Reports");
@@ -1803,6 +1963,11 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("BlockedBy");
 
                     b.Navigation("ExternalLogins");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Walk", b =>
+                {
+                    b.Navigation("Attendees");
                 });
 #pragma warning restore 612, 618
         }

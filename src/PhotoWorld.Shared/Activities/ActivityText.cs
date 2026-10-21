@@ -10,6 +10,7 @@ public static class ActivityText
         var photo = Quote(a.PhotoTitle);
         var post = Quote(a.PostTitle);
         var challenge = Quote(a.ChallengeTitle);
+        var walk = Quote(a.WalkTitle);
         return a.Type switch
         {
             ActivityTypes.Like => $"{who} liked your photo {photo}",
@@ -18,6 +19,11 @@ public static class ActivityText
             ActivityTypes.Follow => $"{who} started following you",
             ActivityTypes.NewPhoto => $"{who} shared a new photo, {photo}",
             ActivityTypes.NewPost => $"{who} published a new post, {post}",
+            ActivityTypes.WalkNew => $"{who} is organising a photo walk: {walk}",
+            ActivityTypes.WalkJoined => $"{who} is coming on your photo walk {walk}",
+            ActivityTypes.WalkChanged => $"The photo walk {walk} has changed: check the time and meeting point",
+            ActivityTypes.WalkCancelled => $"The photo walk {walk} was cancelled",
+            ActivityTypes.WalkReminder => $"Reminder: the photo walk {walk} is tomorrow",
             ActivityTypes.Feedback => $"{who} gave feedback on your photo {photo}",
             ActivityTypes.PhotoOfTheDay => $"Your photo {photo} is today's photo of the day! ⭐",
             ActivityTypes.ChallengeOpen => $"New photo challenge: {challenge} is open for entries",
@@ -40,6 +46,7 @@ public static class ActivityText
         [nameof(ActivitySettingsDto.Follows)] = "New followers",
         [nameof(ActivitySettingsDto.FollowedPosts)] = "New photos and posts from members you follow",
         [nameof(ActivitySettingsDto.Challenges)] = "Photo challenges: new ones, closing soon, results",
+        [nameof(ActivitySettingsDto.Walks)] = "Photo walks: new ones by members you follow, people joining yours, changes and reminders",
         [nameof(ActivitySettingsDto.Push)] = "Also send them to my phone (in the PhotoWorld app)",
     };
 

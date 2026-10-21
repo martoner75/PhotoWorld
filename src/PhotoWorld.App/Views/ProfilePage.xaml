@@ -28,6 +28,8 @@
                                 Command="{Binding OpenMyPageCommand}" />
                         <Button Text="My collections" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenCollectionsCommand}" />
+                        <Button Text="Photo walks" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenWalksCommand}" />
                         <Button Text="Photo challenges" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenChallengesCommand}" />
                         <Button Text="Open PhotoWorld on the web" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
@@ -48,6 +50,7 @@
                         <Grid ColumnDefinitions="*,Auto"><Label Text="New followers" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityFollows}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="New photos and posts from members you follow" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityFollowedPosts}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Photo challenges" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityChallenges}" /></Grid>
+                        <Grid ColumnDefinitions="*,Auto"><Label Text="Photo walks" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityWalks}" /></Grid>
                         <Button Text="Save activity settings" Command="{Binding SaveActivitySettingsCommand}" />
                     </VerticalStackLayout>
                 </Border>

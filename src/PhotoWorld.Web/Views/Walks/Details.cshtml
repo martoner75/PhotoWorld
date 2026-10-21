@@ -1,0 +1,118 @@
+@model WalkDto
+@{
+    var w = Model.Walk;
+    ViewData["Title"] = w.Title;
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+}
+
+<section class="container page">
+    @if (w.IsCancelled)
+    {
+        <div class="alert moderation-banner" role="status"><strong>Cancelled.</strong> This walk isn't happening.</div>
+    }
+    <div class="walk-layout">
+        <div>
+            <p class="hero-eyebrow">Photo walk</p>
+            <h1 class="walk-title">@w.Title</h1>
+            <p class="walk-facts">
+                🗓 <time datetime="@w.StartsAt.ToString("O")" data-local-time="full">@w.StartsAt.ToString("dddd d MMMM, HH:mm") UTC</time>
+                – <time datetime="@w.EndsAt.ToString("O")" data-local-time="time">@w.EndsAt.ToString("HH:mm")</time><br />
+                📍 @w.MeetingPoint<br />
+                👥 @w.AttendeeCount going@(w.MaxPeople is { } max ? $" (up to {max})" : "") · organised by
+                <a asp-controller="Members" asp-action="Details" asp-route-id="@w.Organizer.Id">@w.Organizer.DisplayName</a>
+            </p>
+
+            @if (!w.IsCancelled)
+            {
+                <div class="member-actions walk-actions">
+                    @if (w.IsGoing)
+                    {
+                        <form asp-action="Attend" asp-route-id="@w.Id" method="post" data-confirm="Not going any more?">
+                            <input type="hidden" name="going" value="false" />
+                            <button type="submit" class="btn btn-ghost">Going ✓ · Leave</button>
+                        </form>
+                    }
+                    else if (Model.CanJoin)
+                    {
+                        <form asp-action="Attend" asp-route-id="@w.Id" method="post">
+                            <input type="hidden" name="going" value="true" />
+                            <button type="submit" class="btn btn-accent">I'm going</button>
+                        </form>
+                    }
+                    else if (Model.CannotJoinReason is { } reason)
+                    {
+                        <span class="text-muted">@reason</span>
+                    }
+                    <a class="btn btn-ghost" href="https://www.openstreetmap.org/?mlat=@w.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)&mlon=@w.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)#map=17/@w.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)/@w.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)" rel="noopener" target="_blank">Directions</a>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <p class="blog-intro walk-plan">@Model.Description</p>
+            }
+
+            <p class="walk-tag">Shooting on this walk? Tag your photos <a class="tag-chip" asp-controller="Photos" asp-action="Index" asp-route-tag="@w.Tag">#@w.Tag</a> and they'll show here.</p>
+
+            @if (Model.CanEdit)
+            {
+                <div class="owner-actions">
+                    <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@w.Id">Edit</a>
+                    @if (!w.IsCancelled)
+                    {
+                        <form asp-action="Cancel" asp-route-id="@w.Id" method="post" data-confirm="Cancel this walk? Everyone going will be told.">
+                            <button type="submit" class="btn btn-ghost btn-sm">Cancel walk</button>
+                        </form>
+                    }
+                    <form asp-action="Delete" asp-route-id="@w.Id" method="post" data-confirm="Delete this walk for good? Photos tagged with it stay.">
+                        <button type="submit" class="btn btn-danger-ghost btn-sm">Delete</button>
+                    </form>
+                </div>
+            }
+        </div>
+        <aside>
+            <div id="walk-map" class="places-map walk-map" aria-label="Meeting point"
+                 data-lat="@w.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                 data-lng="@w.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"></div>
+            <h2 class="section-heading mt-3">Going</h2>
+            <ul class="member-results">
+                @foreach (var person in Model.Attendees)
+                {
+                    <li class="member-result">
+                        <a asp-controller="Members" asp-action="Details" asp-route-id="@person.Id" class="photo-card-owner">
+                            <partial name="_Avatar" model="person" /> <strong>@person.DisplayName</strong>
+                            @if (person.Id == w.Organizer.Id) { <span class="text-muted small">organiser</span> }
+                        </a>
+                    </li>
+                }
+            </ul>
+        </aside>
+    </div>
+
+    <h2 class="section-heading mt-4">Photos from the walk @if (Model.PhotoCount > 0) { <span class="text-muted">@Model.PhotoCount</span> }</h2>
+    @if (Model.PhotoCount == 0)
+    {
+        <div class="empty-state"><p>No photos yet. Tag yours <strong>#@w.Tag</strong> to add them here.</p></div>
+    }
+    else
+    {
+        <div class="photo-grid">
+            @foreach (var photo in Model.Photos)
+            {
+                <partial name="_PhotoCard" model="photo" />
+            }
+        </div>
+        @if (Model.PhotoCount > Model.Photos.Count)
+        {
+            <p class="mt-2"><a asp-controller="Photos" asp-action="Index" asp-route-tag="@w.Tag">See all @Model.PhotoCount photos</a></p>
+        }
+    }
+</section>
+
+@section Scripts {
+    <script src="~/lib/leaflet/leaflet.js"></script>
+    <script src="~/js/walks.js" asp-append-version="true"></script>
+}

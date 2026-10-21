@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+             x:Class="PhotoWorld.App.Views.WalkEditorPage"
+             x:DataType="vm:WalkEditorViewModel"
+             Title="{Binding PageTitle}">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="10" MaximumWidthRequest="640">
+                <Label Text="Title" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}"><Entry Text="{Binding Title}" Placeholder="Fog and deer at dawn" MaxLength="100" /></Border>
+                <Label Text="The plan (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Description}" Placeholder="Route, what to bring, the light we're hoping for…" AutoSize="TextChanges"
+                            MinimumHeightRequest="80" MaxLength="2000" />
+                </Border>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Date" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}"><DatePicker Date="{Binding Date}" MinimumDate="{Binding MinDate}" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="Starts" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}"><TimePicker Time="{Binding Time}" TextColor="{DynamicResource Text}" /></Border>
+                    </VerticalStackLayout>
+                </Grid>
+                <Label Text="Lasts" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Picker ItemsSource="{Binding DurationOptions}" SelectedIndex="{Binding DurationIndex}" Title="How long" TextColor="{DynamicResource Text}" />
+                </Border>
+
+                <Label Text="Meeting point" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}"><Entry Text="{Binding MeetingPoint}" Placeholder="Richmond Gate, Richmond Park" MaxLength="150" /></Border>
+                <Border Style="{StaticResource Field}" IsVisible="{Binding HasPlaces}">
+                    <Picker ItemsSource="{Binding PlaceOptions}" SelectedIndex="{Binding PlaceIndex}" Title="…or use one of your places"
+                            TextColor="{DynamicResource Text}" />
+                </Border>
+                <maps:Map x:Name="Map" HeightRequest="260" IsShowingUser="False" MapType="Street" MapClicked="OnMapClicked" />
+                <Label Text="{Binding PinText}" Style="{StaticResource MutedText}" />
+
+                <Label Text="Group size limit (optional, including you)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}"><Entry Text="{Binding MaxPeople}" Placeholder="No limit" Keyboard="Numeric" /></Border>
+
+                <Button Text="Save walk" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+                <Label Text="Followers hear about new walks; people going hear about changes and get a reminder the day before."
+                       Style="{StaticResource MutedText}" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

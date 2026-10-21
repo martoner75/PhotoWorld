@@ -21,6 +21,8 @@ public static class ActivityRules
         ActivityTypes.Follow => settings.Follows,
         ActivityTypes.NewPhoto or ActivityTypes.NewPost => settings.FollowedPosts,
         ActivityTypes.PhotoOfTheDay => true, // rare and always good news
+        ActivityTypes.WalkNew or ActivityTypes.WalkJoined or ActivityTypes.WalkChanged or ActivityTypes.WalkCancelled
+            or ActivityTypes.WalkReminder => settings.Walks,
         _ => settings.Challenges,
     };
 

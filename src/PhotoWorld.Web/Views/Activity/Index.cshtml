@@ -29,6 +29,7 @@
                     { PhotoId: { } photo } => ("Photos", "Details", photo),
                     { PostId: { } post } => ("Blogs", "Post", post),
                     { ChallengeId: { } challenge } => ("Challenges", "Details", challenge),
+                    { WalkId: { } walk } => ("Walks", "Details", walk),
                     { Actor: { } actor } => ("Members", "Details", actor.Id),
                     _ => ("Home", "Index", Guid.Empty),
                 };

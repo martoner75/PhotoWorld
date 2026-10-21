@@ -22,6 +22,12 @@ public static class Routes
     public const string Collection = "collection";
     public const string Explore = "explore";
     public const string Feedback = "feedback";
+    public const string Walks = "walks";
+    public const string Walk = "walk";
+    public const string WalkEditor = "walk-editor";
+
+    public static Task OpenWalkAsync(Guid id) =>
+        Shell.Current.GoToAsync(Walk, new ShellNavigationQueryParameters { ["id"] = id });
 
     public static Task OpenMemberAsync(Guid id) =>
         Shell.Current.GoToAsync(Member, new ShellNavigationQueryParameters { ["id"] = id });

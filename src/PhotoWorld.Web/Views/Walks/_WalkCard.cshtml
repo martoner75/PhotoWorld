@@ -1,0 +1,30 @@
+@model WalkSummaryDto
+<article class="post-card walk-card @(Model.IsCancelled ? "is-cancelled" : "")">
+    <a asp-action="Details" asp-route-id="@Model.Id" class="post-card-cover" tabindex="-1" aria-hidden="true">
+        @if (Model.CoverUrl is not null)
+        {
+            <img src="@Model.CoverUrl" alt="" loading="lazy" />
+        }
+        else
+        {
+            <span class="post-card-cover-empty walk-cover-empty">📍</span>
+        }
+        @if (Model.IsCancelled)
+        {
+            <span class="moderation-badge photo-card-badge">Cancelled</span>
+        }
+        else if (Model.IsGoing || Model.IsOrganizer)
+        {
+            <span class="moderation-badge photo-card-badge draft-badge">@(Model.IsOrganizer ? "Organising" : "Going")</span>
+        }
+    </a>
+    <div class="post-card-body">
+        <p class="walk-when"><time datetime="@Model.StartsAt.ToString("O")" data-local-time="full">@Model.StartsAt.ToString("ddd d MMM, HH:mm") UTC</time></p>
+        <h3><a asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></h3>
+        <p class="text-muted small mb-0">📍 @Model.MeetingPoint</p>
+        <div class="post-card-meta">
+            <span class="photo-card-owner"><partial name="_Avatar" model="Model.Organizer" /> @Model.Organizer.DisplayName</span>
+            <span>@Model.AttendeeCount@(Model.MaxPeople is { } max ? $" / {max}" : "") going</span>
+        </div>
+    </div>
+</article>

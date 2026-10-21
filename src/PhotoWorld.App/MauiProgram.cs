@@ -54,6 +54,9 @@ public static class MauiProgram
         services.AddTransient<CollectionPage>().AddTransient<CollectionViewModel>();
         services.AddTransient<ExplorePage>().AddTransient<ExploreViewModel>();
         services.AddTransient<FeedbackPage>().AddTransient<FeedbackViewModel>();
+        services.AddTransient<WalksPage>().AddTransient<WalksViewModel>();
+        services.AddTransient<WalkPage>().AddTransient<WalkViewModel>();
+        services.AddTransient<WalkEditorPage>().AddTransient<WalkEditorViewModel>();
 
         return builder.Build();
     }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.WalksPage"
+             x:DataType="vm:WalksViewModel"
+             Title="Photo walks">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Organise" Command="{Binding NewCommand}" />
+    </ContentPage.ToolbarItems>
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="8" Padding="0,0,0,8">
+                    <Label Text="Meet other members and shoot together. Afterwards, tag your photos with the walk's tag."
+                           Style="{StaticResource MutedText}" FontSize="14" />
+                    <Border Padding="3" StrokeShape="RoundRectangle 10">
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="3">
+                            <Button Text="Upcoming" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="upcoming">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding List}" Value="upcoming">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="1" Text="Mine" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="mine">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding List}" Value="mine">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="2" Text="Past" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="past">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding List}" Value="past">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.EmptyView>
+                <Label Text="{Binding EmptyMessage}" Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center"
+                       Margin="32,60" IsVisible="{Binding IsEmpty}" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:WalkItem">
+                    <Border Padding="14,12">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:WalksViewModel}}, x:DataType=vm:WalksViewModel}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+                            <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="13" />
+                            <Label Grid.Column="1" Text="{Binding Badge}" Style="{StaticResource MutedText}"
+                                   IsVisible="{Binding Badge, Converter={StaticResource HasValue}}" />
+                            <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Walk.Title}" Style="{StaticResource Subheading}" FontSize="18" />
+                            <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Facts}" Style="{StaticResource MutedText}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

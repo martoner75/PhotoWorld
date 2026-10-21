@@ -40,6 +40,7 @@ public partial class ActivityViewModel(PhotoWorldApi api) : PagedListViewModel<A
         { PhotoId: { } photo } => Shell.Current.GoToAsync(Routes.Photo, new ShellNavigationQueryParameters { ["id"] = photo }),
         { PostId: { } post } => Shell.Current.GoToAsync(Routes.Post, new ShellNavigationQueryParameters { ["id"] = post }),
         { ChallengeId: { } challenge } => Routes.OpenChallengeAsync(challenge),
+        { WalkId: { } walk } => Routes.OpenWalkAsync(walk),
         { Actor: { } actor } => Routes.OpenMemberAsync(actor.Id),
         _ => Task.CompletedTask,
     };
