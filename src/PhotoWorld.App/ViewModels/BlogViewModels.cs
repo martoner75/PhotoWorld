@@ -10,7 +10,28 @@ namespace PhotoWorld.App.ViewModels;
 
 public partial class BlogsViewModel(PhotoWorldApi api) : PagedListViewModel<BlogPostSummaryDto>
 {
-    protected override Task<PagedResult<BlogPostSummaryDto>> FetchAsync(int page) => api.GetPostsAsync(page);
+    /// <summary>Only posts by members the reader follows.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EmptyMessage))]
+    public partial bool Following { get; set; }
+
+    public string EmptyMessage => Following
+        ? "No posts from members you follow yet. Tap an author's name to see their page and follow them."
+        : "No blog posts yet.";
+
+    protected override Task<PagedResult<BlogPostSummaryDto>> FetchAsync(int page) => api.GetPostsAsync(page, Following);
+
+    [RelayCommand]
+    private void ShowFollowing(string which)
+    {
+        var following = which == "following";
+        if (following == Following) return;
+        Following = following;
+        IsRefreshing = true;
+    }
+
+    [RelayCommand]
+    private Task OpenAuthorAsync(BlogPostSummaryDto post) => Routes.OpenMemberAsync(post.Author.Id);
 
     [RelayCommand]
     private Task OpenAsync(BlogPostSummaryDto post) =>

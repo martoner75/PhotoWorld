@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.EnterChallengePage"
+             x:DataType="vm:EnterChallengeViewModel"
+             Title="{Binding Title}">
+    <Grid>
+        <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8"
+                            RemainingItemsThreshold="6" RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=3, Tablet=5, Default=4}"
+                                     HorizontalItemSpacing="8" VerticalItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.Header>
+                    <Label Text="Tap one of your photos to enter it. You can withdraw it until the challenge ends."
+                           Style="{StaticResource MutedText}" FontSize="14" Margin="4,0,4,12" />
+                </CollectionView.Header>
+                <CollectionView.EmptyView>
+                    <Label Text="You haven't shared any photos yet. Upload one from the Upload tab, then come back to enter it."
+                           Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center" Margin="32,80"
+                           IsVisible="{Binding IsEmpty}" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:EntryChoice">
+                        <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                                SemanticProperties.Description="{Binding Label}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ChooseCommand, Source={RelativeSource AncestorType={x:Type vm:EnterChallengeViewModel}}, x:DataType=vm:EnterChallengeViewModel}"
+                                                      CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid HeightRequest="{OnIdiom Phone=120, Tablet=160, Default=140}">
+                                <Image Source="{Binding Photo.ThumbnailUrl}" Aspect="AspectFill">
+                                    <Image.Triggers>
+                                        <DataTrigger TargetType="Image" Binding="{Binding CanEnter}" Value="False">
+                                            <Setter Property="Opacity" Value="0.4" />
+                                        </DataTrigger>
+                                    </Image.Triggers>
+                                </Image>
+                                <Grid VerticalOptions="End" Padding="8,18,8,6">
+                                    <Grid.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="Transparent" Offset="0" />
+                                            <GradientStop Color="#C0000000" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Grid.Background>
+                                    <Label Text="{Binding Label}" FontSize="12" LineBreakMode="TailTruncation">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsEntered}" Value="True">
+                                                <Setter Property="TextColor" Value="{StaticResource Accent}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

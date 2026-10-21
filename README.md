@@ -176,8 +176,8 @@ Without a choice, it's the first photo in the post. The API only accepts the aut
 own photos and can withdraw them until it ends. **Votes are likes**: a like from another member counts if it was
 given between the moment the photo was entered and the end of the challenge. When it ends, the entry with the most
 votes wins (on a tie, the one entered first), and the winner gets a trophy on their member page. Photos hidden by
-moderation drop out of the standings; deleting a photo removes its entry. Challenges are on the website only for
-now; the app doesn't show them yet.
+moderation drop out of the standings; deleting a photo removes its entry. The app shows the open challenge as a
+banner at the top of its Gallery tab.
 
 There's no admin page: add challenges in the Supabase dashboard (**SQL editor**). Times are UTC.
 
@@ -307,9 +307,11 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Mobile app (iPhone, iPad and Android)
 
 `src/PhotoWorld.App` is one .NET MAUI app (native XAML, CommunityToolkit.Mvvm) for iPhone, iPad and
-Android, in PhotoWorld's dark look; only `Platforms/iOS` and `Platforms/Android` differ. Tabs: **Gallery** (photos, likes, comments, reporting), **Blogs** (read posts, comment),
+Android, in PhotoWorld's dark look; only `Platforms/iOS` and `Platforms/Android` differ. Tabs: **Gallery** (photos, likes, comments, reporting; Everyone / Following, camera-settings
+**Filter**, and the current photo challenge with its entries), **Blogs** (read posts, comment; Everyone / Following),
 **Upload** (from Photos or the camera, with the home-page toggle), **Places** (the private map: Apple Maps on iOS, Google
-Maps on Android; search with the platform's geocoder or tap the map) and **Me** (sign out, delete account). It calls the same API as the
+Maps on Android; search with the platform's geocoder or tap the map) and **Me** (your member page, challenges, email notifications, sign out, delete account). Tapping a member's name
+opens their page: follow or unfollow, follower counts, challenge trophies and their photos. It calls the same API as the
 website and compiles the DTOs and routes from `PhotoWorld.Shared` as source (not a project reference, so the app
 doesn't ship the Supabase logger's Npgsql).
 

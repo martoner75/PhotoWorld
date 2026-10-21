@@ -13,8 +13,32 @@
                 <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=1, Tablet=2, Default=2}"
                                  HorizontalItemSpacing="12" VerticalItemSpacing="12" />
             </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <Border Padding="3" StrokeShape="RoundRectangle 10" Margin="0,0,0,10">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                        <Button Text="Everyone" Style="{StaticResource SegmentButton}"
+                                Command="{Binding ShowFollowingCommand}" CommandParameter="everyone">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
+                                    <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Grid.Column="1" Text="Following" Style="{StaticResource SegmentButton}"
+                                Command="{Binding ShowFollowingCommand}" CommandParameter="following">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
+                                    <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </Grid>
+                </Border>
+            </CollectionView.Header>
             <CollectionView.EmptyView>
-                <Label Text="No blog posts yet." Style="{StaticResource MutedText}" FontSize="15"
+                <Label Text="{Binding EmptyMessage}" Style="{StaticResource MutedText}" FontSize="15"
                        HorizontalTextAlignment="Center" Margin="32,80" IsVisible="{Binding IsEmpty}" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
@@ -31,11 +55,14 @@
                             <VerticalStackLayout Padding="14,12" Spacing="6">
                                 <Label Text="{Binding Title}" Style="{StaticResource Subheading}" />
                                 <Label Text="{Binding Excerpt}" TextColor="{StaticResource Muted}" MaxLines="3" LineBreakMode="TailTruncation" />
-                                <Label Style="{StaticResource MutedText}">
+                                <!-- A button (not a tap on the label) so tapping the name opens the member page without also opening the post. -->
+                                <Button Text="{Binding Author.DisplayName}" Style="{StaticResource LinkButton}" FontSize="13"
+                                        Padding="0,2" MinimumHeightRequest="28" HorizontalOptions="Start" CommandParameter="{Binding .}"
+                                        Command="{Binding OpenAuthorCommand, Source={RelativeSource AncestorType={x:Type vm:BlogsViewModel}}, x:DataType=vm:BlogsViewModel}" />
+                                <Label Style="{StaticResource MutedText}" Margin="0,-6,0,0">
                                     <Label.FormattedText>
                                         <FormattedString>
-                                            <Span Text="{Binding Author.DisplayName}" />
-                                            <Span Text="{Binding PublishedAt, StringFormat=' · {0:d MMM yyyy}'}" />
+                                            <Span Text="{Binding PublishedAt, StringFormat='{0:d MMM yyyy}'}" />
                                             <Span Text="{Binding CommentCount, StringFormat=' · {0} comments'}" />
                                         </FormattedString>
                                     </Label.FormattedText>

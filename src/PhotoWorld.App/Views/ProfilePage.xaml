@@ -21,6 +21,10 @@
 
                 <Border Padding="4">
                     <VerticalStackLayout>
+                        <Button Text="My member page" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenMyPageCommand}" />
+                        <Button Text="Photo challenges" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenChallengesCommand}" />
                         <Button Text="Open PhotoWorld on the web" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenWebsiteCommand}" />
                         <Button Text="Privacy policy" Style="{StaticResource LinkButton}" HorizontalOptions="Start"

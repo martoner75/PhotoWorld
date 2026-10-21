@@ -43,6 +43,11 @@ public static class MauiProgram
         services.AddTransient<PlacesPage>().AddTransient<PlacesViewModel>();
         services.AddTransient<PlaceEditorPage>().AddTransient<PlaceEditorViewModel>();
         services.AddTransient<ProfilePage>().AddTransient<ProfileViewModel>();
+        services.AddTransient<MemberPage>().AddTransient<MemberViewModel>();
+        services.AddTransient<PhotoFilterPage>().AddTransient<PhotoFilterViewModel>();
+        services.AddTransient<ChallengesPage>().AddTransient<ChallengesViewModel>();
+        services.AddTransient<ChallengePage>().AddTransient<ChallengeViewModel>();
+        services.AddTransient<EnterChallengePage>().AddTransient<EnterChallengeViewModel>();
 
         return builder.Build();
     }

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.PhotoFilterPage"
+             x:DataType="vm:PhotoFilterViewModel"
+             Title="Filter photos">
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="10" MaximumWidthRequest="560">
+            <Label Text="Show photos taken with these settings. They come from each photo's camera data, so photos without it don't match."
+                   Style="{StaticResource MutedText}" FontSize="14" />
+
+            <Label Text="Camera" Style="{StaticResource Strong}" Margin="0,8,0,0" />
+            <Border Style="{StaticResource Field}">
+                <Picker ItemsSource="{Binding Cameras}" SelectedItem="{Binding Camera}" Title="Camera" TextColor="{StaticResource Text}" />
+            </Border>
+
+            <Label Text="Lens" Style="{StaticResource Strong}" />
+            <Border Style="{StaticResource Field}">
+                <Picker ItemsSource="{Binding Lenses}" SelectedItem="{Binding Lens}" Title="Lens" TextColor="{StaticResource Text}" />
+            </Border>
+
+            <Label Text="Focal length (mm)" Style="{StaticResource Strong}" />
+            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding FocalMin}" Placeholder="From" Keyboard="Numeric" />
+                </Border>
+                <Label Grid.Column="1" Text="–" Style="{StaticResource MutedText}" VerticalOptions="Center" />
+                <Border Grid.Column="2" Style="{StaticResource Field}">
+                    <Entry Text="{Binding FocalMax}" Placeholder="To" Keyboard="Numeric" />
+                </Border>
+            </Grid>
+
+            <Label Text="Aperture (ƒ-number)" Style="{StaticResource Strong}" />
+            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding ApertureMin}" Placeholder="From, e.g. 1.4" Keyboard="Numeric" />
+                </Border>
+                <Label Grid.Column="1" Text="–" Style="{StaticResource MutedText}" VerticalOptions="Center" />
+                <Border Grid.Column="2" Style="{StaticResource Field}">
+                    <Entry Text="{Binding ApertureMax}" Placeholder="To, e.g. 2.8" Keyboard="Numeric" />
+                </Border>
+            </Grid>
+            <Label Text="A lower ƒ-number is a wider aperture." Style="{StaticResource MutedText}" />
+
+            <Label Text="ISO" Style="{StaticResource Strong}" />
+            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="8">
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding IsoMin}" Placeholder="From" Keyboard="Numeric" />
+                </Border>
+                <Label Grid.Column="1" Text="–" Style="{StaticResource MutedText}" VerticalOptions="Center" />
+                <Border Grid.Column="2" Style="{StaticResource Field}">
+                    <Entry Text="{Binding IsoMax}" Placeholder="To" Keyboard="Numeric" />
+                </Border>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,14,0,0">
+                <Button Text="Clear" Style="{StaticResource GhostButton}" Command="{Binding ClearCommand}" />
+                <Button Grid.Column="1" Text="Show photos" Command="{Binding ApplyCommand}" />
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

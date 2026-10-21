@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.ChallengesPage"
+             x:DataType="vm:ChallengesViewModel"
+             Title="Photo challenges">
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=1, Tablet=2, Default=2}"
+                                 HorizontalItemSpacing="12" VerticalItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <Label Text="A theme to shoot for. Enter up to 3 of your photos; the one with the most likes when the challenge ends wins."
+                       Style="{StaticResource MutedText}" FontSize="14" Margin="4,0,4,12" />
+            </CollectionView.Header>
+            <CollectionView.EmptyView>
+                <Label Text="No challenges yet. The first theme is coming soon!" Style="{StaticResource MutedText}" FontSize="15"
+                       HorizontalTextAlignment="Center" Margin="32,80" IsVisible="{Binding IsEmpty}" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ChallengeItem">
+                    <Border Padding="0">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:ChallengesViewModel}}, x:DataType=vm:ChallengesViewModel}"
+                                                  CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout>
+                            <Grid HeightRequest="160" BackgroundColor="{StaticResource PhotoBackground}">
+                                <Image Source="{Binding Challenge.CoverUrl}" Aspect="AspectFill" />
+                                <Border Style="{StaticResource TileBadge}">
+                                    <Label Text="{Binding Phase}" FontSize="12" Style="{StaticResource Strong}" />
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsOpen}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="#D86EC88C" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+                            </Grid>
+                            <VerticalStackLayout Padding="14,12" Spacing="6">
+                                <Label Text="{Binding Challenge.Title}" Style="{StaticResource Subheading}" />
+                                <Label Text="{Binding Challenge.Description}" TextColor="{StaticResource Muted}" MaxLines="3"
+                                       LineBreakMode="TailTruncation" IsVisible="{Binding Challenge.Description, Converter={StaticResource HasValue}}" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding When}" Style="{StaticResource MutedText}"
+                                           IsVisible="{Binding Winner, Converter={StaticResource HasValue}, ConverterParameter=not}" />
+                                    <Label Text="{Binding Winner}" TextColor="{StaticResource Accent}" FontSize="13"
+                                           IsVisible="{Binding Winner, Converter={StaticResource HasValue}}" />
+                                    <Label Grid.Column="1" Text="{Binding Entries}" Style="{StaticResource MutedText}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

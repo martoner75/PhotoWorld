@@ -22,7 +22,11 @@
                     </Border>
 
                     <Label Text="{Binding Photo.Title}" Style="{StaticResource Heading}" />
-                    <Label Text="{Binding Byline}" Style="{StaticResource MutedText}" FontSize="14" />
+                    <Label Text="{Binding Byline}" Style="{StaticResource MutedText}" FontSize="14" TextDecorations="Underline">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenOwnerCommand}" />
+                        </Label.GestureRecognizers>
+                    </Label>
 
                     <HorizontalStackLayout Spacing="10">
                         <Button Command="{Binding ToggleLikeCommand}" Style="{StaticResource GhostButton}" Padding="14,8"
@@ -42,6 +46,12 @@
                            IsVisible="{Binding Photo.Description, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding CameraSummary}" Style="{StaticResource MutedText}"
                            IsVisible="{Binding CameraSummary, Converter={StaticResource HasValue}}" />
+                    <HorizontalStackLayout Spacing="4" Margin="-6,-6,0,0">
+                        <Button Text="Same camera" Style="{StaticResource LinkButton}" Command="{Binding SameCameraCommand}"
+                                IsVisible="{Binding HasCamera}" />
+                        <Button Text="Same lens" Style="{StaticResource LinkButton}" Command="{Binding SameLensCommand}"
+                                IsVisible="{Binding HasLens}" />
+                    </HorizontalStackLayout>
 
                     <Label Text="Comments" Style="{StaticResource Subheading}" Margin="0,14,0,0" />
                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding Comments}" Spacing="8">

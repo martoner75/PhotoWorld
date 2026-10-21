@@ -6,6 +6,11 @@
              x:Class="PhotoWorld.App.Views.GalleryPage"
              x:DataType="vm:GalleryViewModel"
              Title="Gallery">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Challenges" Command="{Binding OpenChallengesCommand}" Order="Primary" />
+        <ToolbarItem Text="Filter" Command="{Binding OpenFiltersCommand}" Order="Primary" />
+    </ContentPage.ToolbarItems>
+
     <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
         <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8"
                         RemainingItemsThreshold="6" RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
@@ -14,8 +19,51 @@
                 <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=2, Tablet=4, Default=3}"
                                  HorizontalItemSpacing="10" VerticalItemSpacing="10" />
             </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="8" Padding="0,0,0,10">
+                    <Border Padding="3" StrokeShape="RoundRectangle 10">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                            <Button Text="Everyone" Style="{StaticResource SegmentButton}"
+                                    Command="{Binding ShowFollowingCommand}" CommandParameter="everyone">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="False">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
+                                        <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="1" Text="Following" Style="{StaticResource SegmentButton}"
+                                    Command="{Binding ShowFollowingCommand}" CommandParameter="following">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
+                                        <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <Border Padding="14,10" Stroke="{StaticResource Accent}" BackgroundColor="#2A1F0E"
+                            IsVisible="{Binding ChallengeBanner, Converter={StaticResource HasValue}}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenChallengeCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="{Binding ChallengeBanner}" Style="{StaticResource Strong}" FontSize="14"
+                                   LineBreakMode="TailTruncation" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="›" TextColor="{StaticResource Accent}" FontSize="20" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsFiltered}">
+                        <Label Text="{Binding FilterSummary}" Style="{StaticResource MutedText}" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Clear" Style="{StaticResource LinkButton}" Command="{Binding ClearFiltersCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </CollectionView.Header>
             <CollectionView.EmptyView>
-                <Label Text="No photos yet. Be the first to share one from the Upload tab."
+                <Label Text="{Binding EmptyMessage}"
                        Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center" Margin="32,80"
                        IsVisible="{Binding IsEmpty}" />
             </CollectionView.EmptyView>

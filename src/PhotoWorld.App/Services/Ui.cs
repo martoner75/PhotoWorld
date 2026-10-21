@@ -11,6 +11,17 @@ public static class Routes
     public const string Post = "post";
     public const string PostComments = "post-comments";
     public const string PlaceEditor = "place-editor";
+    public const string Member = "member";
+    public const string PhotoFilter = "photo-filter";
+    public const string Challenges = "challenges";
+    public const string Challenge = "challenge";
+    public const string EnterChallenge = "challenge-enter";
+
+    public static Task OpenMemberAsync(Guid id) =>
+        Shell.Current.GoToAsync(Member, new ShellNavigationQueryParameters { ["id"] = id });
+
+    public static Task OpenChallengeAsync(Guid id) =>
+        Shell.Current.GoToAsync(Challenge, new ShellNavigationQueryParameters { ["id"] = id });
 }
 
 /// <summary>Alerts and pickers shown over the current page.</summary>
