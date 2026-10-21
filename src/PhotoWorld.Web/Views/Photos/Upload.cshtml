@@ -5,7 +5,8 @@
 
 <section class="container page narrow">
     <h1>Upload a photo</h1>
-    <p class="text-muted">JPEG, PNG, WebP or iPhone HEIC, up to @(PhotoUploadLimits.MaxBytes / (1024 * 1024)) MB.</p>
+    <p class="text-muted">JPEG, PNG, WebP or iPhone HEIC, up to @(PhotoUploadLimits.MaxBytes / (1024 * 1024)) MB.
+        Got a whole shoot? <a asp-action="UploadMany">Upload several at once</a>.</p>
 
     <form asp-action="Upload" method="post" enctype="multipart/form-data" class="form-card">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>

@@ -7,9 +7,36 @@ using PhotoWorld.Shared.Places;
 
 namespace PhotoWorld.App.ViewModels;
 
+/// <summary>One photo in a multi-photo upload: its own title, shown with a thumbnail and how it went.</summary>
+public partial class UploadItem(FileResult file) : ObservableObject
+{
+    public FileResult File { get; } = file;
+    public ImageSource Preview { get; } = ImageSource.FromFile(file.FullPath);
+
+    [ObservableProperty] public partial string Title { get; set; } = Path.GetFileNameWithoutExtension(file.FileName).Replace('_', ' ').Trim();
+    [ObservableProperty] public partial string Status { get; set; } = "";
+    [ObservableProperty] public partial bool Done { get; set; }
+}
+
 public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
 {
+    /// <summary>Most photos one upload takes, on the website too.</summary>
+    public const int MaxBatch = 20;
+
     private FileResult? _file;
+
+    /// <summary>Several photos picked at once: each gets its own title; the other fields apply to all of them.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<UploadItem> Batch { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSingle))]
+    [NotifyCanExecuteChangedFor(nameof(UploadCommand))]
+    public partial bool IsBatch { get; set; }
+
+    public bool IsSingle => !IsBatch;
+
+    [ObservableProperty]
+    public partial string Progress { get; set; } = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPhoto))]
@@ -72,7 +99,18 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
     public int DescriptionMaxLength => PhotoUploadLimits.MaxDescriptionLength;
 
     [RelayCommand]
-    private async Task PickAsync() => Use((await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions { SelectionLimit = 1 }))?.FirstOrDefault());
+    private async Task PickAsync()
+    {
+        var files = (await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions { SelectionLimit = MaxBatch }))?.ToList() ?? [];
+        if (files.Count <= 1)
+        {
+            Use(files.FirstOrDefault());
+            return;
+        }
+        Reset();
+        foreach (var file in files.Take(MaxBatch)) Batch.Add(new UploadItem(file));
+        IsBatch = true;
+    }
 
     [RelayCommand]
     private async Task TakeAsync() => Use(await MediaPicker.Default.CapturePhotoAsync());
@@ -80,14 +118,65 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
     private void Use(FileResult? file)
     {
         if (file is null) return;
+        Batch.Clear();
+        IsBatch = false;
         _file = file;
         Preview = ImageSource.FromFile(file.FullPath);
     }
 
-    private bool CanUpload() => _file is not null && !string.IsNullOrWhiteSpace(Title);
+    private bool CanUpload() => IsBatch ? Batch.Count > 0 : _file is not null && !string.IsNullOrWhiteSpace(Title);
 
     [RelayCommand(CanExecute = nameof(CanUpload))]
-    private Task UploadAsync() => RunAsync(async () =>
+    private Task UploadAsync() => IsBatch ? UploadBatchAsync() : UploadOneAsync();
+
+    /// <summary>
+    /// Uploads the batch one photo at a time, so a failure only costs that photo; finished ones are kept off the list
+    /// if it's tried again.
+    /// </summary>
+    private Task UploadBatchAsync() => RunAsync(async () =>
+    {
+        if (Batch.Any(i => !i.Done && string.IsNullOrWhiteSpace(i.Title)))
+        {
+            await Ui.AlertAsync("Give every photo a title first.");
+            return;
+        }
+        var placeId = PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : (Guid?)null;
+        var todo = Batch.Where(i => !i.Done).ToList();
+        var failed = 0;
+        for (var n = 0; n < todo.Count; n++)
+        {
+            var item = todo[n];
+            Progress = $"Uploading {n + 1} of {todo.Count}…";
+            item.Status = "Uploading…";
+            try
+            {
+                await using var stream = await item.File.OpenReadAsync();
+                await api.UploadPhotoAsync(stream, item.File.FileName, ContentTypeOf(item.File), item.Title.Trim(),
+                    Description.Trim(), ShowOnHome, placeId, Tags, WantsFeedback);
+                (item.Status, item.Done) = ("✓ Uploaded", true);
+            }
+            catch (ApiException ex)
+            {
+                item.Status = ex.Message;
+                failed++;
+            }
+        }
+        Progress = "";
+        WeakReferenceMessenger.Default.Send(new PhotoUploadedMessage(Guid.Empty));
+        if (failed == 0)
+        {
+            var count = todo.Count;
+            Reset();
+            await Ui.AlertAsync($"{count} photos shared. Thanks!");
+            await Shell.Current.GoToAsync(Routes.Gallery);
+        }
+        else
+        {
+            await Ui.AlertAsync($"{todo.Count - failed} of {todo.Count} uploaded. The others say why on the list; fix them and tap Upload again.");
+        }
+    });
+
+    private Task UploadOneAsync() => RunAsync(async () =>
     {
         await using var stream = await _file!.OpenReadAsync();
         if (stream.CanSeek && stream.Length > PhotoUploadLimits.MaxBytes)
@@ -108,6 +197,8 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
     {
         _file = null;
         Preview = null;
+        Batch.Clear();
+        IsBatch = false;
         (Title, Description, ShowOnHome, PlaceIndex, Tags, WantsFeedback) = ("", "", false, 0, "", false);
     }
 

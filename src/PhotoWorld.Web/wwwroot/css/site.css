@@ -611,3 +611,15 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .feedback-averages dt { color: var(--pw-muted); font-weight: 500; }
 .feedback-averages dd { margin: 0; font-weight: 600; }
 .filters-wide { grid-column: 1 / -1; }
+
+/* ---------- Upload several ---------- */
+.dropzone-small { min-height: 140px; }
+.upload-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.upload-item { display: flex; align-items: center; gap: .75rem; padding: .5rem; border: 1px solid var(--pw-line); border-radius: 10px; background: var(--pw-ink); }
+.upload-item.is-done { opacity: .7; }
+.upload-item img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; flex: none; background: var(--pw-photo-bg); }
+.upload-item-fields { flex: 1; min-width: 0; display: grid; gap: .2rem; }
+.upload-item-fields input { width: 100%; background: var(--pw-ink-2); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 8px; padding: .4rem .6rem; }
+.upload-item-status { color: var(--pw-muted); }
+.upload-item.is-done .upload-item-status { color: var(--pw-accent); font-weight: 600; }
+.upload-progress { font-weight: 600; text-align: center; margin: 0; }

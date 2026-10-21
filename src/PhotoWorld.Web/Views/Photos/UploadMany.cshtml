@@ -1,0 +1,41 @@
+@model UploadPhotoViewModel
+@{
+    ViewData["Title"] = "Upload several photos";
+}
+
+<section class="container page narrow">
+    <h1>Upload several photos</h1>
+    <p class="text-muted">Up to 20 at once (@(PhotoUploadLimits.MaxBytes / (1024 * 1024)) MB each). Each gets its own title; tags,
+        place and the options below apply to all of them. <a asp-action="Upload">Upload just one</a></p>
+
+    <form asp-action="UploadOne" method="post" enctype="multipart/form-data" class="form-card" data-upload-many
+          data-max-files="20" data-max-bytes="@PhotoUploadLimits.MaxBytes" data-done="@Url.Action("Me", "Members")">
+        <label class="dropzone dropzone-small" for="many-input">
+            <span class="dropzone-hint"><strong>Choose photos</strong><br />or drag them here</span>
+            <input id="many-input" type="file" accept="@PhotoUploadLimits.AcceptAttribute" multiple data-many-input />
+        </label>
+
+        <ul class="upload-list" data-many-list hidden></ul>
+
+        <div class="field">
+            <label for="many-description">Description <span class="text-muted">(optional, for all)</span></label>
+            <textarea id="many-description" name="description" rows="2" maxlength="@PhotoUploadLimits.MaxDescriptionLength"></textarea>
+        </div>
+        <partial name="_TagsField" model="Model.Tags" />
+        <partial name="_PlaceField" model="new PlaceFieldViewModel(Model.PlaceId, Model.Places)" />
+        <partial name="_FeedbackField" model="false" />
+        <partial name="_ShowOnHomeField" model="false" />
+
+        <p class="field-error" data-many-error hidden></p>
+        <p class="upload-progress" data-many-progress hidden></p>
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="Index">Cancel</a>
+            <button type="submit" class="btn btn-accent" data-many-submit disabled>Share photos</button>
+        </div>
+        <noscript><p class="field-error">Uploading several photos needs JavaScript. <a asp-action="Upload">Upload one at a time</a> instead.</p></noscript>
+    </form>
+</section>
+
+@section Scripts {
+    <script src="~/js/upload-many.js" asp-append-version="true"></script>
+}

@@ -65,6 +65,30 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         return RedirectToAction(nameof(Details), new { id = result.Value!.Id });
     }
 
+    /// <summary>Several photos at once: titles each, the rest shared. photos.js sends them one by one to <see cref="UploadOne"/>.</summary>
+    [HttpGet]
+    public async Task<IActionResult> UploadMany(CancellationToken ct) =>
+        View(new UploadPhotoViewModel { Places = await api.GetPlacesAsync(ct) });
+
+    /// <summary>One photo from the multi-photo page; answers JSON so the page can show progress and carry on.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    [RequestSizeLimit(PhotoUploadLimits.MaxBytes + 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
+    public async Task<IActionResult> UploadOne(IFormFile? photo, string? title, string? description, string? tags, Guid? placeId,
+        bool wantsFeedback, bool showOnHome, CancellationToken ct)
+    {
+        if (photo is null || photo.Length == 0) return BadRequest(new { error = "Choose a photo." });
+        if (string.IsNullOrWhiteSpace(title)) return BadRequest(new { error = "Give the photo a title." });
+        if (photo.Length > PhotoUploadLimits.MaxBytes)
+            return BadRequest(new { error = $"Photos can be up to {PhotoUploadLimits.MaxBytes / (1024 * 1024)} MB." });
+
+        var result = await api.UploadPhotoAsync(photo, title.Trim(), string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+            showOnHome, placeId, tags, wantsFeedback, ct);
+        return result.Succeeded
+            ? Json(new { id = result.Value!.Id, url = Url.Action(nameof(Details), new { id = result.Value.Id }) })
+            : BadRequest(new { error = result.Errors.Values.SelectMany(m => m).FirstOrDefault() ?? "That photo couldn't be uploaded." });
+    }
+
     [HttpGet]
     public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
     {
