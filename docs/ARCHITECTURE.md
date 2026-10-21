@@ -2,7 +2,7 @@
 
 How the pieces of PhotoWorld fit together: the website, the API, the iPhone/iPad/Android app, the Supabase
 database and storage, Google sign-in, and the map services. For setup and day-to-day commands see the
-[README](../README.md).
+[README](../README.md), which also has [screenshots](../README.md#what-it-looks-like) of the website and the app.
 
 - [1. System overview](#1-system-overview)
 - [2. Projects in the solution](#2-projects-in-the-solution)
@@ -12,16 +12,17 @@ database and storage, Google sign-in, and the map services. For setup and day-to
 - [6. Data model](#6-data-model)
 - [7. Moderation](#7-moderation)
 - [8. Places and maps](#8-places-and-maps)
-- [9. Following, camera search and challenges](#9-following-camera-search-and-challenges)
+- [9. Community features](#9-community-features)
 - [10. Email notifications](#10-email-notifications)
-- [11. Logging](#11-logging)
-- [12. Build, CI and database migrations](#12-build-ci-and-database-migrations)
-- [13. Configuration and secrets](#13-configuration-and-secrets)
-- [14. Design decisions](#14-design-decisions)
+- [11. Push notifications](#11-push-notifications)
+- [12. Logging](#12-logging)
+- [13. Build, CI and database migrations](#13-build-ci-and-database-migrations)
+- [14. Configuration and secrets](#14-configuration-and-secrets)
+- [15. Design decisions](#15-design-decisions)
 
 ## 1. System overview
 
-```markup
+```mermaid
 flowchart LR
     subgraph Clients
         Browser["Web browser"]
@@ -45,6 +46,7 @@ flowchart LR
     end
 
     Smtp["SMTP email provider"]
+    Push["Apple APNs · Google FCM<br/>(push, when configured)"]
 
     Browser -- "HTML pages + cookie" --> Web
     Mobile -- "sign-in only" --> Web
@@ -58,6 +60,8 @@ flowchart LR
     Api -. "logs" .-> Logs
     Clients -. "image files, direct" .-> Storage
     Api -- "notification emails" --> Smtp
+    Api -. "push notifications" .-> Push
+    Push -. "lock-screen alerts" .-> Mobile
 ```
 
 Map tiles and place search go straight from each client to its map provider (OpenStreetMap, Apple Maps or Google
@@ -98,7 +102,7 @@ flowchart TB
 
 | Project | Key folders |
 |---|---|
-| Api | `Controllers/` (Auth, Users, Photos, Showcase, Blogs, BlogPosts, Places), `Data/` (EF entities, `PhotoWorldDbContext`, migrations), `Services/` (Identity, Photos, Blogs, Moderation, JWT) |
+| Api | `Controllers/` (Auth, Users, Photos, Feedback, Search, PhotoOfTheDay, Spots, Collections, Showcase, Blogs, BlogPosts, Places, Challenges, Activity, Devices, AdminUsers), `Data/` (EF entities, `PhotoWorldDbContext`, migrations), `Services/` (Identity, Photos, Blogs, Challenges, Activities, Push, Moderation, Notifications, JWT) |
 | Web | `Controllers/`, `Views/`, `Services/PhotoWorldApiClient` (typed API client), `Authentication/`, `wwwroot/` (Bootstrap, Quill, Leaflet) |
 | App | `Views/` (XAML pages), `ViewModels/` (CommunityToolkit.Mvvm), `Services/` (`AuthService`, `PhotoWorldApi`), `Platforms/iOS`, `Platforms/Android` |
 
@@ -277,6 +281,11 @@ erDiagram
     users ||--o{ blocks : "blocks / is blocked"
     users ||--o{ activities : "is notified"
     users ||--o{ collections : curates
+    users ||--o{ devices : "gets push on"
+    users ||--o{ photo_feedback : gives
+    photos ||--o{ photo_tags : "tagged"
+    photos ||--o{ photo_feedback : receives
+    photos ||--o{ photos_of_the_day : "featured on"
     collections ||--o{ collection_photos : holds
     photos ||--o{ collection_photos : "saved in"
     places |o--o{ photos : "where taken"
@@ -420,7 +429,7 @@ erDiagram
     }
 ```
 
-Not shown: `app_logs` (see [Logging](#11-logging)), `__ef_migrations_history`, and the `open_reports` view. Every
+Not shown: `app_logs` (see [Logging](#12-logging)), `__ef_migrations_history`, and the `open_reports` view. Every
 member-owned row cascades on account deletion. A report targets exactly one item (`ck_reports_one_target`).
 
 ## 7. Moderation
@@ -463,7 +472,7 @@ through the photo's visibility rule. Locations are entered by the member (search
 The map providers receive tiles requests and search text from the member's device; nothing about the member's
 account is sent. The privacy policy names each provider.
 
-## 9. Following, camera search and challenges
+## 9. Community features
 
 - **Following.** `POST`/`DELETE api/users/{id}/follow` adds or removes a `follows` row (not yourself:
   `ck_follows_not_self`). `following=true` on `GET api/photos` and `GET api/blog-posts` keeps only followed
@@ -474,19 +483,30 @@ account is sent. The privacy policy names each provider.
   "contains" with the member's text escaped, and photos without a setting never match a filter on it.
   `GET api/photos/camera-options` suggests the 100 most used cameras and lenses. The camera details on a photo
   page link to the matching gallery filter.
-- **Challenges.** A `challenges` row is a theme open from `starts_at` until `ends_at`, added in the Supabase
-  dashboard (README → Photo challenges). Members enter up to 3 of their own visible photos while it's open
+- **Challenges.** A `challenges` row is a theme open from `starts_at` until `ends_at`, created by admins on the
+  website's Admin → Challenges page. Members enter up to 3 of their own visible photos while it's open
   (`challenge_entries`) and can withdraw them until it ends. **Votes are likes** from other members between the
   moment of entry and `ends_at`, so no separate voting system exists and likes after the end don't move anything.
   `ChallengeStandings` ranks entries by votes, then the earlier entry; the leader of a closed challenge is its
   winner. Standings are computed when read, not stored: entries hidden by moderation drop out (shown only to their
   owner, unranked), and deleting a photo removes its entry. Wins show as trophies on the member page.
-- **Activity.** Controllers call `ActivityFeed` after likes, comments, follows, uploads and first publication;
-  `ScheduledActivitySender` adds challenge news. Rows in `activities` cascade with their recipient, actor, photo,
+- **Activity.** Controllers call `ActivityFeed` after likes, comments, feedback, follows, uploads and first
+  publication; `ScheduledActivitySender` adds challenge news and the photo-of-the-day notice. Rows in `activities` cascade with their recipient, actor, photo,
   post or challenge; reading filters them through the same visibility rule, so hidden or blocked content never shows.
 - **Collections** (`collections`, `collection_photos`) hold any visible photos; `Moderation.CollectionVisibleTo`
   shows a member their own and others' public ones (not suspended or blocked owners), and photos inside go through
   `PhotoVisibleTo`. **Spots**: `photos.place_id` links a photo to one of its owner's places (see Places and maps).
+- **Tags and search.** `photo_tags` holds normalised tags (`PhotoTags` in Shared: lower case, no `#`, up to 10,
+  from the tags field plus `#hashtags` in the description). `PhotoSearch` gained `text` (title, description or
+  tag), `tag` and `wantsFeedback`, so tag pages and "see all" are just gallery filters. `GET api/search` returns
+  members, tags, photos and posts; `GET api/explore` returns trending tags (last 7 days), popular photos from members
+  the viewer doesn't follow (last 14 days) and suggested members. All of it goes through the visibility rules.
+- **Photo of the day.** `photos_of_the_day` has one row per UTC date (admins set it from a photo's page; schedule on
+  Admin → Photo of the day). `GET api/photo-of-the-day` returns today's, or the latest within a week; only photos
+  visible to everyone can be picked. The owner is notified on the day.
+- **Feedback.** `photos.wants_feedback` opens a photo to `photo_feedback` (one row per member: composition, light,
+  focus 1–5 and a comment). `GET api/photos/{id}/feedback` gives the owner everything plus averages, a giver their
+  own, everyone else only the count.
 - **In the app** the same API calls back the Gallery's Everyone / Following switch, Filter page and challenge
   banner, the Blogs switch, a member page (follow, trophies, photos) and the challenge, entries and "enter a
   photo" pages. Challenge wording (`ChallengeDisplay`) lives in Shared so the website and app read the same.
@@ -533,7 +553,39 @@ sequenceDiagram
 - Only posts the subscriber could see on the site are sent: published, not hidden by moderation, not their own.
 - No SMTP host configured (development): emails are written as `.eml` files to `src/PhotoWorld.Api/emails/`.
 
-## 11. Logging
+## 11. Push notifications
+
+The server side is in place and **switched off until keys are configured**; the app registers for push once an
+Apple push key and a Firebase project exist (README → Push notifications).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as PhotoWorld app
+    participant A as PhotoWorld.Api
+    participant D as Postgres
+    participant P as PushDispatcher
+    participant S as APNs / FCM
+
+    App->>A: PUT api/devices {platform, token} + Bearer JWT (after sign-in)
+    A->>D: Upsert devices row (the token now belongs to this member)
+    Note over A,D: Likes, comments, follows… → ActivityFeed inserts activities rows
+    loop Every 20 s, one API instance (advisory lock)
+        P->>D: Activities from the last hour with pushed_at = null
+        P->>D: Mark them pushed_at = now
+        P->>S: One alert per device: Activity wording, unread count as badge, ids to open
+        S-->>P: 410 / BadDeviceToken / UNREGISTERED → delete that device
+    end
+    App->>A: DELETE api/devices?token=… (sign-out)
+```
+
+- **APNs**: HTTP/2 to `api.push.apple.com` (or the sandbox), authenticated with an ES256 provider token signed by the
+  `.p8` key and reused for 50 minutes. **FCM**: HTTP v1 `messages:send`, with an OAuth token from the service-account
+  key (RS256 assertion), cached until it expires. Both are in `Services/Push`; the payloads and tokens are unit-tested.
+- Members with "Also send them to my phone" switched off (`activity_settings.push`), suspended members and anyone
+  without a registered phone just get their items marked as handled.
+
+## 12. Logging
 
 ```mermaid
 flowchart LR
@@ -549,7 +601,7 @@ flowchart LR
 - The Web holds only the insert-only `photoworld_logger` role, never the main database password.
 - The mobile app logs to the device console only (Debug builds).
 
-## 12. Build, CI and database migrations
+## 13. Build, CI and database migrations
 
 ```mermaid
 flowchart LR
@@ -567,7 +619,7 @@ flowchart LR
 - Deployment of the API and Web, and publishing the app to the App Store / Google Play, aren't automated yet (see the
   README checklists).
 
-## 13. Configuration and secrets
+## 14. Configuration and secrets
 
 Secrets are never in `appsettings.json`: user-secrets in development, environment variables / a secret store in
 production, a git-ignored `Local.props` for the app.
@@ -585,8 +637,10 @@ production, a git-ignored `Local.props` for the app.
 | `GoogleMapsApiKey`, `JavaSdkDirectory` | `App/Local.props` (git-ignored) | App (Android) | Places map key; local JDK |
 | `Email:Smtp:*`, `Email:From` | API user-secrets | API | Sending notification emails (none set: `.eml` files) |
 | `Email:WebBaseUrl`, `Email:PollMinutes` | API `appsettings*.json` | API | Links in emails; how often the sender runs |
+| `Push:Apns:TeamId`, `KeyId`, `BundleId`, `PrivateKey`, `UseSandbox` | API user-secrets | API | iPhone push (off when unset) |
+| `Push:Fcm:ServiceAccountJson` | API user-secrets | API | Android push (off when unset) |
 
-## 14. Design decisions
+## 15. Design decisions
 
 | Decision | Why |
 |---|---|
@@ -599,6 +653,8 @@ production, a git-ignored `Local.props` for the app.
 | Moderation as one shared expression | The same visibility rule in every query, translated to SQL. |
 | Challenge votes are likes, standings computed on read | No second voting system to build or abuse, no background job, and moderation or deletions are reflected straight away. |
 | Admins in the database (`users.is_admin`) | Managed from the Users page without redeploying; nobody can demote or suspend themselves, so there's always an admin. |
+| Push from the activity table, not from each action | One sender with one rule set (settings, blocks, suspension) and a single place to retry; actions stay fast. |
+| Tags as rows, search with `lower(...) LIKE` | Simple, exact tag pages with an index; fine at PhotoWorld's size. Postgres full-text search is the next step if it grows. |
 | Places private by route design | There is no route that takes another member's id, so there's nothing to get wrong. |
 | Migrations by CI, not at startup | Safe with several API instances; schema changes are deliberate. |
 | DTOs and routes in Shared | API, website and app compile against the same contract. |

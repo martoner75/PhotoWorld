@@ -10,11 +10,25 @@ How the pieces fit together (diagrams of the components, sign-in, requests, phot
 ```
 PhotoWorld.slnx
 ├── src/PhotoWorld.Shared   Class library: DTOs, API routes, provider names, claim types, Supabase logger (used by both)
-├── src/PhotoWorld.Api      Web API: users, photos, likes, comments (Supabase Postgres + Storage), JWT issuing
-├── src/PhotoWorld.Web      MVC UI: members-only pages, cookie auth, Google sign-in, gallery and upload
+├── src/PhotoWorld.Api      Web API: members, photos, blogs, challenges, activity, push… (Supabase Postgres + Storage), JWT issuing
+├── src/PhotoWorld.Web      MVC UI: members-only pages, cookie auth, Google sign-in, admin pages
 ├── src/PhotoWorld.App      .NET MAUI app for iPhone, iPad and Android (talks to the API; signs in through Web)
-└── tests/PhotoWorld.Api.Tests  xUnit tests for image processing
+└── tests/PhotoWorld.Api.Tests  xUnit tests: rules, visibility, image processing, HTML, push formats
 ```
+
+## What it looks like
+
+PhotoWorld uses a light look (Gallery White) that switches to a soft dark one (Graphite) with the device's dark mode.
+These are the signed-out screens; everything else needs a member account.
+
+| Website, light | Website, dark |
+|---|---|
+| ![PhotoWorld home page, light](docs/images/web-home-light.png) | ![PhotoWorld home page, dark](docs/images/web-home-dark.png) |
+| ![Sign-in page, light](docs/images/web-login-light.png) | ![Sign-in page, dark](docs/images/web-login-dark.png) |
+
+| iPhone, light | iPhone, dark | Android |
+|---|---|---|
+| ![App sign-in on iPhone, light](docs/images/app-ios-light.png) | ![App sign-in on iPhone, dark](docs/images/app-ios-dark.png) | ![App sign-in on Android](docs/images/app-android.png) |
 
 ## How sign-in works
 
@@ -40,7 +54,11 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.follows` | API (EF Core) | Who follows whom (for the Following tabs and follower counts) |
 | `photoworld.blocks` | API (EF Core) | Who blocked whom (hides the blocked member's content from the blocker) |
 | `photoworld.collections`, `collection_photos` | API (EF Core) | Members' photo collections (private or public) and the photos in them |
-| `photoworld.activities`, `activity_settings` | API (EF Core) | Members' notifications (kept 90 days) and which kinds they want |
+| `photoworld.activities`, `activity_settings` | API (EF Core) | Members' notifications (kept 90 days) and which kinds they want (incl. push) |
+| `photoworld.photo_tags` | API (EF Core) | Tags on photos (normalised, without `#`) |
+| `photoworld.photos_of_the_day` | API (EF Core) | The admins' photo of the day, one per UTC date |
+| `photoworld.photo_feedback` | API (EF Core) | Members' ratings and comments on photos that ask for feedback (private to the owner) |
+| `photoworld.devices` | API (EF Core) | Phones registered for push notifications (APNs / FCM tokens) |
 | `photoworld.challenges`, `challenge_entries` | You (Supabase dashboard) / API | Photo challenge themes and dates, and the photos entered in each |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
@@ -195,6 +213,32 @@ Admins create, edit and delete challenges on **Admin → Challenges** (or *Manag
 page): theme, description, start and end (UTC). A new challenge must end in the future; moving the end of a
 running one changes which likes count. Deleting a challenge deletes its entries (the photos stay).
 
+## Search, tags and Explore
+
+- **Tags.** Owners tag photos when uploading or editing (`fog wildlife london`); `#hashtags` in the description count
+  too. Up to 10, stored lower case without `#`. Tags show as chips on a photo; a tag opens the gallery filtered by it.
+- **Search.** The box in the website menu (and the search icon on the app's Gallery tab) finds members by name, tags,
+  photos by title, description or tag, and blog posts. Typing `#fog` goes straight to that tag. The gallery also
+  filters by words (`?text=`), so "see all" results are a normal gallery page.
+- **Explore** (menu, and the app's search screen before you type): trending tags from the last week, popular photos
+  from the last two weeks by members you don't follow yet, and photographers to follow.
+
+## Photo of the day
+
+Admins feature one photo per day (UTC): open the photo and use **Feature as photo of the day** (today or a later
+day, with an optional note). **Admin → Photo of the day** shows the last two weeks and what's scheduled, and removes
+picks. Members see it as a highlighted card at the top of the Gallery and Explore (website and app), and the photo
+gets a "⭐ Photo of the day" badge. Its owner gets an Activity notification on the day (always, regardless of
+settings). Only photos everyone may see can be featured; while today has no pick, the latest from the past week shows.
+
+## Feedback on photos
+
+Owners can tick **Ask for feedback** when uploading or editing. Other members then rate **composition, light and
+focus** (1–5) and add a comment, once each, and can change or delete it. Feedback is private: the owner sees all of
+it with the averages and can remove any; a giver sees their own; everyone else only how many gave feedback. Blocked
+and suspended members can't give it. The gallery filters to **photos asking for feedback** (also linked from
+Explore), and the owner gets an Activity notification for each new giver.
+
 ## Activity
 
 Members get notifications (an inbox icon in the website's menu with an unread count; on the app's Gallery tab, with a dot for
@@ -207,7 +251,37 @@ Nobody is notified about their own actions, by members they blocked, or by suspe
 photos or posts they can no longer see are left out. Unliking or unfollowing takes back an unread notification.
 `ScheduledActivitySender` (a background service in the API, every 5 minutes) sends the challenge news, claiming each
 with a conditional update so it goes out once even with several API instances, and deletes activity older than 90
-days. Push notifications to phones aren't set up yet (they need an Apple push key and a Firebase project).
+days. Activity can also go to members' phones as push notifications: see below.
+
+## Push notifications
+
+The server side is built and **off until keys are configured**. `PushDispatcher` (API background service, every 20
+seconds) sends each new activity item to the recipient's registered phones with the Activity wording and the unread
+count as the badge; members switch it off with **Also send them to my phone** in activity settings. Dead tokens are
+removed automatically.
+
+To switch it on:
+
+1. **iPhone (APNs).** Needs the Apple Developer Program. In *Certificates, Identifiers & Profiles*: enable **Push
+   Notifications** on the app's identifier (`com.photoworld.app`), then *Keys → +* with **Apple Push Notifications
+   service (APNs)** and download the `AuthKey_XXXXXXXXXX.p8` (once only). Then:
+   ```bash
+   dotnet user-secrets set "Push:Apns:TeamId" "<your team id>" --project src/PhotoWorld.Api
+   dotnet user-secrets set "Push:Apns:KeyId" "<the key id>" --project src/PhotoWorld.Api
+   dotnet user-secrets set "Push:Apns:BundleId" "com.photoworld.app" --project src/PhotoWorld.Api
+   dotnet user-secrets set "Push:Apns:PrivateKey" "$(cat AuthKey_XXXXXXXXXX.p8)" --project src/PhotoWorld.Api
+   dotnet user-secrets set "Push:Apns:UseSandbox" "true" --project src/PhotoWorld.Api   # Debug builds of the app
+   ```
+2. **Android (FCM).** Create a free Firebase project, add an Android app with package `com.photoworld.app`, download
+   `google-services.json` (for the app), and in *Project settings → Service accounts* generate a private key. Then:
+   ```bash
+   dotnet user-secrets set "Push:Fcm:ServiceAccountJson" "$(cat photoworld-firebase-adminsdk.json)" --project src/PhotoWorld.Api
+   ```
+3. **The app** then needs registering for push (entitlement on iOS, `google-services.json` and the Firebase package
+   on Android) and calling `PUT api/devices` after sign-in and `DELETE api/devices` on sign-out. That part waits for
+   the keys, because the app can't be built for push without them.
+
+The API logs "Push notifications on for: ios, android" at startup once keys are set.
 
 ## Admin
 
@@ -373,9 +447,11 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Mobile app (iPhone, iPad and Android)
 
 `src/PhotoWorld.App` is one .NET MAUI app (native XAML, CommunityToolkit.Mvvm) for iPhone, iPad and
-Android, in PhotoWorld's dark look; only `Platforms/iOS` and `Platforms/Android` differ. Tabs: **Gallery** (photos, likes, comments, reporting; Everyone / Following, camera-settings
-**Filter**, and the current photo challenge with its entries), **Blogs** (read posts, comment; Everyone / Following),
-**Upload** (from Photos or the camera, with the home-page toggle), **Places** (the private map: Apple Maps on iOS, Google
+Android, in PhotoWorld's look (light, or dark with the device); only `Platforms/iOS` and `Platforms/Android` differ.
+Tabs: **Gallery** (photos, likes, comments, reporting, tags, feedback, saving to collections; Everyone / Following, the
+photo of the day, the current challenge, and top-bar buttons for **search & Explore**, **Activity**, **challenges**
+and the **Filter**), **Blogs** (read posts, comment; Everyone / Following),
+**Upload** (from Photos or the camera, with tags, place, "ask for feedback" and the home-page toggle), **Places** (the private map: Apple Maps on iOS, Google
 Maps on Android; search with the platform's geocoder or tap the map) and **Me** (your member page, challenges, email notifications, sign out, delete account). Tapping a member's name
 opens their page: follow or unfollow, follower counts, challenge trophies and their photos. It calls the same API as the
 website and compiles the DTOs and routes from `PhotoWorld.Shared` as source (not a project reference, so the app
