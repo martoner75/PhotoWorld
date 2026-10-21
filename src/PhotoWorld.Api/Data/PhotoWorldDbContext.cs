@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Api.Services.Activities;
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Photos;
@@ -26,6 +28,8 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
     public DbSet<Follow> Follows => Set<Follow>();
     public DbSet<Block> Blocks => Set<Block>();
+    public DbSet<Activity> Activities => Set<Activity>();
+    public DbSet<ActivitySettings> ActivitySettings => Set<ActivitySettings>();
     public DbSet<Challenge> Challenges => Set<Challenge>();
     public DbSet<ChallengeEntry> ChallengeEntries => Set<ChallengeEntry>();
 
@@ -230,6 +234,29 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(x => x.Challenge).WithMany(c => c.Entries).HasForeignKey(x => x.ChallengeId);
             e.HasOne(x => x.Photo).WithMany().HasForeignKey(x => x.PhotoId);
             e.HasIndex(x => x.PhotoId);
+        });
+
+        modelBuilder.Entity<Activity>(e =>
+        {
+            e.ToTable("activities", t => t.HasCheckConstraint("ck_activities_type",
+                $"type in ({string.Join(", ", ActivityTypes.All.Select(k => $"'{k}'"))})"));
+            e.Property(a => a.Type).HasMaxLength(24);
+            e.Property(a => a.Snippet).HasMaxLength(ActivityRules.SnippetMax + 1);
+            // Everything cascades: an activity goes with its recipient, actor, photo, post or challenge.
+            e.HasOne(a => a.Recipient).WithMany().HasForeignKey(a => a.RecipientId);
+            e.HasOne(a => a.Actor).WithMany().HasForeignKey(a => a.ActorId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Photo).WithMany().HasForeignKey(a => a.PhotoId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Post).WithMany().HasForeignKey(a => a.PostId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Challenge).WithMany().HasForeignKey(a => a.ChallengeId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(a => new { a.RecipientId, a.CreatedAt }).IsDescending(false, true);
+            e.HasIndex(a => new { a.RecipientId, a.ReadAt });
+            e.HasIndex(a => a.CreatedAt);
+        });
+
+        modelBuilder.Entity<ActivitySettings>(e =>
+        {
+            e.HasKey(s => s.UserId);
+            e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 
         modelBuilder.Entity<LogEntry>(e =>

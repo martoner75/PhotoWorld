@@ -275,6 +275,7 @@ erDiagram
     users ||--o{ reports : files
     users ||--o{ follows : "follows / is followed"
     users ||--o{ blocks : "blocks / is blocked"
+    users ||--o{ activities : "is notified"
     photos ||--o{ challenge_entries : "entered as"
     challenges ||--o{ challenge_entries : has
     photos ||--o{ photo_likes : receives
@@ -474,6 +475,9 @@ account is sent. The privacy policy names each provider.
   `ChallengeStandings` ranks entries by votes, then the earlier entry; the leader of a closed challenge is its
   winner. Standings are computed when read, not stored: entries hidden by moderation drop out (shown only to their
   owner, unranked), and deleting a photo removes its entry. Wins show as trophies on the member page.
+- **Activity.** Controllers call `ActivityFeed` after likes, comments, follows, uploads and first publication;
+  `ChallengeActivitySender` adds challenge news. Rows in `activities` cascade with their recipient, actor, photo,
+  post or challenge; reading filters them through the same visibility rule, so hidden or blocked content never shows.
 - **In the app** the same API calls back the Gallery's Everyone / Following switch, Filter page and challenge
   banner, the Blogs switch, a member page (follow, trophies, photos) and the challenge, entries and "enter a
   photo" pages. Challenge wording (`ChallengeDisplay`) lives in Shared so the website and app read the same.

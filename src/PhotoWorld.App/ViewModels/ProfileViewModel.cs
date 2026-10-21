@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoWorld.App.Services;
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Users;
@@ -43,6 +44,28 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
         _ => "Off.",
     };
 
+    // ----- Activity: which kinds of notification the member wants -----
+    [ObservableProperty] public partial bool ActivityLikes { get; set; } = true;
+    [ObservableProperty] public partial bool ActivityComments { get; set; } = true;
+    [ObservableProperty] public partial bool ActivityFollows { get; set; } = true;
+    [ObservableProperty] public partial bool ActivityFollowedPosts { get; set; } = true;
+    [ObservableProperty] public partial bool ActivityChallenges { get; set; } = true;
+
+    private void ShowActivitySettings(ActivitySettingsDto s) =>
+        (ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges) =
+        (s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges);
+
+    [RelayCommand]
+    private Task SaveActivitySettingsAsync() => RunAsync(async () =>
+    {
+        ShowActivitySettings(await api.SaveActivitySettingsAsync(new ActivitySettingsDto(
+            ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges)));
+        await Ui.AlertAsync("Activity settings saved.");
+    });
+
+    [RelayCommand]
+    private Task OpenActivityAsync() => Shell.Current.GoToAsync(Routes.Activity);
+
     /// <summary>Members the signed-in member blocked, to unblock from here.</summary>
     public ObservableCollection<UserSummaryDto> Blocked { get; } = [];
 
@@ -57,6 +80,7 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
             User = await api.GetMeAsync();
             ShowNotifications(await api.GetNotificationsAsync());
             await LoadBlockedAsync();
+            ShowActivitySettings(await api.GetActivitySettingsAsync());
         }
         catch (ApiException)
         {

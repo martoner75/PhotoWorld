@@ -12,3 +12,18 @@ document.querySelectorAll("form[data-confirm]").forEach((form) => {
     if (!confirm(form.dataset.confirm)) e.preventDefault();
   });
 });
+
+// The bell in the menu: how many activity items are unread (asked once per page, after it has loaded).
+const bell = document.querySelector("[data-activity-bell]");
+if (bell && !location.pathname.toLowerCase().startsWith("/activity")) {
+  fetch(bell.getAttribute("href").replace(/\/?$/, "/Unread"), { headers: { "X-Requested-With": "fetch" } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (!data || data.count <= 0) return;
+      const badge = bell.querySelector("[data-activity-count]");
+      badge.textContent = data.count > 99 ? "99+" : String(data.count);
+      badge.hidden = false;
+      bell.setAttribute("aria-label", `Activity, ${data.count} new`);
+    })
+    .catch(() => {});
+}

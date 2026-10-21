@@ -16,5 +16,6 @@ public partial class GalleryPage : ContentPage
     {
         base.OnAppearing();
         _viewModel.EnsureLoaded();
+        _ = _viewModel.RefreshUnreadAsync();
     }
 }

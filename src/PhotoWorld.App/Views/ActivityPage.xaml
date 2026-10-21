@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.ActivityPage"
+             x:DataType="vm:ActivityViewModel"
+             Title="Activity">
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8"
+                        RemainingItemsThreshold="8" RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.EmptyView>
+                <Label Text="Nothing yet. When members like or comment on your photos, follow you, or a challenge opens, it shows up here."
+                       Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center" Margin="32,80"
+                       IsVisible="{Binding IsEmpty}" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ActivityItem">
+                    <Border Padding="12,10">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsUnread}" Value="True">
+                                <Setter Property="Stroke" Value="#6B5021" />
+                                <Setter Property="BackgroundColor" Value="#1F1A12" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:ActivityViewModel}}, x:DataType=vm:ActivityViewModel}"
+                                                  CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border WidthRequest="40" HeightRequest="40" StrokeShape="RoundRectangle 20" Padding="0" StrokeThickness="0"
+                                    BackgroundColor="{StaticResource Line}" VerticalOptions="Center">
+                                <Grid>
+                                    <Label Text="{Binding Initial}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    <Image Source="{Binding AvatarUrl}" Aspect="AspectFill" />
+                                </Grid>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding Text}" FontSize="14" />
+                                <Label Text="{Binding Snippet}" Style="{StaticResource MutedText}" MaxLines="2" LineBreakMode="TailTruncation"
+                                       IsVisible="{Binding Snippet, Converter={StaticResource HasValue}}" />
+                                <Label Text="{Binding When}" Style="{StaticResource MutedText}" FontSize="12" />
+                            </VerticalStackLayout>
+                            <Image Grid.Column="2" Source="{Binding Activity.PhotoThumbnailUrl}" Aspect="AspectFill" WidthRequest="48" HeightRequest="48"
+                                   IsVisible="{Binding Activity.PhotoThumbnailUrl, Converter={StaticResource HasValue}}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

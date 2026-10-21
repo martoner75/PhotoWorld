@@ -48,6 +48,7 @@ public static class MauiProgram
         services.AddTransient<ChallengesPage>().AddTransient<ChallengesViewModel>();
         services.AddTransient<ChallengePage>().AddTransient<ChallengeViewModel>();
         services.AddTransient<EnterChallengePage>().AddTransient<EnterChallengeViewModel>();
+        services.AddTransient<ActivityPage>().AddTransient<ActivityViewModel>();
 
         return builder.Build();
     }

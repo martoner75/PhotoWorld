@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Blogs;
+using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Api.Services.Moderation;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
 
@@ -19,6 +21,7 @@ public class BlogPostsController(
     BlogHtml html,
     SupabaseStorage storage,
     ReportService reports,
+    ActivityFeed activity,
     TimeProvider clock,
     ILogger<BlogPostsController> logger) : ControllerBase
 {
@@ -102,6 +105,8 @@ public class BlogPostsController(
 
         logger.LogInformation("User {UserId} created blog post {PostId} ({Status}, {PhotoCount} photos)",
             me, post.Id, post.Status, cleaned.PhotoIds.Count);
+        if (post.Status == BlogPostStatus.Published)
+            await activity.NotifyFollowersAsync(me, ActivityTypes.NewPost, postId: post.Id, ct: ct);
         return CreatedAtAction(nameof(Get), new { id = post.Id }, await LoadAsync(post.Id, ct));
     }
 
@@ -116,6 +121,7 @@ public class BlogPostsController(
         if (cleaned is null) return ValidationProblem(ModelState);
 
         var now = clock.GetUtcNow();
+        var wasPublished = post.Status == BlogPostStatus.Published;
         post.Title = request.Title.Trim();
         post.BodyHtml = cleaned.Html;
         post.Excerpt = cleaned.Excerpt;
@@ -130,6 +136,9 @@ public class BlogPostsController(
         await db.SaveChangesAsync(ct);
 
         logger.LogInformation("User {UserId} edited blog post {PostId} ({Status})", me, id, post.Status);
+        // Followers hear about a post once, when it's first published (republishing doesn't repeat it).
+        if (!wasPublished && post.Status == BlogPostStatus.Published)
+            await activity.NotifyFollowersAsync(me, ActivityTypes.NewPost, postId: id, ct: ct);
         return (await LoadAsync(id, ct))!;
     }
 
@@ -270,6 +279,7 @@ public class BlogPostsController(
         var comment = new BlogComment { PostId = id, AuthorId = me, Text = text, CreatedAt = clock.GetUtcNow() };
         db.BlogComments.Add(comment);
         await db.SaveChangesAsync(ct);
+        await activity.NotifyAsync(authorId.Value, me, ActivityTypes.PostComment, postId: id, snippet: text, ct: ct);
 
         var author = await db.Users.Where(u => u.Id == me)
             .Select(u => new UserSummaryDto(u.Id, u.DisplayName, u.AvatarUrl)).SingleAsync(ct);

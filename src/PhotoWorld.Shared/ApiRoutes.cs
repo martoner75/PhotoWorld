@@ -31,6 +31,12 @@ public static class ApiRoutes
     public const string BlogPostReports = "api/blog-posts/{id:guid}/reports";
     public const string BlogCommentReports = "api/blog-posts/{id:guid}/comments/{commentId:guid}/reports";
 
+    // The signed-in member's notifications.
+    public const string Activity = "api/activity";
+    public const string ActivityUnread = "api/activity/unread";
+    public const string ActivityRead = "api/activity/read";
+    public const string ActivitySettings = "api/activity/settings";
+
     // Admins only.
     public const string AdminUsers = "api/admin/users";
     public const string AdminUserAdmin = "api/admin/users/{id:guid}/admin";

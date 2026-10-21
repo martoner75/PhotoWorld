@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared;
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
@@ -231,6 +232,27 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
             ApiRoutes.Format(ApiRoutes.ChallengeEntry, ("id", id), ("photoId", photoId)), ct);
         if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
         return IsSuccess(res) ? null : "That entry no longer exists.";
+    }
+
+    public async Task<PagedResult<ActivityDto>> GetActivityAsync(int page, CancellationToken ct = default) =>
+        (await GetOrNullAsync<PagedResult<ActivityDto>>($"{ApiRoutes.Activity}?page={page}", ct))!;
+
+    public async Task<int> GetUnreadActivityAsync(CancellationToken ct = default) =>
+        (await GetOrNullAsync<UnreadActivityDto>(ApiRoutes.ActivityUnread, ct))?.Count ?? 0;
+
+    public async Task MarkActivityReadAsync(CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.ActivityRead, null, ct);
+        IsSuccess(res);
+    }
+
+    public async Task<ActivitySettingsDto> GetActivitySettingsAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<ActivitySettingsDto>(ApiRoutes.ActivitySettings, ct) ?? ActivitySettingsDto.AllOn;
+
+    public async Task<ActivitySettingsDto?> SaveActivitySettingsAsync(ActivitySettingsDto settings, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.ActivitySettings, settings, ct);
+        return IsSuccess(res) ? await res.Content.ReadFromJsonAsync<ActivitySettingsDto>(ct) : null;
     }
 
     public Task<PagedResult<AdminUserDto>?> GetAdminUsersAsync(int page, string? search, CancellationToken ct = default) =>

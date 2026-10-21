@@ -9,7 +9,8 @@ public sealed record AccountSettingsViewModel(
     UserProfileDto Profile,
     NotificationsFormViewModel Notifications,
     EmailNotificationsDto? Current,
-    IReadOnlyList<UserSummaryDto> Blocked);
+    IReadOnlyList<UserSummaryDto> Blocked,
+    PhotoWorld.Shared.Activities.ActivitySettingsDto Activity);
 
 /// <summary>The "Email notifications" form on the account settings page.</summary>
 public sealed class NotificationsFormViewModel

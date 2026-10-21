@@ -1,0 +1,63 @@
+@model PagedResult<ActivityDto>
+@{
+    ViewData["Title"] = "Activity";
+    var now = DateTimeOffset.UtcNow;
+}
+
+<section class="container page narrow">
+    <header class="page-header">
+        <div>
+            <h1>Activity</h1>
+            <p class="text-muted">Likes, comments, followers, and news from members you follow and photo challenges.</p>
+        </div>
+        <a class="btn btn-ghost" asp-controller="Account" asp-action="Settings" asp-fragment="activity">Settings</a>
+    </header>
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="empty-state">
+            <p>Nothing yet. When members like or comment on your photos, follow you, or a challenge opens, it shows up here.</p>
+        </div>
+    }
+    else
+    {
+        <ul class="activity-list">
+            @foreach (var a in Model.Items)
+            {
+                var (controller, action, id) = a switch
+                {
+                    { PhotoId: { } photo } => ("Photos", "Details", photo),
+                    { PostId: { } post } => ("Blogs", "Post", post),
+                    { ChallengeId: { } challenge } => ("Challenges", "Details", challenge),
+                    { Actor: { } actor } => ("Members", "Details", actor.Id),
+                    _ => ("Home", "Index", Guid.Empty),
+                };
+                <li class="activity-item @(a.IsRead ? "" : "is-unread")">
+                    <a asp-controller="@controller" asp-action="@action" asp-route-id="@(id == Guid.Empty ? null : id)" class="activity-link">
+                        @if (a.Actor is not null)
+                        {
+                            <partial name="_Avatar" model="a.Actor" />
+                        }
+                        else
+                        {
+                            <span class="avatar avatar-initial activity-icon" aria-hidden="true">🏆</span>
+                        }
+                        <span class="activity-body">
+                            <span class="activity-text">@ActivityText.Describe(a)</span>
+                            @if (a.Snippet is not null)
+                            {
+                                <span class="activity-snippet">“@a.Snippet”</span>
+                            }
+                            <time class="text-muted small" datetime="@a.CreatedAt.ToString("O")">@ActivityText.Ago(a.CreatedAt, now)</time>
+                        </span>
+                        @if (a.PhotoThumbnailUrl is not null)
+                        {
+                            <img src="@a.PhotoThumbnailUrl" alt="" class="activity-thumb" loading="lazy" />
+                        }
+                    </a>
+                </li>
+            }
+        </ul>
+        <partial name="_Pager" model="new PagerViewModel(Model.Page, Model.TotalPages)" />
+    }
+</section>

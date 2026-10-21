@@ -23,6 +23,119 @@ namespace PhotoWorld.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Activity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<Guid?>("ChallengeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("challenge_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<int?>("Place")
+                        .HasColumnType("integer")
+                        .HasColumnName("place");
+
+                    b.Property<Guid?>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipient_id");
+
+                    b.Property<string>("Snippet")
+                        .HasMaxLength(141)
+                        .HasColumnType("character varying(141)")
+                        .HasColumnName("snippet");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_activities");
+
+                    b.HasIndex("ActorId")
+                        .HasDatabaseName("ix_activities_actor_id");
+
+                    b.HasIndex("ChallengeId")
+                        .HasDatabaseName("ix_activities_challenge_id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_activities_created_at");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_activities_photo_id");
+
+                    b.HasIndex("PostId")
+                        .HasDatabaseName("ix_activities_post_id");
+
+                    b.HasIndex("RecipientId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_activities_recipient_id_created_at");
+
+                    b.HasIndex("RecipientId", "ReadAt")
+                        .HasDatabaseName("ix_activities_recipient_id_read_at");
+
+                    b.ToTable("activities", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result')");
+                        });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.ActivitySettings", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<bool>("Challenges")
+                        .HasColumnType("boolean")
+                        .HasColumnName("challenges");
+
+                    b.Property<bool>("Comments")
+                        .HasColumnType("boolean")
+                        .HasColumnName("comments");
+
+                    b.Property<bool>("FollowedPosts")
+                        .HasColumnType("boolean")
+                        .HasColumnName("followed_posts");
+
+                    b.Property<bool>("Follows")
+                        .HasColumnType("boolean")
+                        .HasColumnName("follows");
+
+                    b.Property<bool>("Likes")
+                        .HasColumnType("boolean")
+                        .HasColumnName("likes");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_activity_settings");
+
+                    b.ToTable("activity_settings", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Block", b =>
                 {
                     b.Property<Guid>("BlockerId")
@@ -270,9 +383,21 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("description");
 
+                    b.Property<DateTimeOffset?>("EndingNotifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ending_notified_at");
+
                     b.Property<DateTimeOffset>("EndsAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ends_at");
+
+                    b.Property<DateTimeOffset?>("OpenNotifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("open_notified_at");
+
+                    b.Property<DateTimeOffset?>("ResultsNotifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("results_notified_at");
 
                     b.Property<DateTimeOffset>("StartsAt")
                         .HasColumnType("timestamp with time zone")
@@ -929,6 +1054,62 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasDatabaseName("ix_users_email");
 
                     b.ToTable("users", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Activity", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_activities_users_actor_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Challenge", "Challenge")
+                        .WithMany()
+                        .HasForeignKey("ChallengeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_activities_challenges_challenge_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_activities_photos_photo_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.BlogPost", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_activities_blog_posts_post_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.User", "Recipient")
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_activities_users_recipient_id");
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Challenge");
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Recipient");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.ActivitySettings", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithOne()
+                        .HasForeignKey("PhotoWorld.Api.Data.ActivitySettings", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_activity_settings_users_user_id");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Block", b =>

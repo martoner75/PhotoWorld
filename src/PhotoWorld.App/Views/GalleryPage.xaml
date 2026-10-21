@@ -7,7 +7,9 @@
              x:DataType="vm:GalleryViewModel"
              Title="Gallery">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Challenges" Command="{Binding OpenChallengesCommand}" Order="Primary" />
+        <ToolbarItem Text="{Binding ActivityLabel}" Command="{Binding OpenActivityCommand}" Order="Primary"
+                     SemanticProperties.Description="Activity" />
+        <ToolbarItem Text="🏆" Command="{Binding OpenChallengesCommand}" Order="Primary" SemanticProperties.Description="Photo challenges" />
         <ToolbarItem Text="Filter" Command="{Binding OpenFiltersCommand}" Order="Primary" />
     </ContentPage.ToolbarItems>
 

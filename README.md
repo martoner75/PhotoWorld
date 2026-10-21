@@ -39,6 +39,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates) |
 | `photoworld.follows` | API (EF Core) | Who follows whom (for the Following tabs and follower counts) |
 | `photoworld.blocks` | API (EF Core) | Who blocked whom (hides the blocked member's content from the blocker) |
+| `photoworld.activities`, `activity_settings` | API (EF Core) | Members' notifications (kept 90 days) and which kinds they want |
 | `photoworld.challenges`, `challenge_entries` | You (Supabase dashboard) / API | Photo challenge themes and dates, and the photos entered in each |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
@@ -183,6 +184,20 @@ banner at the top of its Gallery tab.
 Admins create, edit and delete challenges on **Admin → Challenges** (or *Manage challenges* on the Challenges
 page): theme, description, start and end (UTC). A new challenge must end in the future; moving the end of a
 running one changes which likes count. Deleting a challenge deletes its entries (the photos stay).
+
+## Activity
+
+Members get notifications (🔔 in the website's menu with an unread count; 🔔 on the app's Gallery tab, and *Activity*
+on the Me tab) when someone likes or comments on their photo, comments on their post or follows them; when a member
+they follow shares a photo or publishes a post (once per item); and for photo challenges: a new one opens, one they
+entered ends within a day, and the results (won, placed #2/#3, or "results are in"). Opening Activity marks it all
+read. Members switch kinds off in account settings or on the Me tab.
+
+Nobody is notified about their own actions, by members they blocked, or by suspended members, and items about
+photos or posts they can no longer see are left out. Unliking or unfollowing takes back an unread notification.
+`ChallengeActivitySender` (a background service in the API, every 5 minutes) sends the challenge news, claiming each
+with a conditional update so it goes out once even with several API instances, and deletes activity older than 90
+days. Push notifications to phones aren't set up yet (they need an Apple push key and a Firebase project).
 
 ## Admin
 

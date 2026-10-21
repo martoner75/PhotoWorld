@@ -1,3 +1,4 @@
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
@@ -73,6 +74,13 @@ public interface IPhotoWorldApiClient
     Task<string?> EnterChallengeAsync(Guid id, Guid photoId, CancellationToken ct = default);
     /// <summary>Null on success, otherwise a message for the member.</summary>
     Task<string?> WithdrawChallengeEntryAsync(Guid id, Guid photoId, CancellationToken ct = default);
+
+    // Activity (the signed-in member's notifications)
+    Task<PagedResult<ActivityDto>> GetActivityAsync(int page, CancellationToken ct = default);
+    Task<int> GetUnreadActivityAsync(CancellationToken ct = default);
+    Task MarkActivityReadAsync(CancellationToken ct = default);
+    Task<ActivitySettingsDto> GetActivitySettingsAsync(CancellationToken ct = default);
+    Task<ActivitySettingsDto?> SaveActivitySettingsAsync(ActivitySettingsDto settings, CancellationToken ct = default);
 
     // Admins only
     Task<PagedResult<AdminUserDto>?> GetAdminUsersAsync(int page, string? search, CancellationToken ct = default);

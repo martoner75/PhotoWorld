@@ -42,6 +42,23 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
     [NotifyPropertyChangedFor(nameof(ChallengeBanner))]
     public partial ChallengeSummaryDto? FeaturedChallenge { get; set; }
 
+    /// <summary>Unread activity, shown on the bell.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ActivityLabel))]
+    public partial int UnreadActivity { get; set; }
+
+    public string ActivityLabel => UnreadActivity switch { 0 => "🔔", > 99 => "🔔 99+", var n => $"🔔 {n}" };
+
+    /// <summary>Called each time the gallery shows (coming back from Activity resets it).</summary>
+    public async Task RefreshUnreadAsync()
+    {
+        try { UnreadActivity = (await _api.GetUnreadActivityAsync()).Count; }
+        catch (ApiException) { /* the bell just keeps its last count */ }
+    }
+
+    [RelayCommand]
+    private Task OpenActivityAsync() => Shell.Current.GoToAsync(Routes.Activity);
+
     public bool IsFiltered => !Search.IsEmpty;
 
     public string FilterSummary => "Camera filters on: " + string.Join(", ", Search.Describe());

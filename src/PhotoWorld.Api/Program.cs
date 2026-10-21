@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
+using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Api.Services.Blogs;
 using PhotoWorld.Api.Services.Challenges;
 using PhotoWorld.Api.Services.Identity;
@@ -48,6 +49,8 @@ builder.Services.AddScoped<ReportService>();
 builder.Services.AddSingleton<BlogHtml>();
 builder.Services.AddScoped<ChallengeStandings>();
 builder.Services.AddScoped<AdminAccess>();
+builder.Services.AddScoped<ActivityFeed>();
+builder.Services.AddHostedService<ChallengeActivitySender>();
 builder.Services.AddMemoryCache();
 
 // Email notifications about new blog posts. Without an SMTP host (development) emails are written to .eml files.

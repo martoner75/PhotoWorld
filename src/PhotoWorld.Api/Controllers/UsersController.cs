@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
+using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Api.Services.Challenges;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Users;
 
@@ -18,6 +20,7 @@ public class UsersController(
     SupabaseStorage storage,
     ChallengeStandings standings,
     AdminAccess admins,
+    ActivityFeed activity,
     TimeProvider clock,
     ILogger<UsersController> logger) : ControllerBase
 {
@@ -101,7 +104,11 @@ public class UsersController(
         if (!await db.Follows.AnyAsync(f => f.FollowerId == me && f.FolloweeId == id, ct))
         {
             db.Follows.Add(new Follow { FollowerId = me, FolloweeId = id, CreatedAt = clock.GetUtcNow() });
-            try { await db.SaveChangesAsync(ct); }
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                await activity.NotifyAsync(id, me, ActivityTypes.Follow, ct: ct);
+            }
             catch (DbUpdateException) { /* Followed twice at the same moment: the follow already exists. */ }
         }
         return await FollowStateAsync(id, me, ct);
@@ -114,6 +121,7 @@ public class UsersController(
         if (!await db.Users.AnyAsync(u => u.Id == id, ct)) return NotFound();
 
         await db.Follows.Where(f => f.FollowerId == me && f.FolloweeId == id).ExecuteDeleteAsync(ct);
+        await activity.RetractAsync(id, me, ActivityTypes.Follow, ct: ct);
         return await FollowStateAsync(id, me, ct);
     }
 

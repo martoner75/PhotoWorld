@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using PhotoWorld.Shared;
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Notifications;
@@ -108,6 +109,21 @@ public sealed class PhotoWorldApi(HttpClient http)
         SendAsync(HttpMethod.Post, commentId is null
             ? WithId(ApiRoutes.BlogPostReports, postId)
             : ApiRoutes.Format(ApiRoutes.BlogCommentReports, ("id", postId), ("commentId", commentId)), JsonContent.Create(request, options: Json), ct);
+
+    // ----- Activity -----
+    public Task<PagedResult<ActivityDto>> GetActivityAsync(int page, CancellationToken ct = default) =>
+        GetAsync<PagedResult<ActivityDto>>($"{ApiRoutes.Activity}?page={page}", ct);
+
+    public Task<UnreadActivityDto> GetUnreadActivityAsync(CancellationToken ct = default) =>
+        GetAsync<UnreadActivityDto>(ApiRoutes.ActivityUnread, ct);
+
+    public Task MarkActivityReadAsync(CancellationToken ct = default) => SendAsync(HttpMethod.Post, ApiRoutes.ActivityRead, null, ct);
+
+    public Task<ActivitySettingsDto> GetActivitySettingsAsync(CancellationToken ct = default) =>
+        GetAsync<ActivitySettingsDto>(ApiRoutes.ActivitySettings, ct);
+
+    public Task<ActivitySettingsDto> SaveActivitySettingsAsync(ActivitySettingsDto settings, CancellationToken ct = default) =>
+        SendAsync<ActivitySettingsDto>(HttpMethod.Put, ApiRoutes.ActivitySettings, JsonContent.Create(settings, options: Json), ct);
 
     // ----- Photo challenges -----
     public Task<List<ChallengeSummaryDto>> GetChallengesAsync(CancellationToken ct = default) =>

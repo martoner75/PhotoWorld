@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
+using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Api.Services.Moderation;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
+using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Api.Controllers;
@@ -17,6 +19,7 @@ public class PhotosController(
     ImageProcessor images,
     SupabaseStorage storage,
     ReportService reports,
+    ActivityFeed activity,
     TimeProvider clock,
     ILogger<PhotosController> logger) : ControllerBase
 {
@@ -139,6 +142,7 @@ public class PhotosController(
 
         logger.LogInformation("User {UserId} uploaded photo {PhotoId} ({Width}x{Height}, {Bytes} bytes)",
             userId, photo.Id, photo.Width, photo.Height, photo.SizeBytes);
+        await activity.NotifyFollowersAsync(userId, ActivityTypes.NewPhoto, photoId: photo.Id, ct: ct);
         return CreatedAtAction(nameof(Get), new { id = photo.Id }, await LoadDetailAsync(photo.Id, ct));
     }
 
@@ -178,12 +182,17 @@ public class PhotosController(
     public async Task<ActionResult<LikeStateDto>> Like(Guid id, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId) return Unauthorized();
-        if (!await VisiblePhotos(userId).AnyAsync(p => p.Id == id, ct)) return NotFound();
+        var ownerId = await VisiblePhotos(userId).Where(p => p.Id == id).Select(p => (Guid?)p.OwnerId).SingleOrDefaultAsync(ct);
+        if (ownerId is null) return NotFound();
 
         if (!await db.PhotoLikes.AnyAsync(l => l.PhotoId == id && l.UserId == userId, ct))
         {
             db.PhotoLikes.Add(new PhotoLike { PhotoId = id, UserId = userId, CreatedAt = clock.GetUtcNow() });
-            try { await db.SaveChangesAsync(ct); }
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                await activity.NotifyAsync(ownerId.Value, userId, ActivityTypes.Like, photoId: id, ct: ct);
+            }
             catch (DbUpdateException) { /* Liked twice at the same moment: the like already exists. */ }
         }
         return await LikeStateAsync(id, userId, ct);
@@ -193,9 +202,11 @@ public class PhotosController(
     public async Task<ActionResult<LikeStateDto>> Unlike(Guid id, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId) return Unauthorized();
-        if (!await VisiblePhotos(userId).AnyAsync(p => p.Id == id, ct)) return NotFound();
+        var ownerId = await VisiblePhotos(userId).Where(p => p.Id == id).Select(p => (Guid?)p.OwnerId).SingleOrDefaultAsync(ct);
+        if (ownerId is null) return NotFound();
 
         await db.PhotoLikes.Where(l => l.PhotoId == id && l.UserId == userId).ExecuteDeleteAsync(ct);
+        await activity.RetractAsync(ownerId.Value, userId, ActivityTypes.Like, photoId: id, ct: ct);
         return await LikeStateAsync(id, userId, ct);
     }
 
@@ -246,6 +257,7 @@ public class PhotosController(
         var comment = new PhotoComment { PhotoId = id, AuthorId = userId, Text = text, CreatedAt = clock.GetUtcNow() };
         db.PhotoComments.Add(comment);
         await db.SaveChangesAsync(ct);
+        await activity.NotifyAsync(ownerId.Value, userId, ActivityTypes.Comment, photoId: id, snippet: text, ct: ct);
 
         var author = await db.Users.Where(u => u.Id == userId)
             .Select(u => new UserSummaryDto(u.Id, u.DisplayName, u.AvatarUrl)).SingleAsync(ct);

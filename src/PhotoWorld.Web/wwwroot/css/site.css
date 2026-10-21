@@ -488,3 +488,18 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .suspend-form { position: absolute; right: 0; top: calc(100% + .35rem); z-index: 5; width: 300px; white-space: normal;
   display: grid; gap: .5rem; padding: .9rem; background: var(--pw-ink-2); border: 1px solid #6b2a2a; border-radius: 10px; }
 .suspend-form input { background: var(--pw-ink); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 8px; padding: .45rem .6rem; }
+
+/* ---------- Activity ---------- */
+.nav-bell { position: relative; }
+.nav-bell-count { position: absolute; top: .1rem; right: -.2rem; min-width: 1.15rem; padding: 0 .3rem; border-radius: 99px;
+  background: var(--pw-accent); color: var(--pw-accent-ink); font-size: .7rem; font-weight: 700; line-height: 1.15rem; text-align: center; }
+.activity-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.activity-item { border: 1px solid var(--pw-line); border-radius: 12px; background: var(--pw-ink-2); }
+.activity-item.is-unread { border-color: #6b5021; background: rgba(242, 165, 65, .07); }
+.activity-link { display: flex; align-items: center; gap: .8rem; padding: .7rem .9rem; color: var(--pw-text); text-decoration: none; }
+.activity-link:hover .activity-text { color: var(--pw-accent); }
+.activity-link .avatar { width: 38px; height: 38px; }
+.activity-icon { font-size: 1.1rem; }
+.activity-body { flex: 1; min-width: 0; display: grid; gap: .1rem; }
+.activity-snippet { color: #c9c9c4; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.activity-thumb { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; flex: none; }
