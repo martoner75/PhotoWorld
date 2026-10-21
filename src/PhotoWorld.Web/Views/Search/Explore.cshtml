@@ -1,4 +1,5 @@
-@model ExploreDto
+@model ExplorePageViewModel
+@{ var e = Model.Explore; }
 @{
     ViewData["Title"] = "Explore";
 }
@@ -12,22 +13,27 @@
         <partial name="_SearchForm" model='""' />
     </header>
 
-    @if (Model.TrendingTags.Count > 0)
+    @if (Model.PhotoOfTheDay is { } potd)
+    {
+        <partial name="_PhotoOfTheDay" model="potd" />
+    }
+
+    @if (e.TrendingTags.Count > 0)
     {
         <h2 class="section-heading">Trending tags</h2>
         <p class="tag-list mb-4">
-            @foreach (var t in Model.TrendingTags)
+            @foreach (var t in e.TrendingTags)
             {
                 <a class="tag-chip" asp-controller="Photos" asp-action="Index" asp-route-tag="@t.Name">#@t.Name <span>@t.Count</span></a>
             }
         </p>
     }
 
-    @if (Model.SuggestedMembers.Count > 0)
+    @if (e.SuggestedMembers.Count > 0)
     {
         <h2 class="section-heading">Photographers to follow</h2>
         <ul class="member-results mb-4">
-            @foreach (var m in Model.SuggestedMembers)
+            @foreach (var m in e.SuggestedMembers)
             {
                 <partial name="_MemberResult" model="m" />
             }
@@ -35,14 +41,14 @@
     }
 
     <h2 class="section-heading">Popular photos</h2>
-    @if (Model.PopularPhotos.Count == 0)
+    @if (e.PopularPhotos.Count == 0)
     {
         <div class="empty-state"><p>Nothing here yet: popular photos from members you don't follow show up here.</p></div>
     }
     else
     {
         <div class="photo-grid">
-            @foreach (var photo in Model.PopularPhotos)
+            @foreach (var photo in e.PopularPhotos)
             {
                 <partial name="_PhotoCard" model="photo" />
             }

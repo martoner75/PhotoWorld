@@ -39,6 +39,12 @@ public interface IPhotoWorldApiClient
     Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
         string? tags = null, CancellationToken ct = default);
     Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default);
+    /// <summary>Today's photo of the day (or the latest), or null.</summary>
+    Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<PhotoOfTheDayScheduleDto>?> GetPhotoOfTheDayScheduleAsync(CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the admin.</summary>
+    Task<string?> SetPhotoOfTheDayAsync(DateOnly date, SetPhotoOfTheDayRequest request, CancellationToken ct = default);
+    Task<bool> ClearPhotoOfTheDayAsync(DateOnly date, CancellationToken ct = default);
     Task<ExploreDto> ExploreAsync(CancellationToken ct = default);
     Task<IReadOnlyList<PhotoSpotDto>> GetSpotsAsync(Guid? ownerId = null, CancellationToken ct = default);
 

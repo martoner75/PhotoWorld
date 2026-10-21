@@ -23,7 +23,9 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         // Out-of-range filters show their errors on the form; the photos are then shown unfiltered.
         var applied = ModelState.IsValid ? search : new PhotoSearch();
         var photos = await api.GetPhotosAsync(page, following: following, search: applied, ct: ct);
-        return View(new GalleryViewModel(photos, following, search, await api.GetCameraOptionsAsync(ct)));
+        // The photo of the day leads the plain gallery (first page, everyone, no filters).
+        var featured = page == 1 && !following && applied.IsEmpty ? await api.GetPhotoOfTheDayAsync(ct) : null;
+        return View(new GalleryViewModel(photos, following, search, await api.GetCameraOptionsAsync(ct), featured));
     }
 
     [HttpGet]

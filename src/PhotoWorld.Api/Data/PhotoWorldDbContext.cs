@@ -19,6 +19,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<PhotoLike> PhotoLikes => Set<PhotoLike>();
     public DbSet<PhotoTag> PhotoTags => Set<PhotoTag>();
+    public DbSet<PhotoOfTheDay> PhotosOfTheDay => Set<PhotoOfTheDay>();
     public DbSet<PhotoComment> PhotoComments => Set<PhotoComment>();
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<Blog> Blogs => Set<Blog>();
@@ -89,6 +90,16 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(t => t.Name).HasMaxLength(Shared.Photos.PhotoTags.MaxLength);
             e.HasOne(t => t.Photo).WithMany(p => p.Tags).HasForeignKey(t => t.PhotoId);
             e.HasIndex(t => t.Name);
+        });
+
+        modelBuilder.Entity<PhotoOfTheDay>(e =>
+        {
+            e.ToTable("photos_of_the_day");
+            e.HasKey(x => x.Date);
+            e.Property(x => x.Note).HasMaxLength(PhotoOfTheDayLimits.NoteMax);
+            e.HasOne(x => x.Photo).WithMany().HasForeignKey(x => x.PhotoId);
+            e.HasOne(x => x.ChosenBy).WithMany().HasForeignKey(x => x.ChosenById).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(x => x.PhotoId);
         });
 
         modelBuilder.Entity<PhotoLike>(e =>

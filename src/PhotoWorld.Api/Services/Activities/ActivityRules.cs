@@ -20,6 +20,7 @@ public static class ActivityRules
         ActivityTypes.Comment or ActivityTypes.PostComment => settings.Comments,
         ActivityTypes.Follow => settings.Follows,
         ActivityTypes.NewPhoto or ActivityTypes.NewPost => settings.FollowedPosts,
+        ActivityTypes.PhotoOfTheDay => true, // rare and always good news
         _ => settings.Challenges,
     };
 

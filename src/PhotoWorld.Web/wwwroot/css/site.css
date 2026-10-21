@@ -578,3 +578,17 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .member-result .photo-card-owner { color: var(--pw-text); }
 .member-result .avatar { width: 40px; height: 40px; }
 .section-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+
+/* ---------- Photo of the day ---------- */
+.potd { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; padding: .7rem; border-radius: var(--pw-radius);
+  background: color-mix(in srgb, var(--pw-accent) 8%, var(--pw-ink-2)); border: 1px solid var(--pw-accent-line); color: var(--pw-text); text-decoration: none; }
+.potd:hover { border-color: var(--pw-accent); color: var(--pw-text); }
+.potd img { width: 150px; height: 100px; object-fit: cover; border-radius: 10px; flex: none; background: var(--pw-photo-bg); }
+.potd-body { display: grid; gap: .1rem; min-width: 0; }
+.potd-body strong { font-family: var(--pw-serif); font-size: 1.3rem; }
+.potd-label { color: var(--pw-accent); font-weight: 600; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; }
+.potd-note { color: var(--pw-text-soft); font-style: italic; }
+.potd-badge { color: var(--pw-accent); font-weight: 600; margin: 0 0 .25rem; }
+.admin-feature { margin: 0 0 1.25rem; border: 1px dashed var(--pw-accent-line); border-radius: 10px; padding: .5rem .75rem; }
+.admin-feature summary { cursor: pointer; font-size: .9rem; color: var(--pw-muted); }
+.admin-feature form { margin-top: .75rem; }

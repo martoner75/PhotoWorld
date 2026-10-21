@@ -331,6 +331,7 @@ public class PhotosController(
 
     private async Task<PhotoDetailDto?> LoadDetailAsync(Guid id, CancellationToken ct)
     {
+        var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
         var me = CurrentUserId();
         var commentVisible = Moderation.CommentVisibleTo(me);
         var row = await VisiblePhotos(me)
@@ -347,6 +348,8 @@ public class PhotosController(
                 ReportedByMe = p.Reports.Any(r => r.ReporterId == me),
                 Place = p.Place == null ? null : new PhotoPlaceDto(p.Place.Id, p.Place.Name, p.Place.Latitude, p.Place.Longitude),
                 Tags = p.Tags.OrderBy(t => t.Name).Select(t => t.Name).ToList(),
+                Featured = db.PhotosOfTheDay.Where(x => x.PhotoId == p.Id && x.Date <= today)
+                    .OrderByDescending(x => x.Date).Select(x => (DateOnly?)x.Date).FirstOrDefault(),
             })
             .SingleOrDefaultAsync(ct);
         if (row is null) return null;
@@ -360,7 +363,8 @@ public class PhotosController(
             CanReport: p.OwnerId != me && !row.ReportedByMe,
             ShowOnHome: p.ShowOnHome,
             Place: row.Place,
-            Tags: row.Tags);
+            Tags: row.Tags,
+            PhotoOfTheDay: row.Featured);
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(

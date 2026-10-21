@@ -51,7 +51,8 @@ public sealed record PhotoDetailDto(
     bool CanReport = false,
     bool ShowOnHome = false,
     PhotoPlaceDto? Place = null,
-    IReadOnlyList<string>? Tags = null);
+    IReadOnlyList<string>? Tags = null,
+    DateOnly? PhotoOfTheDay = null);
 
 /// <summary>Where a photo was taken: one of its owner's places, which they chose to show with it.</summary>
 public sealed record PhotoPlaceDto(Guid Id, string Name, double Latitude, double Longitude);

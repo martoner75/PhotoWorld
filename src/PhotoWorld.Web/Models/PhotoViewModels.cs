@@ -8,7 +8,10 @@ public sealed record PhotoPageViewModel(PhotoDetailDto Photo, IReadOnlyList<Comm
 public sealed record MemberPageViewModel(MemberProfileDto Member, PagedResult<PhotoSummaryDto> Photos);
 
 /// <summary>The gallery: everyone's photos or only followed members', optionally filtered by camera settings.</summary>
-public sealed record GalleryViewModel(PagedResult<PhotoSummaryDto> Photos, bool Following, PhotoSearch Search, CameraOptionsDto Options);
+public sealed record GalleryViewModel(PagedResult<PhotoSummaryDto> Photos, bool Following, PhotoSearch Search, CameraOptionsDto Options,
+    PhotoOfTheDayDto? PhotoOfTheDay = null);
+
+public sealed record ExplorePageViewModel(ExploreDto Explore, PhotoOfTheDayDto? PhotoOfTheDay);
 
 public sealed class UploadPhotoViewModel
 {

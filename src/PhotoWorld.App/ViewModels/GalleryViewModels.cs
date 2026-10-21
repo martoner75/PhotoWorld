@@ -76,9 +76,29 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
         : Following ? "No photos from members you follow yet. Tap a member's name to see their page and follow them."
         : "No photos yet. Be the first to share one from the Upload tab.";
 
+    /// <summary>Leads the plain gallery (everyone, no filters).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PhotoOfTheDayLabel), nameof(HasPhotoOfTheDay))]
+    public partial PhotoOfTheDayDto? PhotoOfTheDay { get; set; }
+
+    public bool HasPhotoOfTheDay => PhotoOfTheDay is not null;
+
+    public string? PhotoOfTheDayLabel => PhotoOfTheDay is { } p
+        ? (p.IsToday ? "⭐ PHOTO OF THE DAY" : $"⭐ PHOTO OF THE DAY · {p.Date:d MMM}")
+        : null;
+
+    private async Task LoadPhotoOfTheDayAsync()
+    {
+        try { PhotoOfTheDay = Following || IsFiltered ? null : await _api.GetPhotoOfTheDayAsync(); }
+        catch (ApiException) { /* optional, like the challenge banner */ }
+    }
+
+    [RelayCommand]
+    private Task OpenPhotoOfTheDayAsync() => PhotoOfTheDay is { } p ? OpenAsync(p.Photo) : Task.CompletedTask;
+
     protected override Task<PagedResult<PhotoSummaryDto>> FetchAsync(int page)
     {
-        if (page == 1) _ = LoadChallengeAsync();
+        if (page == 1) { _ = LoadChallengeAsync(); _ = LoadPhotoOfTheDayAsync(); }
         return _api.GetPhotosAsync(page, following: Following, search: Search);
     }
 
@@ -236,7 +256,7 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(AspectHeight),
-        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags))]
+        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags), nameof(FeaturedLabel))]
     public partial PhotoDetailDto? Photo { get; set; }
 
     public bool HasCamera => Photo?.Camera is { } c && (c.Model ?? c.Make) is not null;
@@ -335,6 +355,8 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         await api.DeleteCommentAsync(Photo!.Id, comment.Id);
         Comments.Remove(comment);
     });
+
+    public string? FeaturedLabel => Photo?.PhotoOfTheDay is { } day ? $"⭐ Photo of the day · {day:d MMMM yyyy}" : null;
 
     public IReadOnlyList<string> Tags => Photo?.Tags?.Select(t => "#" + t).ToList() ?? [];
     public bool HasTags => Tags.Count > 0;

@@ -1,0 +1,56 @@
+@model IReadOnlyList<PhotoOfTheDayScheduleDto>
+@{
+    ViewData["Title"] = "Photo of the day";
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Admin</h1>
+            <p class="text-muted">Photo of the day. To pick one, open the photo and use “Feature as photo of the day”. Days are UTC.</p>
+        </div>
+        <a class="btn btn-ghost" asp-controller="Search" asp-action="Explore">Find photos on Explore</a>
+    </header>
+
+    <partial name="_AdminNav" model='"potd"' />
+
+    @if (!Model.Any(d => d.Date == today))
+    {
+        <div class="alert moderation-banner" role="status"><strong>Nothing for today yet.</strong> Members see the most recent pick meanwhile.</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state"><p>No photos featured in the last two weeks, and none scheduled.</p></div>
+    }
+    else
+    {
+        <div class="manage-table-wrap">
+            <table class="manage-table">
+                <thead><tr><th>Day</th><th>Photo</th><th>By</th><th>Note</th><th>Chosen by</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+                <tbody>
+                    @foreach (var d in Model)
+                    {
+                        <tr>
+                            <td>@d.Date.ToString("ddd d MMM yyyy") @if (d.Date == today) { <span class="moderation-badge draft-badge">Today</span> }</td>
+                            <td><a asp-controller="Photos" asp-action="Details" asp-route-id="@d.Photo.Id" class="photo-card-owner"><img src="@d.Photo.ThumbnailUrl" alt="" class="activity-thumb" /> @d.Photo.Title</a></td>
+                            <td>@d.Photo.Owner.DisplayName</td>
+                            <td>@d.Note</td>
+                            <td>@d.ChosenBy</td>
+                            <td class="manage-actions">
+                                @if (d.Date >= today)
+                                {
+                                    <form asp-action="ClearPhotoOfTheDay" method="post" data-confirm="Remove the pick for @d.Date.ToString("d MMMM")?">
+                                        <input type="hidden" name="date" value="@d.Date.ToString("yyyy-MM-dd")" />
+                                        <button type="submit" class="btn btn-danger-ghost btn-sm">Remove</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

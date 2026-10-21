@@ -7,10 +7,10 @@ namespace PhotoWorld.Api.Services.Activities;
 
 /// <summary>
 /// Every few minutes: tells members about challenges (a new one opening, one they entered closing within a day, and
-/// the results), and deletes activity older than <see cref="ActivityRules.KeepFor"/>. Each piece of news is claimed
+/// the results) and photo owners about their photo of the day, and deletes activity older than <see cref="ActivityRules.KeepFor"/>. Each piece of news is claimed
 /// with a conditional update first, so it goes out once even with several API instances.
 /// </summary>
-public sealed class ChallengeActivitySender(IServiceScopeFactory scopes, TimeProvider clock, ILogger<ChallengeActivitySender> logger)
+public sealed class ScheduledActivitySender(IServiceScopeFactory scopes, TimeProvider clock, ILogger<ScheduledActivitySender> logger)
     : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
@@ -75,6 +75,14 @@ public sealed class ChallengeActivitySender(IServiceScopeFactory scopes, TimePro
                     places.TryGetValue(id, out var place) ? place : null, now)), ct);
             }
         }
+
+        // Today's photo of the day: tell its owner once (claimed like the challenge news).
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        var pick = await db.PhotosOfTheDay.AsNoTracking().Where(x => x.Date == today && x.NotifiedAt == null)
+            .Select(x => new { x.PhotoId, x.Photo.OwnerId }).SingleOrDefaultAsync(ct);
+        if (pick is not null && await db.PhotosOfTheDay.Where(x => x.Date == today && x.NotifiedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.NotifiedAt, now), ct) == 1)
+            await AddAsync(db, [new Activity { RecipientId = pick.OwnerId, PhotoId = pick.PhotoId, Type = ActivityTypes.PhotoOfTheDay, CreatedAt = now }], ct);
 
         var purged = await db.Activities.Where(a => a.CreatedAt < now - ActivityRules.KeepFor).ExecuteDeleteAsync(ct);
         if (purged > 0) logger.LogInformation("Deleted {Count} old activity items", purged);

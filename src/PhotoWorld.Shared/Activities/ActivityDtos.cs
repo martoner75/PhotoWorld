@@ -14,9 +14,10 @@ public static class ActivityTypes
     public const string ChallengeOpen = "challenge_open";
     public const string ChallengeEnding = "challenge_ending";
     public const string ChallengeResult = "challenge_result";
+    public const string PhotoOfTheDay = "photo_of_the_day";
 
     public static readonly IReadOnlyList<string> All =
-        [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult];
+        [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay];
 }
 
 /// <summary>

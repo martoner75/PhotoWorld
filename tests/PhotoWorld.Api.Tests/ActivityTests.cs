@@ -71,6 +71,14 @@ public class ActivityTests
     }
 
     [Fact]
+    public void Photo_of_the_day_news_always_goes_out_and_reads_well()
+    {
+        var off = new ActivitySettingsDto(false, false, false, false, false);
+        Assert.True(ActivityRules.Wants(off, ActivityTypes.PhotoOfTheDay));
+        Assert.Equal("Your photo “Fog” is today's photo of the day! ⭐", ActivityText.Describe(Item(ActivityTypes.PhotoOfTheDay)));
+    }
+
+    [Fact]
     public void Times_read_as_ago()
     {
         Assert.Equal("just now", ActivityText.Ago(Start, Start.AddSeconds(20)));

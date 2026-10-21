@@ -31,7 +31,13 @@ public partial class ExploreViewModel(PhotoWorldApi api) : ViewModelBase
     [ObservableProperty] public partial string Query { get; set; } = "";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(TagsTitle), nameof(MembersTitle), nameof(PhotosTitle), nameof(CanSeeAllPhotos))]
+    [NotifyPropertyChangedFor(nameof(HasPhotoOfTheDay))]
+    public partial PhotoOfTheDayDto? PhotoOfTheDay { get; set; }
+
+    public bool HasPhotoOfTheDay => PhotoOfTheDay is not null && !IsSearch;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TagsTitle), nameof(MembersTitle), nameof(PhotosTitle), nameof(CanSeeAllPhotos), nameof(HasPhotoOfTheDay))]
     public partial bool IsSearch { get; set; }
 
     [ObservableProperty]
@@ -60,6 +66,7 @@ public partial class ExploreViewModel(PhotoWorldApi api) : ViewModelBase
     private Task LoadExploreAsync() => RunAsync(async () =>
     {
         var explore = await api.ExploreAsync();
+        try { PhotoOfTheDay ??= await api.GetPhotoOfTheDayAsync(); } catch (ApiException) { /* optional */ }
         IsSearch = false;
         Show(explore.TrendingTags, explore.SuggestedMembers, [], explore.PopularPhotos, explore.PopularPhotos.Count);
     });
@@ -130,6 +137,9 @@ public partial class ExploreViewModel(PhotoWorldApi api) : ViewModelBase
     [RelayCommand]
     private Task OpenPostAsync(BlogPostSummaryDto post) =>
         Shell.Current.GoToAsync(Routes.Post, new ShellNavigationQueryParameters { ["id"] = post.Id });
+
+    [RelayCommand]
+    private Task OpenPhotoOfTheDayAsync() => PhotoOfTheDay is { } p ? OpenPhotoAsync(p.Photo) : Task.CompletedTask;
 
     [RelayCommand]
     private Task OpenPhotoAsync(PhotoSummaryDto photo) =>

@@ -14,6 +14,10 @@ public static class ApiRoutes
     public const string Showcase = "api/showcase";
     public const string Photos = "api/photos";
     public const string PhotoCameraOptions = "api/photos/camera-options";
+    public const string PhotoOfTheDay = "api/photo-of-the-day";
+    public const string AdminPhotoOfTheDay = "api/admin/photo-of-the-day";
+    /// <summary>One day on the schedule; {date} is yyyy-MM-dd (UTC).</summary>
+    public const string AdminPhotoOfTheDayDate = "api/admin/photo-of-the-day/{date}";
     public const string Search = "api/search";
     public const string Explore = "api/explore";
     /// <summary>Photos whose owners linked them to a place, for the Spots map.</summary>

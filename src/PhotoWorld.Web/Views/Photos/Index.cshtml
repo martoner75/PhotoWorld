@@ -32,6 +32,11 @@
         </div>
     </header>
 
+    @if (Model.PhotoOfTheDay is { } potd)
+    {
+        <partial name="_PhotoOfTheDay" model="potd" />
+    }
+
     <partial name="_FeedTabs" model="new FeedTabsViewModel(Model.Following)" />
 
     <details class="filters" open="@(filtered || !ViewData.ModelState.IsValid)">

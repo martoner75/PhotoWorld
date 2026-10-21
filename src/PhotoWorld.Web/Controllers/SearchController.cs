@@ -18,5 +18,6 @@ public class SearchController(IPhotoWorldApiClient api) : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Explore(CancellationToken ct) => View(await api.ExploreAsync(ct));
+    public async Task<IActionResult> Explore(CancellationToken ct) =>
+        View(new PhotoWorld.Web.Models.ExplorePageViewModel(await api.ExploreAsync(ct), await api.GetPhotoOfTheDayAsync(ct)));
 }

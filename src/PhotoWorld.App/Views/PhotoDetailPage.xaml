@@ -21,6 +21,8 @@
                         <Label Text="This photo is hidden from other members while it's reviewed." FontSize="13" />
                     </Border>
 
+                    <Label Text="{Binding FeaturedLabel}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="14"
+                           IsVisible="{Binding FeaturedLabel, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding Photo.Title}" Style="{StaticResource Heading}" />
                     <Label Text="{Binding Byline}" Style="{StaticResource MutedText}" FontSize="14" TextDecorations="Underline">
                         <Label.GestureRecognizers>

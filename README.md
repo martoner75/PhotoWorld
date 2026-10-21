@@ -205,7 +205,7 @@ read. Members switch kinds off in account settings or on the Me tab.
 
 Nobody is notified about their own actions, by members they blocked, or by suspended members, and items about
 photos or posts they can no longer see are left out. Unliking or unfollowing takes back an unread notification.
-`ChallengeActivitySender` (a background service in the API, every 5 minutes) sends the challenge news, claiming each
+`ScheduledActivitySender` (a background service in the API, every 5 minutes) sends the challenge news, claiming each
 with a conditional update so it goes out once even with several API instances, and deletes activity older than 90
 days. Push notifications to phones aren't set up yet (they need an Apple push key and a Firebase project).
 

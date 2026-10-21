@@ -25,6 +25,10 @@
             <partial name="_Avatar" model="p.Owner" />
             <span>@p.Owner.DisplayName</span>
         </a>
+        @if (p.PhotoOfTheDay is { } featured)
+        {
+            <p class="potd-badge">⭐ Photo of the day · @featured.ToString("d MMMM yyyy")</p>
+        }
         <p class="text-muted small">
             Shared @p.CreatedAt.ToString("d MMMM yyyy")
             @if (p.CanEdit && p.ShowOnHome)
@@ -93,6 +97,25 @@
                     <button type="submit" class="btn btn-danger-ghost btn-sm">Delete</button>
                 </form>
             </div>
+        }
+
+        @if (User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true") && p.Moderation == ModerationState.Visible)
+        {
+            <details class="admin-feature">
+                <summary>⭐ Feature as photo of the day (admin)</summary>
+                <form asp-controller="Admin" asp-action="SetPhotoOfTheDay" method="post" class="notify-form">
+                    <input type="hidden" name="photoId" value="@p.Id" />
+                    <div class="field">
+                        <label for="potd-date">Day (UTC)</label>
+                        <input id="potd-date" name="date" type="date" value="@DateTime.UtcNow.ToString("yyyy-MM-dd")" min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="field">
+                        <label for="potd-note">Note <span class="text-muted">(optional, shown with it)</span></label>
+                        <input id="potd-note" name="note" maxlength="@PhotoOfTheDayLimits.NoteMax" placeholder="Wonderful morning light" />
+                    </div>
+                    <button type="submit" class="btn btn-accent btn-sm">Feature it</button>
+                </form>
+            </details>
         }
 
         @if (p.CanReport)

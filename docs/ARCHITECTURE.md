@@ -482,7 +482,7 @@ account is sent. The privacy policy names each provider.
   winner. Standings are computed when read, not stored: entries hidden by moderation drop out (shown only to their
   owner, unranked), and deleting a photo removes its entry. Wins show as trophies on the member page.
 - **Activity.** Controllers call `ActivityFeed` after likes, comments, follows, uploads and first publication;
-  `ChallengeActivitySender` adds challenge news. Rows in `activities` cascade with their recipient, actor, photo,
+  `ScheduledActivitySender` adds challenge news. Rows in `activities` cascade with their recipient, actor, photo,
   post or challenge; reading filters them through the same visibility rule, so hidden or blocked content never shows.
 - **Collections** (`collections`, `collection_photos`) hold any visible photos; `Moderation.CollectionVisibleTo`
   shows a member their own and others' public ones (not suspended or blocked owners), and photos inside go through

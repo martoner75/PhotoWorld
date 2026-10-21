@@ -73,6 +73,28 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public async Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default) =>
         (await GetOrNullAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct))!;
 
+    public async Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default)
+    {
+        using var res = await http.GetAsync(ApiRoutes.PhotoOfTheDay, ct);
+        return res.StatusCode == HttpStatusCode.NoContent || !IsSuccess(res) ? null : await res.Content.ReadFromJsonAsync<PhotoOfTheDayDto>(ct);
+    }
+
+    public async Task<IReadOnlyList<PhotoOfTheDayScheduleDto>?> GetPhotoOfTheDayScheduleAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<List<PhotoOfTheDayScheduleDto>>(ApiRoutes.AdminPhotoOfTheDay, ct);
+
+    public async Task<string?> SetPhotoOfTheDayAsync(DateOnly date, SetPhotoOfTheDayRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminPhotoOfTheDayDate, ("date", date.ToString("yyyy-MM-dd"))), request, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "Only admins can choose the photo of the day.";
+    }
+
+    public async Task<bool> ClearPhotoOfTheDayAsync(DateOnly date, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.AdminPhotoOfTheDayDate, ("date", date.ToString("yyyy-MM-dd"))), ct);
+        return IsSuccess(res);
+    }
+
     public async Task<ExploreDto> ExploreAsync(CancellationToken ct = default) =>
         (await GetOrNullAsync<ExploreDto>(ApiRoutes.Explore, ct))!;
 

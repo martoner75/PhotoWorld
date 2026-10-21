@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared.Admin;
+using PhotoWorld.Shared.Photos;
 using PhotoWorld.Web.Models;
 using PhotoWorld.Web.Services;
 
@@ -42,6 +43,28 @@ public class AdminController(IPhotoWorldApiClient api) : Controller
         TempData["Flash"] = await api.SetSuspensionAsync(id, new SetSuspensionRequest(false, null), ct)
             ?? "Account reactivated. They can sign in again and their photos and posts are back.";
         return BackTo(returnUrl);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> PhotoOfTheDay(CancellationToken ct)
+    {
+        var schedule = await api.GetPhotoOfTheDayScheduleAsync(ct);
+        return schedule is null ? Forbid() : View(schedule);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPhotoOfTheDay(Guid photoId, DateOnly date, string? note, CancellationToken ct)
+    {
+        var problem = await api.SetPhotoOfTheDayAsync(date, new SetPhotoOfTheDayRequest(photoId, note), ct);
+        TempData["Flash"] = problem ?? $"Featured as the photo of the day for {date:d MMMM yyyy}.";
+        return problem is null ? RedirectToAction(nameof(PhotoOfTheDay)) : RedirectToAction("Details", "Photos", new { id = photoId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ClearPhotoOfTheDay(DateOnly date, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.ClearPhotoOfTheDayAsync(date, ct) ? $"Removed the pick for {date:d MMMM yyyy}." : "Nothing to remove.";
+        return RedirectToAction(nameof(PhotoOfTheDay));
     }
 
     private IActionResult BackTo(string? returnUrl) =>

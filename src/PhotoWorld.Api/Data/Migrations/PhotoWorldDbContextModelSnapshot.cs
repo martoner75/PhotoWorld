@@ -100,7 +100,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day')");
                         });
                 });
 
@@ -926,6 +926,45 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("photo_likes", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoOfTheDay", b =>
+                {
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<Guid?>("ChosenById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("chosen_by_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("note");
+
+                    b.Property<DateTimeOffset?>("NotifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("notified_at");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.HasKey("Date")
+                        .HasName("pk_photos_of_the_day");
+
+                    b.HasIndex("ChosenById")
+                        .HasDatabaseName("ix_photos_of_the_day_chosen_by_id");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_photos_of_the_day_photo_id");
+
+                    b.ToTable("photos_of_the_day", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoTag", b =>
                 {
                     b.Property<Guid>("PhotoId")
@@ -1472,6 +1511,26 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Photo");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoOfTheDay", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "ChosenBy")
+                        .WithMany()
+                        .HasForeignKey("ChosenById")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_photos_of_the_day_users_chosen_by_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photos_of_the_day_photos_photo_id");
+
+                    b.Navigation("ChosenBy");
+
+                    b.Navigation("Photo");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoTag", b =>

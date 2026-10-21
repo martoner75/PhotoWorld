@@ -56,6 +56,13 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default) =>
         GetAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct);
 
+    /// <summary>Today's photo of the day (or the latest), or null when there isn't one.</summary>
+    public async Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default)
+    {
+        using var response = await SendCoreAsync(HttpMethod.Get, ApiRoutes.PhotoOfTheDay, null, ct);
+        return response.StatusCode == HttpStatusCode.NoContent ? null : await response.Content.ReadFromJsonAsync<PhotoOfTheDayDto>(Json, ct);
+    }
+
     public Task<ExploreDto> ExploreAsync(CancellationToken ct = default) => GetAsync<ExploreDto>(ApiRoutes.Explore, ct);
 
     public Task<List<PhotoSpotDto>> GetSpotsAsync(CancellationToken ct = default) =>

@@ -1,0 +1,14 @@
+@model PhotoOfTheDayDto
+@{ var p = Model.Photo; }
+<a class="potd" asp-controller="Photos" asp-action="Details" asp-route-id="@p.Id">
+    <img src="@p.ThumbnailUrl" alt="@p.Title" />
+    <span class="potd-body">
+        <span class="potd-label">⭐ @(Model.IsToday ? "Photo of the day" : $"Photo of the day · {Model.Date:d MMM}")</span>
+        <strong>@p.Title</strong>
+        <span class="text-muted">by @p.Owner.DisplayName</span>
+        @if (Model.Note is not null)
+        {
+            <span class="potd-note">“@Model.Note”</span>
+        }
+    </span>
+</a>

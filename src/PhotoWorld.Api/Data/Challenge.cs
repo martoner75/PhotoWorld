@@ -13,7 +13,7 @@ public class Challenge
     public DateTimeOffset EndsAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
-    // When the activity about this challenge went out (see ChallengeActivitySender), so each goes out once.
+    // When the activity about this challenge went out (see ScheduledActivitySender), so each goes out once.
     public DateTimeOffset? OpenNotifiedAt { get; set; }
     public DateTimeOffset? EndingNotifiedAt { get; set; }
     public DateTimeOffset? ResultsNotifiedAt { get; set; }

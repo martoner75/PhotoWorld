@@ -50,7 +50,7 @@ builder.Services.AddSingleton<BlogHtml>();
 builder.Services.AddScoped<ChallengeStandings>();
 builder.Services.AddScoped<AdminAccess>();
 builder.Services.AddScoped<ActivityFeed>();
-builder.Services.AddHostedService<ChallengeActivitySender>();
+builder.Services.AddHostedService<ScheduledActivitySender>();
 builder.Services.AddMemoryCache();
 
 // Email notifications about new blog posts. Without an SMTP host (development) emails are written to .eml files.
