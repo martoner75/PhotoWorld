@@ -88,8 +88,10 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res);
     }
 
+    // Empty results rather than an error page if the API can't answer (e.g. an older API without these routes).
     public async Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default) =>
-        (await GetOrNullAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct))!;
+        await GetOrNullAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct)
+        ?? new SearchResultsDto(query, [], [], [], 0, []);
 
     public async Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default)
     {
@@ -114,7 +116,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     }
 
     public async Task<ExploreDto> ExploreAsync(CancellationToken ct = default) =>
-        (await GetOrNullAsync<ExploreDto>(ApiRoutes.Explore, ct))!;
+        await GetOrNullAsync<ExploreDto>(ApiRoutes.Explore, ct) ?? new ExploreDto([], [], []);
 
     public async Task<IReadOnlyList<PhotoSpotDto>> GetSpotsAsync(Guid? ownerId = null, CancellationToken ct = default) =>
         await GetOrNullAsync<List<PhotoSpotDto>>(ApiRoutes.Spots + (ownerId is null ? "" : $"?ownerId={ownerId}"), ct) ?? [];
