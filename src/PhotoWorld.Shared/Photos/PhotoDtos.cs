@@ -71,7 +71,16 @@ public sealed record MemberProfileDto(
     string? AvatarUrl,
     DateTimeOffset MemberSince,
     int PhotoCount,
-    bool IsMe);
+    bool IsMe,
+    int FollowerCount = 0,
+    int FollowingCount = 0,
+    bool FollowedByMe = false,
+    IReadOnlyList<ChallengeWinDto>? Wins = null);
+
+public sealed record FollowStateDto(bool FollowedByMe, int FollowerCount);
+
+/// <summary>A photo challenge the member won, for the trophies on their page.</summary>
+public sealed record ChallengeWinDto(Guid ChallengeId, string Title, DateTimeOffset EndsAt, Guid PhotoId);
 
 public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount)
 {

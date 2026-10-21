@@ -22,35 +22,42 @@ public class PhotosController(
 {
     private const int PageSize = 24;
 
-    /// <summary>Newest photos first, optionally only one member's. Hidden photos are left out except for their owner.</summary>
+    /// <summary>
+    /// Newest photos first: optionally only one member's, only from members the caller follows, and/or matching
+    /// camera settings. Hidden photos are left out except for their owner.
+    /// </summary>
     [HttpGet(ApiRoutes.Photos)]
-    public async Task<PagedResult<PhotoSummaryDto>> List(int page = 1, Guid? ownerId = null, CancellationToken ct = default)
+    public async Task<PagedResult<PhotoSummaryDto>> List(int page = 1, Guid? ownerId = null, bool following = false,
+        [FromQuery] PhotoSearch? search = null, CancellationToken ct = default)
     {
         page = Math.Max(1, page);
         var me = CurrentUserId();
-        var commentVisible = Moderation.CommentVisibleTo(me);
         var query = VisiblePhotos(me);
         if (ownerId is not null) query = query.Where(p => p.OwnerId == ownerId);
+        if (following) query = query.Where(p => db.Follows.Any(f => f.FollowerId == me && f.FolloweeId == p.OwnerId));
+        if (search is not null) query = query.Matching(search);
 
         var total = await query.CountAsync(ct);
-        var rows = await query
+        var items = await query
             .OrderByDescending(p => p.CreatedAt)
             .Skip((page - 1) * PageSize).Take(PageSize)
-            .Select(p => new
-            {
-                p.Id, p.Title, p.ThumbnailPath, p.Width, p.Height, p.CreatedAt,
-                Owner = new UserSummaryDto(p.Owner.Id, p.Owner.DisplayName, p.Owner.AvatarUrl),
-                Likes = p.Likes.Count,
-                Comments = p.Comments.AsQueryable().Count(commentVisible),
-                Upheld = p.Reports.Any(r => r.Status == ReportStatus.Upheld),
-                OpenReports = p.Reports.Count(r => r.Status == ReportStatus.Open),
-            })
-            .ToListAsync(ct);
-
-        var items = rows.Select(r => new PhotoSummaryDto(r.Id, r.Title, storage.PublicUrl(r.ThumbnailPath),
-            r.Width, r.Height, r.Owner, r.Likes, r.Comments, r.CreatedAt,
-            Moderation.State(r.Upheld, r.OpenReports))).ToList();
+            .ToSummariesAsync(me, storage, ct);
         return new PagedResult<PhotoSummaryDto>(items, page, PageSize, total);
+    }
+
+    /// <summary>Cameras and lenses in the gallery, most used first, as suggestions for the filter form.</summary>
+    [HttpGet(ApiRoutes.PhotoCameraOptions)]
+    public async Task<CameraOptionsDto> CameraOptions(CancellationToken ct)
+    {
+        const int max = 100;
+        var photos = VisiblePhotos(CurrentUserId());
+        var cameras = await photos.Where(p => p.CameraModel != null)
+            .GroupBy(p => p.CameraModel!).OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+            .Select(g => g.Key).Take(max).ToListAsync(ct);
+        var lenses = await photos.Where(p => p.Lens != null)
+            .GroupBy(p => p.Lens!).OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+            .Select(g => g.Key).Take(max).ToListAsync(ct);
+        return new CameraOptionsDto(cameras, lenses);
     }
 
     [HttpGet(ApiRoutes.Photo)]

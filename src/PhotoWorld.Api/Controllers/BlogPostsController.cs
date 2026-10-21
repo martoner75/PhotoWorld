@@ -26,10 +26,12 @@ public class BlogPostsController(
 
     /// <summary>
     /// Newest posts first. Without <paramref name="authorId"/>: everyone's published posts. With it: that
-    /// member's published posts, plus their drafts when it's the caller's own blog.
+    /// member's published posts, plus their drafts when it's the caller's own blog. With <paramref name="following"/>:
+    /// only published posts by members the caller follows.
     /// </summary>
     [HttpGet(ApiRoutes.BlogPosts)]
-    public async Task<PagedResult<BlogPostSummaryDto>> List(int page = 1, Guid? authorId = null, CancellationToken ct = default)
+    public async Task<PagedResult<BlogPostSummaryDto>> List(int page = 1, Guid? authorId = null, bool following = false,
+        CancellationToken ct = default)
     {
         page = Math.Max(1, page);
         var me = CurrentUserId();
@@ -40,6 +42,9 @@ public class BlogPostsController(
         query = authorId is null
             ? query.Where(p => p.Status == BlogPostStatus.Published)
             : query.Where(p => p.AuthorId == authorId && (p.AuthorId == me || p.Status == BlogPostStatus.Published));
+        if (following)
+            query = query.Where(p => p.Status == BlogPostStatus.Published
+                                     && db.Follows.Any(f => f.FollowerId == me && f.FolloweeId == p.AuthorId));
 
         var total = await query.CountAsync(ct);
         var rows = await query

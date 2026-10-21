@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
+using PhotoWorld.Api.Services.Challenges;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Photos;
@@ -15,6 +16,8 @@ namespace PhotoWorld.Api.Controllers;
 public class UsersController(
     PhotoWorldDbContext db,
     SupabaseStorage storage,
+    ChallengeStandings standings,
+    TimeProvider clock,
     ILogger<UsersController> logger) : ControllerBase
 {
     [HttpGet(ApiRoutes.CurrentUser)]
@@ -75,8 +78,62 @@ public class UsersController(
         var member = await db.Users.AsNoTracking()
             .Where(u => u.Id == id)
             .Select(u => new MemberProfileDto(u.Id, u.DisplayName, u.AvatarUrl, u.CreatedAt,
-                visiblePhotos.Count(p => p.OwnerId == u.Id), u.Id == me))
+                visiblePhotos.Count(p => p.OwnerId == u.Id), u.Id == me,
+                db.Follows.Count(f => f.FolloweeId == u.Id),
+                db.Follows.Count(f => f.FollowerId == u.Id),
+                db.Follows.Any(f => f.FolloweeId == u.Id && f.FollowerId == me),
+                null))
             .SingleOrDefaultAsync(ct);
-        return member is null ? NotFound() : member;
+        return member is null ? NotFound() : member with { Wins = await WinsAsync(id, ct) };
+    }
+
+    [HttpPost(ApiRoutes.MemberFollow)]
+    public async Task<ActionResult<FollowStateDto>> Follow(Guid id, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        if (id == me) return Problem("You can't follow yourself.", statusCode: StatusCodes.Status400BadRequest);
+        if (!await db.Users.AnyAsync(u => u.Id == id, ct)) return NotFound();
+
+        if (!await db.Follows.AnyAsync(f => f.FollowerId == me && f.FolloweeId == id, ct))
+        {
+            db.Follows.Add(new Follow { FollowerId = me, FolloweeId = id, CreatedAt = clock.GetUtcNow() });
+            try { await db.SaveChangesAsync(ct); }
+            catch (DbUpdateException) { /* Followed twice at the same moment: the follow already exists. */ }
+        }
+        return await FollowStateAsync(id, me, ct);
+    }
+
+    [HttpDelete(ApiRoutes.MemberFollow)]
+    public async Task<ActionResult<FollowStateDto>> Unfollow(Guid id, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        if (!await db.Users.AnyAsync(u => u.Id == id, ct)) return NotFound();
+
+        await db.Follows.Where(f => f.FollowerId == me && f.FolloweeId == id).ExecuteDeleteAsync(ct);
+        return await FollowStateAsync(id, me, ct);
+    }
+
+    private async Task<FollowStateDto> FollowStateAsync(Guid id, Guid me, CancellationToken ct) => new(
+        await db.Follows.AnyAsync(f => f.FollowerId == me && f.FolloweeId == id, ct),
+        await db.Follows.CountAsync(f => f.FolloweeId == id, ct));
+
+    /// <summary>Closed challenges this member won, newest first.</summary>
+    private async Task<IReadOnlyList<ChallengeWinDto>> WinsAsync(Guid id, CancellationToken ct)
+    {
+        var now = clock.GetUtcNow();
+        // Only challenges they entered can be wins, which keeps the scoring to a handful.
+        var entered = await db.Challenges.AsNoTracking()
+            .Where(c => c.EndsAt <= now && c.Entries.Any(e => e.Photo.OwnerId == id))
+            .Select(c => new { c.Id, c.Title, c.EndsAt })
+            .ToListAsync(ct);
+        if (entered.Count == 0) return [];
+
+        var scores = await standings.ForAsync(entered.Select(c => c.Id).ToList(), ct);
+        return entered
+            .Select(c => (Challenge: c, Winner: scores.GetValueOrDefault(c.Id, Standing.Empty).Ranked.FirstOrDefault()))
+            .Where(w => w.Winner?.OwnerId == id)
+            .OrderByDescending(w => w.Challenge.EndsAt)
+            .Select(w => new ChallengeWinDto(w.Challenge.Id, w.Challenge.Title, w.Challenge.EndsAt, w.Winner!.PhotoId))
+            .ToList();
     }
 }

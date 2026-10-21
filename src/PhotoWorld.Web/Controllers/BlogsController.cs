@@ -18,10 +18,10 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
         ["coverPhotoId"] = nameof(PostEditorViewModel.CoverPhotoId),
     };
 
-    /// <summary>The newest published posts from everyone.</summary>
+    /// <summary>The newest published posts from everyone, or only from members the reader follows.</summary>
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, CancellationToken ct = default) =>
-        View(await api.GetPostsAsync(page, ct: ct));
+    public async Task<IActionResult> Index(int page = 1, bool following = false, CancellationToken ct = default) =>
+        View(new BlogsIndexViewModel(await api.GetPostsAsync(page, following: following, ct: ct), following));
 
     /// <summary>One member's blog.</summary>
     [HttpGet]
@@ -29,7 +29,7 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
     {
         var blog = await api.GetBlogAsync(id, ct);
         if (blog is null) return NotFound();
-        return View(new BlogPageViewModel(blog, await api.GetPostsAsync(page, id, ct)));
+        return View(new BlogPageViewModel(blog, await api.GetPostsAsync(page, id, ct: ct)));
     }
 
     [HttpGet]
@@ -191,7 +191,7 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
     [HttpGet]
     public async Task<IActionResult> MyPhotos(int page = 1, CancellationToken ct = default)
     {
-        var photos = await api.GetPhotosAsync(page, User.GetUserId(), ct);
+        var photos = await api.GetPhotosAsync(page, User.GetUserId(), ct: ct);
         return Json(new
         {
             items = photos.Items.Select(p => new { id = p.Id, title = p.Title, thumbnailUrl = p.ThumbnailUrl }),

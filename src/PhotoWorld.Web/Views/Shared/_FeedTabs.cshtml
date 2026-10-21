@@ -1,0 +1,12 @@
+@model FeedTabsViewModel
+@{
+    // Keep the page's other query values (like gallery filters); switching tabs starts again from page 1.
+    var everyone = Context.Request.Query
+        .Where(q => q.Key is not ("page" or "following"))
+        .ToDictionary(q => q.Key, q => q.Value.ToString());
+    var following = new Dictionary<string, string>(everyone) { ["following"] = "true" };
+}
+<nav class="feed-tabs" aria-label="Whose posts to show">
+    <a asp-all-route-data="everyone" class="@(Model.Following ? "" : "active")" aria-current="@(Model.Following ? null : "page")">Everyone</a>
+    <a asp-all-route-data="following" class="@(Model.Following ? "active" : "")" aria-current="@(Model.Following ? "page" : null)">Following</a>
+</nav>

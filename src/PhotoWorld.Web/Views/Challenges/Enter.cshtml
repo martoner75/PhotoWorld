@@ -1,0 +1,48 @@
+@model EnterChallengeViewModel
+@{
+    var c = Model.Challenge.Challenge;
+    ViewData["Title"] = $"Enter “{c.Title}”";
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Enter “@c.Title”</h1>
+            <p class="text-muted">
+                Choose one of your photos. You can enter @(Model.EntriesLeft == 1 ? "1 more" : $"{Model.EntriesLeft} more"),
+                and withdraw an entry until the challenge ends (@c.When(DateTimeOffset.UtcNow).ToLowerInvariant()).
+            </p>
+        </div>
+        <div class="member-actions">
+            <a class="btn btn-ghost" asp-action="Details" asp-route-id="@c.Id">Back to the challenge</a>
+            <a class="btn btn-accent" asp-controller="Photos" asp-action="Upload">Upload a new photo</a>
+        </div>
+    </header>
+
+    @if (Model.MyPhotos.TotalCount == 0)
+    {
+        <div class="empty-state">
+            <p>You haven't shared any photos yet. Upload one, then come back to enter it.</p>
+            <a class="btn btn-accent" asp-controller="Photos" asp-action="Upload">Upload a photo</a>
+        </div>
+    }
+    else
+    {
+        <div class="enter-grid">
+            @foreach (var p in Model.MyPhotos.Items)
+            {
+                var entered = Model.IsEntered(p.Id);
+                var hidden = p.Moderation != ModerationState.Visible;
+                <form asp-action="Enter" asp-route-id="@c.Id" method="post" class="enter-tile @(entered ? "is-entered" : "")">
+                    <input type="hidden" name="photoId" value="@p.Id" />
+                    <button type="submit" disabled="@(entered || hidden || Model.EntriesLeft == 0)"
+                            title="@(entered ? "Already entered" : hidden ? "Hidden photos can't be entered" : $"Enter “{p.Title}”")">
+                        <img src="@p.ThumbnailUrl" alt="" loading="lazy" />
+                        <span class="enter-tile-label">@(entered ? "✓ Entered" : hidden ? "Hidden" : p.Title)</span>
+                    </button>
+                </form>
+            }
+        </div>
+        <partial name="_Pager" model="new PagerViewModel(Model.MyPhotos.Page, Model.MyPhotos.TotalPages)" />
+    }
+</section>

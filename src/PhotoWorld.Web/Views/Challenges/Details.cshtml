@@ -1,0 +1,85 @@
+@model ChallengeDto
+@{
+    var c = Model.Challenge;
+    ViewData["Title"] = c.Title;
+    var entriesLeft = ChallengeLimits.EntriesPerMember - Model.MyEntryCount;
+}
+
+<section class="container page">
+    <header class="page-header challenge-header">
+        <div>
+            <p class="hero-eyebrow">Photo challenge · @c.When(DateTimeOffset.UtcNow)</p>
+            <h1>@c.Title</h1>
+            <p class="text-muted">@c.StartsAt.ToString("d MMM") – @c.EndsAt.ToString("d MMM yyyy, HH:mm") UTC</p>
+        </div>
+        @if (c.Phase == ChallengePhase.Open)
+        {
+            <div class="member-actions">
+                @if (entriesLeft > 0)
+                {
+                    <a class="btn btn-accent" asp-action="Enter" asp-route-id="@c.Id">Enter a photo</a>
+                }
+                else
+                {
+                    <span class="text-muted small">You've entered @ChallengeLimits.EntriesPerMember photos, the most allowed.</span>
+                }
+            </div>
+        }
+    </header>
+
+    @if (!string.IsNullOrEmpty(c.Description))
+    {
+        <p class="blog-intro">@c.Description</p>
+    }
+
+    <div class="challenge-rules text-muted small">
+        @switch (c.Phase)
+        {
+            case ChallengePhase.Upcoming:
+                <p>Entries open on @c.StartsAt.ToString("d MMMM 'at' HH:mm") UTC. Start shooting!</p>
+                break;
+            case ChallengePhase.Open:
+                <p>Votes are likes: open a photo and like the ones you think should win. Only likes from other members
+                    between the moment a photo is entered and the end of the challenge count.
+                    @if (Model.MyEntryCount > 0)
+                    {
+                        @:You have @(entriesLeft == 1 ? "1 entry" : $"{entriesLeft} entries") left.
+                    }
+                </p>
+                break;
+            default:
+                <p>This challenge has ended. Places are by likes received during the challenge; on a tie, the photo entered first ranks higher.</p>
+                break;
+        }
+    </div>
+
+    @if (Model.Entries.Count == 0)
+    {
+        <div class="empty-state">
+            @if (c.Phase == ChallengePhase.Closed)
+            {
+                <p>Nobody entered this challenge.</p>
+            }
+            else if (c.Phase == ChallengePhase.Open)
+            {
+                <p>No entries yet. Be the first!</p>
+                <a class="btn btn-accent" asp-action="Enter" asp-route-id="@c.Id">Enter a photo</a>
+            }
+            else
+            {
+                <p>Entries open @c.StartsAt.ToString("d MMMM").</p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="photo-grid">
+            @foreach (var entry in Model.Entries)
+            {
+                <partial name="_Entry" model="new ChallengeEntryItemViewModel(c.Id, entry, c.Phase)" />
+            }
+        </div>
+    }
+
+    <p class="small mt-4"><a asp-action="Index">← All challenges</a></p>
+</section>

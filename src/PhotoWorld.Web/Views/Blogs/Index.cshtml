@@ -1,4 +1,4 @@
-@model PagedResult<BlogPostSummaryDto>
+@model BlogsIndexViewModel
 @{
     ViewData["Title"] = "Blogs";
 }
@@ -15,7 +15,16 @@
         </div>
     </header>
 
-    @if (Model.TotalCount == 0)
+    <partial name="_FeedTabs" model="new FeedTabsViewModel(Model.Following)" />
+
+    @if (Model.Posts.TotalCount == 0 && Model.Following)
+    {
+        <div class="empty-state">
+            <p>No posts from members you follow yet. Follow members from their page to see their posts here.</p>
+            <a class="btn btn-ghost" asp-action="Index">See everyone's posts</a>
+        </div>
+    }
+    else if (Model.Posts.TotalCount == 0)
     {
         <div class="empty-state">
             <p>No posts yet. Tell the story behind one of your photos!</p>
@@ -24,6 +33,6 @@
     }
     else
     {
-        <partial name="_PostGrid" model="Model" />
+        <partial name="_PostGrid" model="Model.Posts" />
     }
 </section>

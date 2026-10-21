@@ -12,7 +12,15 @@ public class MembersController(IPhotoWorldApiClient api) : Controller
     {
         var member = await api.GetMemberAsync(id, ct);
         if (member is null) return NotFound();
-        return View(new MemberPageViewModel(member, await api.GetPhotosAsync(page, id, ct)));
+        return View(new MemberPageViewModel(member, await api.GetPhotosAsync(page, id, ct: ct)));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Follow(Guid id, bool follow, CancellationToken ct)
+    {
+        var state = await api.SetFollowAsync(id, follow, ct);
+        if (state is null) return NotFound();
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     /// <summary>Shortcut to the signed-in member's own page.</summary>

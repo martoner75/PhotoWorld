@@ -6,9 +6,11 @@ public static class ApiRoutes
     public const string ExternalLogin = "api/auth/external";
     public const string CurrentUser = "api/users/me";
     public const string Member = "api/users/{id:guid}";
+    public const string MemberFollow = "api/users/{id:guid}/follow";
 
     public const string Showcase = "api/showcase";
     public const string Photos = "api/photos";
+    public const string PhotoCameraOptions = "api/photos/camera-options";
     public const string Photo = "api/photos/{id:guid}";
     public const string PhotoLike = "api/photos/{id:guid}/like";
     public const string PhotoComments = "api/photos/{id:guid}/comments";
@@ -25,6 +27,11 @@ public static class ApiRoutes
     public const string BlogPostComment = "api/blog-posts/{id:guid}/comments/{commentId:guid}";
     public const string BlogPostReports = "api/blog-posts/{id:guid}/reports";
     public const string BlogCommentReports = "api/blog-posts/{id:guid}/comments/{commentId:guid}/reports";
+
+    public const string Challenges = "api/challenges";
+    public const string Challenge = "api/challenges/{id:guid}";
+    public const string ChallengeEntries = "api/challenges/{id:guid}/entries";
+    public const string ChallengeEntry = "api/challenges/{id:guid}/entries/{photoId:guid}";
 
     // Always the signed-in member's own places; there is deliberately no route to anyone else's.
     public const string Places = "api/places";

@@ -407,3 +407,55 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .notify-form { display: grid; gap: 1.1rem; }
 .notify-form fieldset { border: 0; padding: 0; margin: 0; }
 .notify-form legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem; }
+
+/* ---------- Everyone / Following tabs ---------- */
+.feed-tabs { display: flex; gap: .25rem; margin: -0.75rem 0 1.5rem; border-bottom: 1px solid var(--pw-line); }
+.feed-tabs a { color: var(--pw-muted); text-decoration: none; padding: .5rem .85rem; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.feed-tabs a:hover { color: var(--pw-text); }
+.feed-tabs a.active { color: var(--pw-text); border-bottom-color: var(--pw-accent); font-weight: 500; }
+
+/* ---------- Gallery camera filters ---------- */
+.filters { background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: var(--pw-radius); margin-bottom: 1.75rem; }
+.filters summary { padding: .8rem 1.1rem; cursor: pointer; font-weight: 500; }
+.filters-on { color: var(--pw-accent); }
+.filters-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem 1.25rem; padding: 0 1.1rem 1.1rem; }
+.range-inputs { display: flex; align-items: center; gap: .4rem; color: var(--pw-muted); }
+.range-inputs input { min-width: 0; }
+.filters-error, .filters-actions, .filters-note { grid-column: 1 / -1; margin: 0; }
+.filters-actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.camera-details dd a { color: var(--pw-text); text-decoration: underline dotted var(--pw-muted); text-underline-offset: 3px; }
+.camera-details dd a:hover { color: var(--pw-accent); }
+
+/* ---------- Follows ---------- */
+.member-follows { margin-top: .15rem !important; }
+.btn-following .btn-following-off { display: none; }
+.btn-following:hover, .btn-following:focus-visible { border-color: #8a3a3a; color: #f19999; }
+.btn-following:hover .btn-following-on, .btn-following:focus-visible .btn-following-on { display: none; }
+.btn-following:hover .btn-following-off, .btn-following:focus-visible .btn-following-off { display: inline; }
+.trophies { list-style: none; padding: 0; margin: -1.5rem 0 2rem; display: flex; flex-wrap: wrap; gap: .5rem; }
+.trophies a { display: inline-block; padding: .3rem .8rem; border-radius: 99px; text-decoration: none; font-size: .88rem;
+  background: rgba(242, 165, 65, .12); border: 1px solid #6b5021; color: var(--pw-accent); }
+.trophies a:hover { background: rgba(242, 165, 65, .22); }
+
+/* ---------- Photo challenges ---------- */
+.section-heading { font-family: var(--pw-serif); font-size: 1.5rem; margin: 0 0 1rem; }
+.post-grid + .section-heading { margin-top: 2.5rem; }
+.challenge-badge.is-open { background: rgba(110, 200, 140, .85); color: #06210f; border-color: transparent; }
+.challenge-badge.is-upcoming { background: rgba(242, 165, 65, .85); color: var(--pw-accent-ink); border-color: transparent; }
+.challenge-badge.is-closed { background: rgba(20, 20, 24, .85); color: var(--pw-muted); border-color: var(--pw-line); }
+.challenge-header .hero-eyebrow { margin: 0 0 .25rem; }
+.challenge-rules { max-width: 46rem; margin-bottom: 1.75rem; }
+.rank-badge { background: rgba(20, 20, 24, .85); color: var(--pw-text); border-color: var(--pw-line); }
+.rank-badge.rank-1 { background: var(--pw-accent); color: var(--pw-accent-ink); border-color: transparent; }
+.challenge-entry.is-winner { border-color: var(--pw-accent); box-shadow: 0 0 0 1px var(--pw-accent); }
+.entry-withdraw { margin-top: .4rem; text-align: right; }
+.enter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .75rem; }
+.enter-tile button { position: relative; display: block; width: 100%; padding: 0; border: 2px solid transparent; border-radius: 10px;
+  overflow: hidden; background: #07080a; aspect-ratio: 1; }
+.enter-tile button:hover:not(:disabled), .enter-tile button:focus-visible { border-color: var(--pw-accent); }
+.enter-tile button:disabled { cursor: not-allowed; }
+.enter-tile button:disabled img { opacity: .4; }
+.enter-tile img { width: 100%; height: 100%; object-fit: cover; }
+.enter-tile-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.25rem .6rem .5rem; text-align: left; font-size: .85rem;
+  color: var(--pw-text); background: linear-gradient(transparent, rgba(0, 0, 0, .8)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.enter-tile.is-entered .enter-tile-label { color: var(--pw-accent); font-weight: 600; }

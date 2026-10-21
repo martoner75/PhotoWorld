@@ -1,0 +1,36 @@
+@model ChallengeSummaryDto
+<article class="post-card challenge-card">
+    <a asp-action="Details" asp-route-id="@Model.Id" class="post-card-cover" tabindex="-1" aria-hidden="true">
+        @if (Model.CoverUrl is not null)
+        {
+            <img src="@Model.CoverUrl" alt="" loading="lazy" />
+        }
+        else
+        {
+            <span class="post-card-cover-empty"></span>
+        }
+        <span class="moderation-badge photo-card-badge challenge-badge is-@Model.Phase.ToString().ToLowerInvariant()">
+            @ChallengeDisplay.PhaseLabel(Model.Phase)
+        </span>
+    </a>
+    <div class="post-card-body">
+        <h3><a asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></h3>
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <p class="post-card-excerpt">@Model.Description</p>
+        }
+        <div class="post-card-meta">
+            @if (Model.Winner is not null)
+            {
+                <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Winner.Id" class="photo-card-owner">
+                    🏆 <partial name="_Avatar" model="Model.Winner" /> @Model.Winner.DisplayName
+                </a>
+            }
+            else
+            {
+                <span>@Model.When(DateTimeOffset.UtcNow)</span>
+            }
+            <span>@Model.EntryCount @(Model.EntryCount == 1 ? "entry" : "entries")</span>
+        </div>
+    </div>
+</article>

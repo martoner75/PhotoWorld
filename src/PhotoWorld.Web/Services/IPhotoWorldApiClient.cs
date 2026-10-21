@@ -1,5 +1,6 @@
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
@@ -19,8 +20,12 @@ public interface IPhotoWorldApiClient
     Task<UserProfileDto?> GetCurrentUserAsync(CancellationToken ct = default);
     Task<bool> DeleteAccountAsync(CancellationToken ct = default);
     Task<MemberProfileDto?> GetMemberAsync(Guid id, CancellationToken ct = default);
+    Task<FollowStateDto?> SetFollowAsync(Guid id, bool follow, CancellationToken ct = default);
 
-    Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, CancellationToken ct = default);
+    /// <summary>Newest photos; <paramref name="following"/> limits them to members the caller follows.</summary>
+    Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, bool following = false,
+        PhotoSearch? search = null, CancellationToken ct = default);
+    Task<CameraOptionsDto> GetCameraOptionsAsync(CancellationToken ct = default);
     Task<PhotoDetailDto?> GetPhotoAsync(Guid id, CancellationToken ct = default);
     Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, CancellationToken ct = default);
 
@@ -40,7 +45,7 @@ public interface IPhotoWorldApiClient
     // Blogs
     Task<BlogDto?> GetBlogAsync(Guid userId, CancellationToken ct = default);
     Task<ApiResult<BlogDto>> SaveBlogAsync(Guid userId, SaveBlogRequest request, CancellationToken ct = default);
-    Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, Guid? authorId = null, CancellationToken ct = default);
+    Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, Guid? authorId = null, bool following = false, CancellationToken ct = default);
     Task<BlogPostDto?> GetPostAsync(Guid id, CancellationToken ct = default);
     Task<ApiResult<BlogPostDto>> CreatePostAsync(SavePostRequest request, CancellationToken ct = default);
     Task<ApiResult<BlogPostDto>> UpdatePostAsync(Guid id, SavePostRequest request, CancellationToken ct = default);
@@ -53,6 +58,14 @@ public interface IPhotoWorldApiClient
 
     /// <summary>Reports a blog post, or one of its comments when <paramref name="commentId"/> is set.</summary>
     Task<ReportOutcome> ReportBlogAsync(Guid postId, Guid? commentId, CreateReportRequest request, CancellationToken ct = default);
+
+    // Photo challenges
+    Task<IReadOnlyList<ChallengeSummaryDto>> GetChallengesAsync(CancellationToken ct = default);
+    Task<ChallengeDto?> GetChallengeAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the member.</summary>
+    Task<string?> EnterChallengeAsync(Guid id, Guid photoId, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the member.</summary>
+    Task<string?> WithdrawChallengeEntryAsync(Guid id, Guid photoId, CancellationToken ct = default);
 
     // Places (always the signed-in member's own)
     Task<IReadOnlyList<PlaceDto>> GetPlacesAsync(CancellationToken ct = default);

@@ -225,6 +225,75 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("blog_post_photos", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Challenge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_challenges");
+
+                    b.HasIndex("EndsAt")
+                        .IsDescending()
+                        .HasDatabaseName("ix_challenges_ends_at");
+
+                    b.ToTable("challenges", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_challenges_dates", "ends_at > starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.ChallengeEntry", b =>
+                {
+                    b.Property<Guid>("ChallengeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("challenge_id");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("ChallengeId", "PhotoId")
+                        .HasName("pk_challenge_entries");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_challenge_entries_photo_id");
+
+                    b.ToTable("challenge_entries", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -339,6 +408,32 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasDatabaseName("ix_external_logins_provider_provider_user_id");
 
                     b.ToTable("external_logins", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Follow", b =>
+                {
+                    b.Property<Guid>("FollowerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("follower_id");
+
+                    b.Property<Guid>("FolloweeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("followee_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("FollowerId", "FolloweeId")
+                        .HasName("pk_follows");
+
+                    b.HasIndex("FolloweeId")
+                        .HasDatabaseName("ix_follows_followee_id");
+
+                    b.ToTable("follows", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_follows_not_self", "follower_id <> followee_id");
+                        });
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.LogEntry", b =>
@@ -883,6 +978,27 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.ChallengeEntry", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Challenge", "Challenge")
+                        .WithMany("Entries")
+                        .HasForeignKey("ChallengeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_challenge_entries_challenges_challenge_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_challenge_entries_photos_photo_id");
+
+                    b.Navigation("Challenge");
+
+                    b.Navigation("Photo");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.EmailSubscription", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.User", "User")
@@ -905,6 +1021,27 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasConstraintName("fk_external_logins_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Follow", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Followee")
+                        .WithMany()
+                        .HasForeignKey("FolloweeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_follows_users_followee_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.User", "Follower")
+                        .WithMany()
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_follows_users_follower_id");
+
+                    b.Navigation("Followee");
+
+                    b.Navigation("Follower");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>
@@ -1031,6 +1168,11 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Photos");
 
                     b.Navigation("Reports");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Challenge", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Photo", b =>

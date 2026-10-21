@@ -14,9 +14,15 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
         ["description"] = nameof(UploadPhotoViewModel.Description),
     };
 
+    /// <summary>The gallery: everyone's photos or followed members', optionally filtered by camera settings.</summary>
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, CancellationToken ct = default) =>
-        View(await api.GetPhotosAsync(page, ct: ct));
+    public async Task<IActionResult> Index(PhotoSearch search, int page = 1, bool following = false, CancellationToken ct = default)
+    {
+        // Out-of-range filters show their errors on the form; the photos are then shown unfiltered.
+        var applied = ModelState.IsValid ? search : new PhotoSearch();
+        var photos = await api.GetPhotosAsync(page, following: following, search: applied, ct: ct);
+        return View(new GalleryViewModel(photos, following, search, await api.GetCameraOptionsAsync(ct)));
+    }
 
     [HttpGet]
     public async Task<IActionResult> Details(Guid id, CancellationToken ct)

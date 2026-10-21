@@ -1,15 +1,20 @@
 @model PagerViewModel
+@{
+    // Keep the page's other query values (filters, the Following tab) on the previous/next links.
+    var query = Context.Request.Query.Where(q => q.Key != "page").ToDictionary(q => q.Key, q => q.Value.ToString());
+    Dictionary<string, string> PageLink(int page) => new(query) { ["page"] = page.ToString() };
+}
 @if (Model.TotalPages > 1)
 {
     <nav class="pager" aria-label="Pages">
         @if (Model.Page > 1)
         {
-            <a class="btn btn-ghost" asp-route-page="@(Model.Page - 1)" rel="prev">← Newer</a>
+            <a class="btn btn-ghost" asp-all-route-data="PageLink(Model.Page - 1)" rel="prev">← Newer</a>
         }
         <span class="pager-status">Page @Model.Page of @Model.TotalPages</span>
         @if (Model.Page < Model.TotalPages)
         {
-            <a class="btn btn-ghost" asp-route-page="@(Model.Page + 1)" rel="next">Older →</a>
+            <a class="btn btn-ghost" asp-all-route-data="PageLink(Model.Page + 1)" rel="next">Older →</a>
         }
     </nav>
 }

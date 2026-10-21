@@ -50,10 +50,17 @@
         @if (camera.Count > 0)
         {
             <dl class="camera-details">
-                @foreach (var (label, value) in camera)
+                @foreach (var (label, value, search) in camera)
                 {
                     <dt>@label</dt>
-                    <dd>@value</dd>
+                    @if (search is null)
+                    {
+                        <dd>@value</dd>
+                    }
+                    else
+                    {
+                        <dd><a asp-action="Index" asp-all-route-data="search" title="More photos with this @label.ToLowerInvariant()">@value</a></dd>
+                    }
                 }
             </dl>
         }

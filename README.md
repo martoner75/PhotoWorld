@@ -37,6 +37,8 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.photos`, `photo_likes`, `photo_comments` | API (EF Core) | Photo details (title, camera settings, file paths), likes and comments |
 | `photoworld.blogs`, `blog_posts`, `blog_post_photos`, `blog_attachments`, `blog_comments` | API (EF Core) | Members' blogs, posts (sanitized HTML), the photos each post embeds, attached PDFs, and comments |
 | `photoworld.places` | API (EF Core) | Places each member has pinned on their private map (name, note, visit date, coordinates) |
+| `photoworld.follows` | API (EF Core) | Who follows whom (for the Following tabs and follower counts) |
+| `photoworld.challenges`, `challenge_entries` | You (Supabase dashboard) / API | Photo challenge themes and dates, and the photos entered in each |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
 | Storage bucket `photos` (public) | API | The photo files: `{userId}/{photoId}/display.jpg` and `thumb.jpg` |
 | Storage bucket `attachments` (public) | API | PDFs attached to blog posts: `{userId}/{postId}/{attachmentId}.pdf` |
@@ -106,6 +108,14 @@ server build is green, it applies any pending EF migrations to Supabase. It need
 The whole site is members-only: everything except the landing, sign-in and privacy pages needs a Google
 sign-in. Members can upload photos, browse the gallery, like and comment, and edit or delete their own photos.
 
+**Following.** Members follow each other from member pages. The Gallery and Blogs pages have **Everyone /
+Following** tabs; member pages show follower and following counts (not the names).
+
+**Search by camera settings.** The Gallery's *Filter by camera settings* panel narrows photos by camera (make or
+model), lens, focal length, aperture and ISO, read from each photo's EXIF data at upload. Camera and lens fields
+suggest what's already in the gallery. On a photo page, the camera, lens, focal length, aperture and ISO are links
+to the gallery filtered by that value.
+
 **Upload pipeline** (`ImageProcessor` in the API): accepts JPEG, PNG, WebP or iPhone HEIC up to 25 MB. HEIC is
 decoded with Magick.NET (libheif) into an upright, metadata-free image first. It reads the camera settings from EXIF and stores them in `photoworld.photos`, then re-encodes
 the image as two JPEGs: `display` (longest side ≤ 2560 px) and `thumb` (≤ 640 px). The original is never kept,
@@ -159,6 +169,27 @@ When a post is shown, photos that were since deleted or hidden by moderation are
 **Cover photo.** The photo on a post's tile (in blog lists, the app and notification emails) is the one the author
 picks under *Cover photo* in the editor, from their gallery or a new upload; it doesn't have to appear in the post.
 Without a choice, it's the first photo in the post. The API only accepts the author's own photos as covers.
+
+## Photo challenges
+
+**Challenges** (in the menu) are themes to shoot for. While a challenge is open, members enter up to 3 of their
+own photos and can withdraw them until it ends. **Votes are likes**: a like from another member counts if it was
+given between the moment the photo was entered and the end of the challenge. When it ends, the entry with the most
+votes wins (on a tie, the one entered first), and the winner gets a trophy on their member page. Photos hidden by
+moderation drop out of the standings; deleting a photo removes its entry. Challenges are on the website only for
+now; the app doesn't show them yet.
+
+There's no admin page: add challenges in the Supabase dashboard (**SQL editor**). Times are UTC.
+
+```sql
+insert into photoworld.challenges (title, description, starts_at, ends_at)
+values ('Fog', 'Mist, haze and low cloud: show us the world going soft.', '2026-11-01 00:00+00', '2026-12-01 00:00+00');
+
+-- Fix a typo, or move the end date
+update photoworld.challenges set ends_at = '2026-12-08 00:00+00' where title = 'Fog';
+```
+
+Deleting a challenge deletes its entries (the photos stay).
 
 ## My places
 

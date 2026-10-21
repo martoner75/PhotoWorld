@@ -1,0 +1,45 @@
+@model IReadOnlyList<ChallengeSummaryDto>
+@{
+    ViewData["Title"] = "Photo challenges";
+    var current = Model.Where(c => c.Phase != ChallengePhase.Closed).ToList();
+    var past = Model.Where(c => c.Phase == ChallengePhase.Closed).ToList();
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Photo challenges</h1>
+            <p class="text-muted">A new theme to shoot for. Enter up to @ChallengeLimits.EntriesPerMember of your photos;
+                the one with the most likes when the challenge ends wins.</p>
+        </div>
+    </header>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No challenges yet. The first theme is coming soon!</p>
+        </div>
+    }
+
+    @if (current.Count > 0)
+    {
+        <h2 class="section-heading">Now and next</h2>
+        <div class="post-grid">
+            @foreach (var c in current)
+            {
+                <partial name="_ChallengeCard" model="c" />
+            }
+        </div>
+    }
+
+    @if (past.Count > 0)
+    {
+        <h2 class="section-heading">Past challenges</h2>
+        <div class="post-grid">
+            @foreach (var c in past)
+            {
+                <partial name="_ChallengeCard" model="c" />
+            }
+        </div>
+    }
+</section>

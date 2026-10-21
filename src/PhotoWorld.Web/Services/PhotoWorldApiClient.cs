@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
@@ -35,11 +36,28 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public Task<MemberProfileDto?> GetMemberAsync(Guid id, CancellationToken ct = default) =>
         GetOrNullAsync<MemberProfileDto>(ApiRoutes.Format(ApiRoutes.Member, ("id", id)), ct);
 
-    public async Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, CancellationToken ct = default)
+    public async Task<FollowStateDto?> SetFollowAsync(Guid id, bool follow, CancellationToken ct = default)
     {
-        var url = $"{ApiRoutes.Photos}?page={page}" + (ownerId is null ? "" : $"&ownerId={ownerId}");
+        var url = ApiRoutes.Format(ApiRoutes.MemberFollow, ("id", id));
+        using var res = follow ? await http.PostAsync(url, null, ct) : await http.DeleteAsync(url, ct);
+        // 400: trying to follow yourself.
+        if (res.StatusCode == HttpStatusCode.BadRequest) return null;
+        return IsSuccess(res) ? await res.Content.ReadFromJsonAsync<FollowStateDto>(ct) : null;
+    }
+
+    public async Task<PagedResult<PhotoSummaryDto>> GetPhotosAsync(int page, Guid? ownerId = null, bool following = false,
+        PhotoSearch? search = null, CancellationToken ct = default)
+    {
+        var query = new List<(string Name, string Value)> { ("page", page.ToString()) };
+        if (ownerId is not null) query.Add(("ownerId", ownerId.Value.ToString()));
+        if (following) query.Add(("following", "true"));
+        if (search is not null) query.AddRange(search.QueryValues());
+        var url = $"{ApiRoutes.Photos}?" + string.Join("&", query.Select(q => $"{q.Name}={Uri.EscapeDataString(q.Value)}"));
         return (await GetOrNullAsync<PagedResult<PhotoSummaryDto>>(url, ct))!;
     }
+
+    public async Task<CameraOptionsDto> GetCameraOptionsAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<CameraOptionsDto>(ApiRoutes.PhotoCameraOptions, ct) ?? new CameraOptionsDto([], []);
 
     public Task<PhotoDetailDto?> GetPhotoAsync(Guid id, CancellationToken ct = default) =>
         GetOrNullAsync<PhotoDetailDto>(ApiRoutes.Format(ApiRoutes.Photo, ("id", id)), ct);
@@ -117,9 +135,11 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return await ReadResultAsync<BlogDto>(res, ct);
     }
 
-    public async Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, Guid? authorId = null, CancellationToken ct = default)
+    public async Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, Guid? authorId = null, bool following = false,
+        CancellationToken ct = default)
     {
-        var url = $"{ApiRoutes.BlogPosts}?page={page}" + (authorId is null ? "" : $"&authorId={authorId}");
+        var url = $"{ApiRoutes.BlogPosts}?page={page}" + (authorId is null ? "" : $"&authorId={authorId}")
+                  + (following ? "&following=true" : "");
         return (await GetOrNullAsync<PagedResult<BlogPostSummaryDto>>(url, ct))!;
     }
 
@@ -177,6 +197,28 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         using var res = await http.DeleteAsync(
             ApiRoutes.Format(ApiRoutes.BlogPostComment, ("id", postId), ("commentId", commentId)), ct);
         return IsSuccess(res);
+    }
+
+    public async Task<IReadOnlyList<ChallengeSummaryDto>> GetChallengesAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<List<ChallengeSummaryDto>>(ApiRoutes.Challenges, ct) ?? [];
+
+    public Task<ChallengeDto?> GetChallengeAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<ChallengeDto>(ApiRoutes.Format(ApiRoutes.Challenge, ("id", id)), ct);
+
+    public async Task<string?> EnterChallengeAsync(Guid id, Guid photoId, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.ChallengeEntries, ("id", id)),
+            new EnterChallengeRequest(photoId), ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That challenge no longer exists.";
+    }
+
+    public async Task<string?> WithdrawChallengeEntryAsync(Guid id, Guid photoId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(
+            ApiRoutes.Format(ApiRoutes.ChallengeEntry, ("id", id), ("photoId", photoId)), ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That entry no longer exists.";
     }
 
     public async Task<IReadOnlyList<PlaceDto>> GetPlacesAsync(CancellationToken ct = default) =>

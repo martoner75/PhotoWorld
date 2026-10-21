@@ -18,6 +18,10 @@
                     @:· <a asp-controller="Places" asp-action="Index">My places</a>
                 }
             </p>
+            <p class="text-muted small member-follows">
+                @m.FollowerCount @(m.FollowerCount == 1 ? "follower" : "followers") ·
+                @(m.IsMe ? "following" : "follows") @m.FollowingCount @(m.FollowingCount == 1 ? "member" : "members")
+            </p>
         </div>
         @if (m.IsMe)
         {
@@ -26,7 +30,37 @@
                 <a class="btn btn-accent" asp-controller="Photos" asp-action="Upload">Upload a photo</a>
             </div>
         }
+        else
+        {
+            <form class="member-actions" asp-action="Follow" asp-route-id="@m.Id" method="post">
+                <input type="hidden" name="follow" value="@(m.FollowedByMe ? "false" : "true")" />
+                @if (m.FollowedByMe)
+                {
+                    <button type="submit" class="btn btn-ghost btn-following" aria-pressed="true">
+                        <span class="btn-following-on">Following</span><span class="btn-following-off">Unfollow</span>
+                    </button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-accent" aria-pressed="false">Follow</button>
+                }
+            </form>
+        }
     </header>
+
+    @if (m.Wins is { Count: > 0 } wins)
+    {
+        <ul class="trophies" aria-label="Challenges won">
+            @foreach (var win in wins)
+            {
+                <li>
+                    <a asp-controller="Challenges" asp-action="Details" asp-route-id="@win.ChallengeId">
+                        <span aria-hidden="true">🏆</span> Won “@win.Title” · @win.EndsAt.ToString("MMM yyyy")
+                    </a>
+                </li>
+            }
+        </ul>
+    }
 
     @if (Model.Photos.TotalCount == 0)
     {

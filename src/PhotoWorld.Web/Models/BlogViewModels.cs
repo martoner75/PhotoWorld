@@ -7,6 +7,9 @@ namespace PhotoWorld.Web.Models;
 
 public sealed record BlogPageViewModel(BlogDto Blog, PagedResult<BlogPostSummaryDto> Posts);
 
+/// <summary>The blogs page: everyone's posts, or only those by members the reader follows.</summary>
+public sealed record BlogsIndexViewModel(PagedResult<BlogPostSummaryDto> Posts, bool Following);
+
 public sealed record PostPageViewModel(BlogPostDto Post, IReadOnlyList<BlogCommentDto> Comments);
 
 public sealed record BlogCommentItemViewModel(Guid PostId, BlogCommentDto Comment);

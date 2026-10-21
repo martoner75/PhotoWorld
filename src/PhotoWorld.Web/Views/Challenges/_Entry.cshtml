@@ -1,0 +1,37 @@
+@model ChallengeEntryItemViewModel
+@{
+    var e = Model.Entry;
+    var p = e.Photo;
+}
+<figure class="photo-card challenge-entry @(e.Rank == 1 && Model.Phase == ChallengePhase.Closed ? "is-winner" : "")">
+    <a asp-controller="Photos" asp-action="Details" asp-route-id="@p.Id" class="photo-card-image">
+        @if (p.Moderation != ModerationState.Visible)
+        {
+            <span class="moderation-badge photo-card-badge">@(p.Moderation == ModerationState.Removed ? "Removed" : "Hidden for review")</span>
+        }
+        else if (e.Rank is >= 1 and <= 3)
+        {
+            <span class="moderation-badge photo-card-badge rank-badge rank-@e.Rank">
+                @(Model.Phase == ChallengePhase.Closed && e.Rank == 1 ? "🏆 Winner" : $"#{e.Rank}")
+            </span>
+        }
+        <img src="@p.ThumbnailUrl" alt="@p.Title" width="@p.Width" height="@p.Height" loading="lazy" />
+    </a>
+    <figcaption>
+        <a asp-controller="Photos" asp-action="Details" asp-route-id="@p.Id" class="photo-card-title">@p.Title</a>
+        <div class="photo-card-meta">
+            <a asp-controller="Members" asp-action="Details" asp-route-id="@p.Owner.Id" class="photo-card-owner">
+                <partial name="_Avatar" model="p.Owner" /> @p.Owner.DisplayName
+            </a>
+            <span class="photo-card-stats"><span title="Likes during the challenge">♥ @ChallengeDisplay.Votes(e.Votes)</span></span>
+        </div>
+        @if (Model.CanWithdraw)
+        {
+            <form asp-action="Withdraw" asp-route-id="@Model.ChallengeId" method="post" class="entry-withdraw"
+                  onsubmit="return confirm('Withdraw this photo? Its votes so far will be lost.');">
+                <input type="hidden" name="photoId" value="@p.Id" />
+                <button type="submit" class="btn-link-muted">Withdraw</button>
+            </form>
+        }
+    </figcaption>
+</figure>

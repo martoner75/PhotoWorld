@@ -7,6 +7,9 @@ public sealed record PhotoPageViewModel(PhotoDetailDto Photo, IReadOnlyList<Comm
 
 public sealed record MemberPageViewModel(MemberProfileDto Member, PagedResult<PhotoSummaryDto> Photos);
 
+/// <summary>The gallery: everyone's photos or only followed members', optionally filtered by camera settings.</summary>
+public sealed record GalleryViewModel(PagedResult<PhotoSummaryDto> Photos, bool Following, PhotoSearch Search, CameraOptionsDto Options);
+
 public sealed class UploadPhotoViewModel
 {
     [Required(ErrorMessage = "Choose a photo to upload.")]
@@ -42,22 +45,31 @@ public sealed record CommentItemViewModel(Guid PhotoId, CommentDto Comment);
 
 public sealed record PagerViewModel(int Page, int TotalPages);
 
+/// <summary>"Everyone / Following" tabs on the current page (links keep the page's other query values).</summary>
+public sealed record FeedTabsViewModel(bool Following);
+
 public static class CameraDetailsDisplay
 {
-    /// <summary>Label/value rows for the camera panel, skipping anything the photo didn't record.</summary>
-    public static IEnumerable<(string Label, string Value)> Rows(this CameraDetailsDto c)
+    /// <summary>
+    /// Label/value rows for the camera panel, skipping anything the photo didn't record. <c>Search</c> is the
+    /// gallery filter for "more photos like this" (query-string values), where there is one.
+    /// </summary>
+    public static IEnumerable<(string Label, string Value, Dictionary<string, string>? Search)> Rows(this CameraDetailsDto c)
     {
         var camera = c.Model is not null && c.Make is not null && !c.Model.StartsWith(c.Make, StringComparison.OrdinalIgnoreCase)
             ? $"{c.Make} {c.Model}"
             : c.Model ?? c.Make;
-        if (camera is not null) yield return ("Camera", camera);
-        if (c.Lens is not null) yield return ("Lens", c.Lens);
-        if (c.FocalLengthMm is { } focal) yield return ("Focal length", $"{focal:0.#} mm");
-        if (c.Aperture is { } aperture) yield return ("Aperture", $"ƒ/{aperture:0.#}");
-        if (c.ExposureTime is not null) yield return ("Shutter", c.ExposureTime);
-        if (c.Iso is { } iso) yield return ("ISO", iso.ToString());
-        if (c.TakenAt is { } taken) yield return ("Taken", taken.ToString("d MMM yyyy, HH:mm"));
+        if (camera is not null) yield return ("Camera", camera, Filter(new PhotoSearch { Camera = c.Model ?? c.Make }));
+        if (c.Lens is not null) yield return ("Lens", c.Lens, Filter(new PhotoSearch { Lens = c.Lens }));
+        if (c.FocalLengthMm is { } focal) yield return ("Focal length", $"{focal:0.#} mm", Filter(new PhotoSearch { FocalMin = focal, FocalMax = focal }));
+        if (c.Aperture is { } aperture) yield return ("Aperture", $"ƒ/{aperture:0.#}", Filter(new PhotoSearch { ApertureMin = aperture, ApertureMax = aperture }));
+        if (c.ExposureTime is not null) yield return ("Shutter", c.ExposureTime, null);
+        if (c.Iso is { } iso) yield return ("ISO", iso.ToString(), Filter(new PhotoSearch { IsoMin = iso, IsoMax = iso }));
+        if (c.TakenAt is { } taken) yield return ("Taken", taken.ToString("d MMM yyyy, HH:mm"), null);
     }
+
+    private static Dictionary<string, string> Filter(PhotoSearch search) =>
+        search.QueryValues().ToDictionary(v => v.Name, v => v.Value);
 }
 
 public sealed class ReportViewModel

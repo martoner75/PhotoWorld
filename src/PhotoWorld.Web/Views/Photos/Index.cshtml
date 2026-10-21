@@ -1,6 +1,10 @@
-@model PagedResult<PhotoSummaryDto>
+@model GalleryViewModel
 @{
     ViewData["Title"] = "Gallery";
+    var s = Model.Search;
+    var filtered = !s.IsEmpty;
+    // Number inputs need a "." decimal point whatever the server's culture.
+    string? Invariant(IFormattable? value) => value?.ToString(null, System.Globalization.CultureInfo.InvariantCulture);
 }
 
 <section class="container page">
@@ -12,7 +16,87 @@
         <a class="btn btn-accent" asp-action="Upload">Upload a photo</a>
     </header>
 
-    @if (Model.TotalCount == 0)
+    <partial name="_FeedTabs" model="new FeedTabsViewModel(Model.Following)" />
+
+    <details class="filters" open="@(filtered || !ViewData.ModelState.IsValid)">
+        <summary>Filter by camera settings @if (filtered) { <span class="filters-on">· on</span> }</summary>
+        <form asp-action="Index" method="get" class="filters-form">
+            @if (Model.Following)
+            {
+                <input type="hidden" name="following" value="true" />
+            }
+            <div class="field">
+                <label for="filter-camera">Camera</label>
+                <input id="filter-camera" name="camera" value="@s.Camera" list="camera-options" maxlength="@PhotoSearch.TextMax" placeholder="Any camera" />
+            </div>
+            <div class="field">
+                <label for="filter-lens">Lens</label>
+                <input id="filter-lens" name="lens" value="@s.Lens" list="lens-options" maxlength="@PhotoSearch.TextMax" placeholder="Any lens" />
+            </div>
+            <fieldset class="field">
+                <legend>Focal length (mm)</legend>
+                <div class="range-inputs">
+                    <input name="focalMin" type="number" min="1" max="5000" step="any" value="@Invariant(s.FocalMin)" placeholder="From" aria-label="Focal length from" />
+                    <span aria-hidden="true">–</span>
+                    <input name="focalMax" type="number" min="1" max="5000" step="any" value="@Invariant(s.FocalMax)" placeholder="To" aria-label="Focal length to" />
+                </div>
+            </fieldset>
+            <fieldset class="field">
+                <legend>Aperture (ƒ/)</legend>
+                <div class="range-inputs">
+                    <input name="apertureMin" type="number" min="0.5" max="128" step="any" value="@Invariant(s.ApertureMin)" placeholder="From" aria-label="Aperture from" />
+                    <span aria-hidden="true">–</span>
+                    <input name="apertureMax" type="number" min="0.5" max="128" step="any" value="@Invariant(s.ApertureMax)" placeholder="To" aria-label="Aperture to" />
+                </div>
+            </fieldset>
+            <fieldset class="field">
+                <legend>ISO</legend>
+                <div class="range-inputs">
+                    <input name="isoMin" type="number" min="1" max="10000000" step="1" value="@Invariant(s.IsoMin)" placeholder="From" aria-label="ISO from" />
+                    <span aria-hidden="true">–</span>
+                    <input name="isoMax" type="number" min="1" max="10000000" step="1" value="@Invariant(s.IsoMax)" placeholder="To" aria-label="ISO to" />
+                </div>
+            </fieldset>
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <p class="field-error filters-error">Some of those filters aren't valid, so they weren't applied. Check the numbers and try again.</p>
+            }
+            <div class="filters-actions">
+                <a class="btn btn-ghost btn-sm" asp-action="Index" asp-route-following="@(Model.Following ? "true" : null)">Clear</a>
+                <button type="submit" class="btn btn-accent btn-sm">Show photos</button>
+            </div>
+            <p class="text-muted small filters-note">Settings come from each photo's camera data, so photos without it don't match.
+                A lower ƒ-number is a wider aperture.</p>
+        </form>
+        <datalist id="camera-options">
+            @foreach (var camera in Model.Options.Cameras)
+            {
+                <option value="@camera"></option>
+            }
+        </datalist>
+        <datalist id="lens-options">
+            @foreach (var lens in Model.Options.Lenses)
+            {
+                <option value="@lens"></option>
+            }
+        </datalist>
+    </details>
+
+    @if (Model.Photos.TotalCount == 0 && filtered)
+    {
+        <div class="empty-state">
+            <p>No photos match those camera settings.</p>
+            <a class="btn btn-ghost" asp-action="Index" asp-route-following="@(Model.Following ? "true" : null)">Clear the filters</a>
+        </div>
+    }
+    else if (Model.Photos.TotalCount == 0 && Model.Following)
+    {
+        <div class="empty-state">
+            <p>No photos from members you follow yet. Follow members from their page to see their photos here.</p>
+            <a class="btn btn-ghost" asp-action="Index">See everyone's photos</a>
+        </div>
+    }
+    else if (Model.Photos.TotalCount == 0)
     {
         <div class="empty-state">
             <p>No photos yet. Be the first to share one!</p>
@@ -21,6 +105,6 @@
     }
     else
     {
-        <partial name="_PhotoGrid" model="Model" />
+        <partial name="_PhotoGrid" model="Model.Photos" />
     }
 </section>

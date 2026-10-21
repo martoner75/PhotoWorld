@@ -12,11 +12,12 @@ database and storage, Google sign-in, and the map services. For setup and day-to
 - [6. Data model](#6-data-model)
 - [7. Moderation](#7-moderation)
 - [8. Places and maps](#8-places-and-maps)
-- [9. Email notifications](#9-email-notifications)
-- [10. Logging](#10-logging)
-- [11. Build, CI and database migrations](#11-build-ci-and-database-migrations)
-- [12. Configuration and secrets](#12-configuration-and-secrets)
-- [13. Design decisions](#13-design-decisions)
+- [9. Following, camera search and challenges](#9-following-camera-search-and-challenges)
+- [10. Email notifications](#10-email-notifications)
+- [11. Logging](#11-logging)
+- [12. Build, CI and database migrations](#12-build-ci-and-database-migrations)
+- [13. Configuration and secrets](#13-configuration-and-secrets)
+- [14. Design decisions](#14-design-decisions)
 
 ## 1. System overview
 
@@ -272,6 +273,9 @@ erDiagram
     users ||--o{ places : "has been to"
     users ||--o| email_subscriptions : "gets emails"
     users ||--o{ reports : files
+    users ||--o{ follows : "follows / is followed"
+    photos ||--o{ challenge_entries : "entered as"
+    challenges ||--o{ challenge_entries : has
     photos ||--o{ photo_likes : receives
     photos ||--o{ photo_comments : has
     photos ||--o{ blog_post_photos : "embedded in"
@@ -376,6 +380,23 @@ erDiagram
         timestamptz notified_through
         timestamptz period_started_at
     }
+    follows {
+        uuid follower_id PK
+        uuid followee_id PK
+        timestamptz created_at
+    }
+    challenges {
+        uuid id PK
+        text title
+        text description
+        timestamptz starts_at
+        timestamptz ends_at
+    }
+    challenge_entries {
+        uuid challenge_id PK
+        uuid photo_id PK
+        timestamptz created_at
+    }
     reports {
         uuid id PK
         uuid reporter_id FK
@@ -388,7 +409,7 @@ erDiagram
     }
 ```
 
-Not shown: `app_logs` (see [Logging](#10-logging)), `__ef_migrations_history`, and the `open_reports` view. Every
+Not shown: `app_logs` (see [Logging](#11-logging)), `__ef_migrations_history`, and the `open_reports` view. Every
 member-owned row cascades on account deletion. A report targets exactly one item (`ck_reports_one_target`).
 
 ## 7. Moderation
@@ -423,7 +444,26 @@ answers `404`. Locations are entered by the member (search or a pin), never take
 The map providers receive tiles requests and search text from the member's device; nothing about the member's
 account is sent. The privacy policy names each provider.
 
-## 9. Email notifications
+## 9. Following, camera search and challenges
+
+- **Following.** `POST`/`DELETE api/users/{id}/follow` adds or removes a `follows` row (not yourself:
+  `ck_follows_not_self`). `following=true` on `GET api/photos` and `GET api/blog-posts` keeps only followed
+  members' items; the website shows it as **Everyone / Following** tabs. Profiles show follower and following
+  counts but not who they are.
+- **Camera search.** `GET api/photos` also takes `camera`, `lens`, `focalMin/Max`, `apertureMin/Max` and
+  `isoMin/Max` (`PhotoSearch` in Shared). `PhotoFilters.Matching` applies them; text is a case-insensitive
+  "contains" with the member's text escaped, and photos without a setting never match a filter on it.
+  `GET api/photos/camera-options` suggests the 100 most used cameras and lenses. The camera details on a photo
+  page link to the matching gallery filter.
+- **Challenges.** A `challenges` row is a theme open from `starts_at` until `ends_at`, added in the Supabase
+  dashboard (README → Photo challenges). Members enter up to 3 of their own visible photos while it's open
+  (`challenge_entries`) and can withdraw them until it ends. **Votes are likes** from other members between the
+  moment of entry and `ends_at`, so no separate voting system exists and likes after the end don't move anything.
+  `ChallengeStandings` ranks entries by votes, then the earlier entry; the leader of a closed challenge is its
+  winner. Standings are computed when read, not stored: entries hidden by moderation drop out (shown only to their
+  owner, unranked), and deleting a photo removes its entry. Wins show as trophies on the member page.
+
+## 10. Email notifications
 
 Members choose an address and a frequency (instant, daily or weekly) in the website's settings or the app. A
 background service in the API does the sending through SMTP.
@@ -465,7 +505,7 @@ sequenceDiagram
 - Only posts the subscriber could see on the site are sent: published, not hidden by moderation, not their own.
 - No SMTP host configured (development): emails are written as `.eml` files to `src/PhotoWorld.Api/emails/`.
 
-## 10. Logging
+## 11. Logging
 
 ```mermaid
 flowchart LR
@@ -481,7 +521,7 @@ flowchart LR
 - The Web holds only the insert-only `photoworld_logger` role, never the main database password.
 - The mobile app logs to the device console only (Debug builds).
 
-## 11. Build, CI and database migrations
+## 12. Build, CI and database migrations
 
 ```mermaid
 flowchart LR
@@ -499,7 +539,7 @@ flowchart LR
 - Deployment of the API and Web, and publishing the app to the App Store / Google Play, aren't automated yet (see the
   README checklists).
 
-## 12. Configuration and secrets
+## 13. Configuration and secrets
 
 Secrets are never in `appsettings.json`: user-secrets in development, environment variables / a secret store in
 production, a git-ignored `Local.props` for the app.
@@ -518,7 +558,7 @@ production, a git-ignored `Local.props` for the app.
 | `Email:Smtp:*`, `Email:From` | API user-secrets | API | Sending notification emails (none set: `.eml` files) |
 | `Email:WebBaseUrl`, `Email:PollMinutes` | API `appsettings*.json` | API | Links in emails; how often the sender runs |
 
-## 13. Design decisions
+## 14. Design decisions
 
 | Decision | Why |
 |---|---|
@@ -529,6 +569,7 @@ production, a git-ignored `Local.props` for the app.
 | Dedicated `photoworld` schema | Supabase's auto-generated Data API exposes `public`; this data is only reachable through the API. |
 | Photos re-encoded, originals discarded | Strips GPS and other metadata before files reach a public bucket. |
 | Moderation as one shared expression | The same visibility rule in every query, translated to SQL. |
+| Challenge votes are likes, standings computed on read | No second voting system to build or abuse, no background job, and moderation or deletions are reflected straight away. |
 | Places private by route design | There is no route that takes another member's id, so there's nothing to get wrong. |
 | Migrations by CI, not at startup | Safe with several API instances; schema changes are deliberate. |
 | DTOs and routes in Shared | API, website and app compile against the same contract. |

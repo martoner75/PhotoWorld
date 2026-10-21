@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Places;
@@ -22,6 +23,9 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<BlogComment> BlogComments => Set<BlogComment>();
     public DbSet<Place> Places => Set<Place>();
     public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
+    public DbSet<Follow> Follows => Set<Follow>();
+    public DbSet<Challenge> Challenges => Set<Challenge>();
+    public DbSet<ChallengeEntry> ChallengeEntries => Set<ChallengeEntry>();
 
     /// <summary>
     /// PhotoWorld's own schema in the Supabase database. Keeping it out of <c>public</c> means
@@ -184,6 +188,35 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(s => s.User).WithOne().HasForeignKey<EmailSubscription>(s => s.UserId);
             e.HasIndex(s => s.ConfirmTokenHash).IsUnique();
             e.HasIndex(s => s.UnsubscribeToken).IsUnique();
+        });
+
+        modelBuilder.Entity<Follow>(e =>
+        {
+            e.HasKey(f => new { f.FollowerId, f.FolloweeId });
+            e.ToTable(t => t.HasCheckConstraint("ck_follows_not_self", "follower_id <> followee_id"));
+            // Either account going takes the follow with it.
+            e.HasOne(f => f.Follower).WithMany().HasForeignKey(f => f.FollowerId);
+            e.HasOne(f => f.Followee).WithMany().HasForeignKey(f => f.FolloweeId);
+            e.HasIndex(f => f.FolloweeId);
+        });
+
+        modelBuilder.Entity<Challenge>(e =>
+        {
+            e.ToTable(t => t.HasCheckConstraint("ck_challenges_dates", "ends_at > starts_at"));
+            // Defaults so a challenge can be added with a plain SQL insert in the Supabase dashboard.
+            e.Property(c => c.Id).HasDefaultValueSql("gen_random_uuid()");
+            e.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
+            e.Property(c => c.Title).HasMaxLength(ChallengeLimits.TitleMax);
+            e.Property(c => c.Description).HasMaxLength(ChallengeLimits.DescriptionMax);
+            e.HasIndex(c => c.EndsAt).IsDescending();
+        });
+
+        modelBuilder.Entity<ChallengeEntry>(e =>
+        {
+            e.HasKey(x => new { x.ChallengeId, x.PhotoId });
+            e.HasOne(x => x.Challenge).WithMany(c => c.Entries).HasForeignKey(x => x.ChallengeId);
+            e.HasOne(x => x.Photo).WithMany().HasForeignKey(x => x.PhotoId);
+            e.HasIndex(x => x.PhotoId);
         });
 
         modelBuilder.Entity<LogEntry>(e =>
