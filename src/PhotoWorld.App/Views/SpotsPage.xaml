@@ -19,7 +19,7 @@
         </maps:Map>
         <Label Grid.Row="1" Text="No spots yet. Choose where a photo was taken when you upload it."
                Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center" VerticalOptions="Center"
-               Margin="32" IsVisible="{Binding IsEmpty}" BackgroundColor="#C00E0F12" Padding="12" />
+               Margin="32" IsVisible="{Binding IsEmpty}" BackgroundColor="{DynamicResource Scrim}" Padding="12" />
         <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
     </Grid>
 </ContentPage>

@@ -24,7 +24,7 @@
                         </Border.GestureRecognizers>
                         <VerticalStackLayout>
                             <Image Source="{Binding Collection.CoverUrl}" Aspect="AspectFill" HeightRequest="130"
-                                   BackgroundColor="{StaticResource PhotoBackground}" />
+                                   BackgroundColor="{DynamicResource PhotoBackground}" />
                             <VerticalStackLayout Padding="10,8" Spacing="2">
                                 <Label Text="{Binding Collection.Title}" Style="{StaticResource Strong}" LineBreakMode="TailTruncation" />
                                 <Label Text="{Binding Facts}" Style="{StaticResource MutedText}" FontSize="12" />

@@ -12,12 +12,12 @@
 
             <Label Text="Camera" Style="{StaticResource Strong}" Margin="0,8,0,0" />
             <Border Style="{StaticResource Field}">
-                <Picker ItemsSource="{Binding Cameras}" SelectedItem="{Binding Camera}" Title="Camera" TextColor="{StaticResource Text}" />
+                <Picker ItemsSource="{Binding Cameras}" SelectedItem="{Binding Camera}" Title="Camera" TextColor="{DynamicResource Text}" />
             </Border>
 
             <Label Text="Lens" Style="{StaticResource Strong}" />
             <Border Style="{StaticResource Field}">
-                <Picker ItemsSource="{Binding Lenses}" SelectedItem="{Binding Lens}" Title="Lens" TextColor="{StaticResource Text}" />
+                <Picker ItemsSource="{Binding Lenses}" SelectedItem="{Binding Lens}" Title="Lens" TextColor="{DynamicResource Text}" />
             </Border>
 
             <Label Text="Focal length (mm)" Style="{StaticResource Strong}" />

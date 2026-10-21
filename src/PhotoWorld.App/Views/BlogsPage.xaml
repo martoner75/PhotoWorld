@@ -20,8 +20,8 @@
                                 Command="{Binding ShowFollowingCommand}" CommandParameter="everyone">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="False">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
-                                    <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource Text}" />
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
@@ -29,8 +29,8 @@
                                 Command="{Binding ShowFollowingCommand}" CommandParameter="following">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
-                                    <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource Text}" />
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
@@ -50,11 +50,11 @@
                         </Border.GestureRecognizers>
                         <VerticalStackLayout>
                             <Image Source="{Binding CoverUrl}" Aspect="AspectFill" HeightRequest="180"
-                                   BackgroundColor="{StaticResource PhotoBackground}"
+                                   BackgroundColor="{DynamicResource PhotoBackground}"
                                    IsVisible="{Binding CoverUrl, Converter={StaticResource HasValue}}" />
                             <VerticalStackLayout Padding="14,12" Spacing="6">
                                 <Label Text="{Binding Title}" Style="{StaticResource Subheading}" />
-                                <Label Text="{Binding Excerpt}" TextColor="{StaticResource Muted}" MaxLines="3" LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding Excerpt}" TextColor="{DynamicResource Muted}" MaxLines="3" LineBreakMode="TailTruncation" />
                                 <!-- A button (not a tap on the label) so tapping the name opens the member page without also opening the post. -->
                                 <Button Text="{Binding Author.DisplayName}" Style="{StaticResource LinkButton}" FontSize="13"
                                         Padding="0,2" MinimumHeightRequest="28" HorizontalOptions="Start" CommandParameter="{Binding .}"

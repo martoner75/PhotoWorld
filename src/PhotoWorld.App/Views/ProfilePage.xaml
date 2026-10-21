@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
@@ -42,7 +42,7 @@
                 <Border Padding="16">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Activity" Style="{StaticResource Subheading}" />
-                        <Label Text="What shows on your Activity screen (🔔 on the Gallery tab)." Style="{StaticResource MutedText}" FontSize="14" />
+                        <Label Text="What shows on your Activity screen (the bell on the Gallery tab)." Style="{StaticResource MutedText}" FontSize="14" />
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Likes on your photos" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityLikes}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Comments on your photos and posts" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityComments}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="New followers" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityFollows}" /></Grid>
@@ -73,7 +73,7 @@
                         <Label Text="How often" Style="{StaticResource Strong}" />
                         <Border Style="{StaticResource Field}">
                             <Picker ItemsSource="{Binding FrequencyOptions}" SelectedIndex="{Binding FrequencyIndex}"
-                                    TextColor="{StaticResource Text}" Title="How often" />
+                                    TextColor="{DynamicResource Text}" Title="How often" />
                         </Border>
                         <Button Text="Save notification settings" Command="{Binding SaveNotificationsCommand}" />
                     </VerticalStackLayout>
@@ -100,7 +100,7 @@
 
                 <Button Text="Sign out" Command="{Binding SignOutCommand}" Style="{StaticResource GhostButton}" />
 
-                <Border Padding="16" Stroke="#6B2A2A" Margin="0,18,0,0">
+                <Border Padding="16" Stroke="{DynamicResource DangerLine}" Margin="0,18,0,0">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Delete account" Style="{StaticResource Subheading}" />
                         <Label Text="Permanently deletes your account, all your photos, your blog, your places, notification settings, likes and comments, straight away. This can't be undone."

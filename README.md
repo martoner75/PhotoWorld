@@ -106,6 +106,15 @@ server build is green, it applies any pending EF migrations to Supabase. It need
 `SUPABASE_DB_CONNECTION_STRING`, holding the Session pooler connection string for the `postgres` user
 (GitHub → Settings → Secrets and variables → Actions).
 
+## Look and feel
+
+PhotoWorld uses **Gallery White** (white pages, amber accent) and switches to **Graphite** (soft charcoal) when the
+device is in dark mode, on the website and in the apps. Website: the colours are CSS variables at the top of
+`site.css` (`:root` and its `prefers-color-scheme: dark` block), and Bootstrap follows via `data-bs-theme`. App:
+`Resources/Styles/Colors.xaml` holds the light values and `ThemePalette` swaps in the dark ones when the device
+changes (pages use `DynamicResource`). Text drawn on photos stays light in both. Notification and challenge buttons
+in the app's top bar are outline icons (`Resources/Images/icon_*.svg`).
+
 ## Photos
 
 The whole site is members-only: everything except the landing, sign-in and privacy pages needs a Google

@@ -21,17 +21,17 @@
                             <Label Style="{StaticResource MutedText}">
                                 <Label.FormattedText>
                                     <FormattedString>
-                                        <Span Text="{Binding Author.DisplayName}" TextColor="{StaticResource Text}" FontFamily="OpenSansSemibold" />
+                                        <Span Text="{Binding Author.DisplayName}" TextColor="{DynamicResource Text}" FontFamily="OpenSansSemibold" />
                                         <Span Text="{Binding CreatedAt, StringFormat='  {0:d MMM yyyy}'}" />
                                     </FormattedString>
                                 </Label.FormattedText>
                             </Label>
                             <Label Grid.Row="1" Text="{Binding Text}" />
                             <HorizontalStackLayout Grid.Column="1" Grid.RowSpan="2" VerticalOptions="Start">
-                                <Button Text="Delete" Style="{StaticResource LinkButton}" TextColor="{StaticResource Danger}"
+                                <Button Text="Delete" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Danger}"
                                         IsVisible="{Binding CanDelete}" CommandParameter="{Binding .}"
                                         Command="{Binding DeleteCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PostCommentsViewModel}}, x:DataType=vm:PostCommentsViewModel}" />
-                                <Button Text="Report" Style="{StaticResource LinkButton}" TextColor="{StaticResource Muted}"
+                                <Button Text="Report" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Muted}"
                                         IsVisible="{Binding CanReport}" CommandParameter="{Binding .}"
                                         Command="{Binding ReportCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PostCommentsViewModel}}, x:DataType=vm:PostCommentsViewModel}" />
                             </HorizontalStackLayout>

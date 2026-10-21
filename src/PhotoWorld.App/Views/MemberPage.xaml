@@ -17,7 +17,7 @@
                 <VerticalStackLayout Spacing="12" Padding="6,8,6,14">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                         <Border WidthRequest="72" HeightRequest="72" StrokeShape="RoundRectangle 36" Padding="0"
-                                Stroke="{StaticResource Accent}" StrokeThickness="2" BackgroundColor="{StaticResource Line}">
+                                Stroke="{DynamicResource Accent}" StrokeThickness="2" BackgroundColor="{DynamicResource Line}">
                             <Grid>
                                 <Label Text="{Binding Initial}" FontSize="28" HorizontalOptions="Center" VerticalOptions="Center" />
                                 <Image Source="{Binding Member.AvatarUrl}" Aspect="AspectFill" />
@@ -34,8 +34,8 @@
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding FollowedByMe}" Value="True">
                                 <Setter Property="BackgroundColor" Value="Transparent" />
-                                <Setter Property="TextColor" Value="{StaticResource Text}" />
-                                <Setter Property="BorderColor" Value="{StaticResource Line}" />
+                                <Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                <Setter Property="BorderColor" Value="{DynamicResource Line}" />
                                 <Setter Property="BorderWidth" Value="1" />
                             </DataTrigger>
                         </Button.Triggers>
@@ -44,23 +44,23 @@
                     <Button Text="Collections" Style="{StaticResource LinkButton}" HorizontalOptions="Start" Padding="4,0"
                             MinimumHeightRequest="30" Command="{Binding OpenCollectionsCommand}" />
 
-                    <Border Padding="12,8" BackgroundColor="#2A1414" Stroke="#6B2A2A" IsVisible="{Binding IsBlocked}">
+                    <Border Padding="12,8" BackgroundColor="{DynamicResource DangerSoft}" Stroke="{DynamicResource DangerLine}" IsVisible="{Binding IsBlocked}">
                         <Label Text="Blocked. You don't see their photos, posts or comments, and they can't follow you or comment on your work."
                                FontSize="13" />
                     </Border>
                     <Button Text="{Binding BlockButtonText}" Command="{Binding ToggleBlockCommand}" IsVisible="{Binding CanBlock}"
-                            Style="{StaticResource LinkButton}" TextColor="{StaticResource Muted}" FontSize="13" HorizontalOptions="End"
+                            Style="{StaticResource LinkButton}" TextColor="{DynamicResource Muted}" FontSize="13" HorizontalOptions="End"
                             Padding="4,0" MinimumHeightRequest="30" Margin="0,-6,0,0" />
 
                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding Wins}" Spacing="6" IsVisible="{Binding HasWins}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="dto:ChallengeWinDto">
-                                <Border Padding="12,8" Stroke="#6B5021" BackgroundColor="#2A1F0E">
+                                <Border Padding="12,8" Stroke="{DynamicResource AccentLine}" BackgroundColor="{DynamicResource AccentSoft}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding OpenWinCommand, Source={RelativeSource AncestorType={x:Type vm:MemberViewModel}}, x:DataType=vm:MemberViewModel}"
                                                               CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
-                                    <Label TextColor="{StaticResource Accent}" FontSize="14">
+                                    <Label TextColor="{DynamicResource Accent}" FontSize="14">
                                         <Label.FormattedText>
                                             <FormattedString>
                                                 <Span Text="🏆 Won “" />
@@ -81,7 +81,7 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dto:PhotoSummaryDto">
-                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{DynamicResource PhotoBackground}"
                             SemanticProperties.Description="{Binding Title}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:MemberViewModel}}, x:DataType=vm:MemberViewModel}"
@@ -96,7 +96,7 @@
                                         <GradientStop Color="#C0000000" Offset="1" />
                                     </LinearGradientBrush>
                                 </Grid.Background>
-                                <Label Text="{Binding Title}" Style="{StaticResource Strong}" FontSize="14" LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding Title}" Style="{StaticResource OnPhoto}" FontSize="14" LineBreakMode="TailTruncation" />
                             </Grid>
                         </Grid>
                     </Border>

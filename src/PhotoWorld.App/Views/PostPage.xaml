@@ -11,7 +11,7 @@
 
     <Grid RowDefinitions="*,Auto">
         <!-- The post body is HTML the API has sanitized; links open in the browser (see code-behind). -->
-        <WebView Source="{Binding Body}" BackgroundColor="{StaticResource Ink}" Navigating="OnNavigating" />
+        <WebView Source="{Binding Body}" BackgroundColor="{DynamicResource Ink}" Navigating="OnNavigating" />
         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
         <Border Grid.Row="1" StrokeShape="Rectangle" StrokeThickness="0" Padding="16,10">
             <Button Text="{Binding CommentsLabel}" Command="{Binding OpenCommentsCommand}" Style="{StaticResource GhostButton}" />

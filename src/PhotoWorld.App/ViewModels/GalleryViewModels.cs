@@ -45,10 +45,13 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
 
     /// <summary>Unread activity, shown on the bell.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ActivityLabel))]
+    [NotifyPropertyChangedFor(nameof(ActivityIcon), nameof(ActivityDescription))]
     public partial int UnreadActivity { get; set; }
 
-    public string ActivityLabel => UnreadActivity switch { 0 => "🔔", > 99 => "🔔 99+", var n => $"🔔 {n}" };
+    /// <summary>The outline bell, with a dot while there's something new.</summary>
+    public string ActivityIcon => UnreadActivity > 0 ? "icon_bell_dot.png" : "icon_bell.png";
+
+    public string ActivityDescription => UnreadActivity switch { 0 => "Activity", 1 => "Activity, 1 new", var n => $"Activity, {n} new" };
 
     /// <summary>Called each time the gallery shows (coming back from Activity resets it).</summary>
     public async Task RefreshUnreadAsync()

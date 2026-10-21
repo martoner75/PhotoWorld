@@ -27,10 +27,10 @@
                                                   CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <VerticalStackLayout>
-                            <Grid HeightRequest="160" BackgroundColor="{StaticResource PhotoBackground}">
+                            <Grid HeightRequest="160" BackgroundColor="{DynamicResource PhotoBackground}">
                                 <Image Source="{Binding Challenge.CoverUrl}" Aspect="AspectFill" />
                                 <Border Style="{StaticResource TileBadge}">
-                                    <Label Text="{Binding Phase}" FontSize="12" Style="{StaticResource Strong}" />
+                                    <Label Text="{Binding Phase}" FontSize="12" Style="{StaticResource OnPhoto}" />
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsOpen}" Value="True">
                                             <Setter Property="BackgroundColor" Value="#D86EC88C" />
@@ -40,12 +40,12 @@
                             </Grid>
                             <VerticalStackLayout Padding="14,12" Spacing="6">
                                 <Label Text="{Binding Challenge.Title}" Style="{StaticResource Subheading}" />
-                                <Label Text="{Binding Challenge.Description}" TextColor="{StaticResource Muted}" MaxLines="3"
+                                <Label Text="{Binding Challenge.Description}" TextColor="{DynamicResource Muted}" MaxLines="3"
                                        LineBreakMode="TailTruncation" IsVisible="{Binding Challenge.Description, Converter={StaticResource HasValue}}" />
                                 <Grid ColumnDefinitions="*,Auto">
                                     <Label Text="{Binding When}" Style="{StaticResource MutedText}"
                                            IsVisible="{Binding Winner, Converter={StaticResource HasValue}, ConverterParameter=not}" />
-                                    <Label Text="{Binding Winner}" TextColor="{StaticResource Accent}" FontSize="13"
+                                    <Label Text="{Binding Winner}" TextColor="{DynamicResource Accent}" FontSize="13"
                                            IsVisible="{Binding Winner, Converter={StaticResource HasValue}}" />
                                     <Label Grid.Column="1" Text="{Binding Entries}" Style="{StaticResource MutedText}" />
                                 </Grid>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
@@ -24,7 +24,7 @@
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:EntryChoice">
-                        <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                        <Border Padding="0" StrokeThickness="0" BackgroundColor="{DynamicResource PhotoBackground}"
                                 SemanticProperties.Description="{Binding Label}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding ChooseCommand, Source={RelativeSource AncestorType={x:Type vm:EnterChallengeViewModel}}, x:DataType=vm:EnterChallengeViewModel}"
@@ -45,10 +45,10 @@
                                             <GradientStop Color="#C0000000" Offset="1" />
                                         </LinearGradientBrush>
                                     </Grid.Background>
-                                    <Label Text="{Binding Label}" FontSize="12" LineBreakMode="TailTruncation">
+                                    <Label Text="{Binding Label}" FontSize="12" Style="{StaticResource OnPhoto}" LineBreakMode="TailTruncation">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding IsEntered}" Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource Accent}" />
+                                                <Setter Property="TextColor" Value="{DynamicResource Accent}" />
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>

@@ -13,7 +13,7 @@
             </CollectionView.ItemsLayout>
             <CollectionView.Header>
                 <VerticalStackLayout Spacing="8" Padding="4,8,4,14">
-                    <Label Text="{Binding When}" TextColor="{StaticResource Accent}" FontSize="13" Style="{StaticResource Strong}" />
+                    <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" FontSize="13" Style="{StaticResource Strong}" />
                     <Label Text="{Binding Title}" Style="{StaticResource Heading}" />
                     <Label Text="{Binding Dates}" Style="{StaticResource MutedText}" />
                     <Label Text="{Binding Challenge.Challenge.Description}" FontSize="16"
@@ -30,7 +30,7 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:EntryItem">
-                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{DynamicResource PhotoBackground}"
                             SemanticProperties.Description="{Binding Photo.Title}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:ChallengeViewModel}}, x:DataType=vm:ChallengeViewModel}"
@@ -39,7 +39,7 @@
                         <Grid HeightRequest="{OnIdiom Phone=200, Tablet=250, Default=230}">
                             <Image Source="{Binding Photo.ThumbnailUrl}" Aspect="AspectFill" />
                             <Border Style="{StaticResource TileBadge}" IsVisible="{Binding Badge, Converter={StaticResource HasValue}}">
-                                <Label Text="{Binding Badge}" FontSize="12" Style="{StaticResource Strong}" />
+                                <Label Text="{Binding Badge}" FontSize="12" Style="{StaticResource OnPhoto}" />
                             </Border>
                             <Grid VerticalOptions="End" Padding="10,24,10,6">
                                 <Grid.Background>
@@ -49,8 +49,8 @@
                                     </LinearGradientBrush>
                                 </Grid.Background>
                                 <VerticalStackLayout Spacing="0">
-                                    <Label Text="{Binding Photo.Title}" Style="{StaticResource Strong}" FontSize="14" LineBreakMode="TailTruncation" />
-                                    <Label Style="{StaticResource MutedText}" FontSize="12" LineBreakMode="TailTruncation">
+                                    <Label Text="{Binding Photo.Title}" Style="{StaticResource OnPhoto}" FontSize="14" LineBreakMode="TailTruncation" />
+                                    <Label Style="{StaticResource OnPhotoMuted}" FontSize="12" LineBreakMode="TailTruncation">
                                         <Label.FormattedText>
                                             <FormattedString>
                                                 <Span Text="{Binding Photo.Owner.DisplayName}" />
@@ -59,7 +59,7 @@
                                             </FormattedString>
                                         </Label.FormattedText>
                                     </Label>
-                                    <Button Text="Withdraw" Style="{StaticResource LinkButton}" TextColor="{StaticResource Danger}"
+                                    <Button Text="Withdraw" Style="{StaticResource LinkButton}" TextColor="#FFB3B3"
                                             FontSize="12" Padding="0,4" MinimumHeightRequest="28" HorizontalOptions="Start"
                                             IsVisible="{Binding CanWithdraw}" CommandParameter="{Binding .}"
                                             Command="{Binding WithdrawCommand, Source={RelativeSource AncestorType={x:Type vm:ChallengeViewModel}}, x:DataType=vm:ChallengeViewModel}" />

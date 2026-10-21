@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
@@ -7,9 +7,10 @@
              x:DataType="vm:GalleryViewModel"
              Title="Gallery">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="{Binding ActivityLabel}" Command="{Binding OpenActivityCommand}" Order="Primary"
-                     SemanticProperties.Description="Activity" />
-        <ToolbarItem Text="🏆" Command="{Binding OpenChallengesCommand}" Order="Primary" SemanticProperties.Description="Photo challenges" />
+        <ToolbarItem IconImageSource="{Binding ActivityIcon}" Text="{Binding ActivityDescription}" Command="{Binding OpenActivityCommand}"
+                     Order="Primary" SemanticProperties.Description="{Binding ActivityDescription}" />
+        <ToolbarItem IconImageSource="icon_trophy.png" Text="Challenges" Command="{Binding OpenChallengesCommand}" Order="Primary"
+                     SemanticProperties.Description="Photo challenges" />
         <ToolbarItem Text="Filter" Command="{Binding OpenFiltersCommand}" Order="Primary" />
     </ContentPage.ToolbarItems>
 
@@ -29,8 +30,8 @@
                                     Command="{Binding ShowFollowingCommand}" CommandParameter="everyone">
                                 <Button.Triggers>
                                     <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="False">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
-                                        <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" />
+                                        <Setter Property="TextColor" Value="{DynamicResource Text}" />
                                     </DataTrigger>
                                 </Button.Triggers>
                             </Button>
@@ -38,15 +39,15 @@
                                     Command="{Binding ShowFollowingCommand}" CommandParameter="following">
                                 <Button.Triggers>
                                     <DataTrigger TargetType="Button" Binding="{Binding Following}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Line}" />
-                                        <Setter Property="TextColor" Value="{StaticResource Text}" />
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" />
+                                        <Setter Property="TextColor" Value="{DynamicResource Text}" />
                                     </DataTrigger>
                                 </Button.Triggers>
                             </Button>
                         </Grid>
                     </Border>
 
-                    <Border Padding="14,10" Stroke="{StaticResource Accent}" BackgroundColor="#2A1F0E"
+                    <Border Padding="14,10" Stroke="{DynamicResource Accent}" BackgroundColor="{DynamicResource AccentSoft}"
                             IsVisible="{Binding ChallengeBanner, Converter={StaticResource HasValue}}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenChallengeCommand}" />
@@ -54,7 +55,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <Label Text="{Binding ChallengeBanner}" Style="{StaticResource Strong}" FontSize="14"
                                    LineBreakMode="TailTruncation" VerticalOptions="Center" />
-                            <Label Grid.Column="1" Text="›" TextColor="{StaticResource Accent}" FontSize="20" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="›" TextColor="{DynamicResource Accent}" FontSize="20" VerticalOptions="Center" />
                         </Grid>
                     </Border>
 
@@ -74,7 +75,7 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="dto:PhotoSummaryDto">
-                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                    <Border Padding="0" StrokeThickness="0" BackgroundColor="{DynamicResource PhotoBackground}"
                             SemanticProperties.Description="{Binding Title}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:GalleryViewModel}}, x:DataType=vm:GalleryViewModel}"
@@ -90,8 +91,8 @@
                                     </LinearGradientBrush>
                                 </Grid.Background>
                                 <VerticalStackLayout Spacing="0">
-                                    <Label Text="{Binding Title}" Style="{StaticResource Strong}" FontSize="14" LineBreakMode="TailTruncation" />
-                                    <Label Style="{StaticResource MutedText}" FontSize="12" LineBreakMode="TailTruncation">
+                                    <Label Text="{Binding Title}" Style="{StaticResource OnPhoto}" FontSize="14" LineBreakMode="TailTruncation" />
+                                    <Label Style="{StaticResource OnPhotoMuted}" FontSize="12" LineBreakMode="TailTruncation">
                                         <Label.FormattedText>
                                             <FormattedString>
                                                 <Span Text="{Binding Owner.DisplayName}" />

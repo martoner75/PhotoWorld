@@ -14,10 +14,10 @@
         <ScrollView>
             <VerticalStackLayout Spacing="0" Padding="0,0,0,24">
                 <Image Source="{Binding Photo.ImageUrl}" Aspect="AspectFit" HeightRequest="{Binding AspectHeight}"
-                       BackgroundColor="{StaticResource PhotoBackground}" SemanticProperties.Description="{Binding Photo.Title}" />
+                       BackgroundColor="{DynamicResource PhotoBackground}" SemanticProperties.Description="{Binding Photo.Title}" />
 
                 <VerticalStackLayout Padding="18,16" Spacing="10" MaximumWidthRequest="760">
-                    <Border Padding="12,8" BackgroundColor="#3A2A10" Stroke="{StaticResource Accent}" IsVisible="{Binding IsUnderReview}">
+                    <Border Padding="12,8" BackgroundColor="{DynamicResource AccentSoft}" Stroke="{DynamicResource Accent}" IsVisible="{Binding IsUnderReview}">
                         <Label Text="This photo is hidden from other members while it's reviewed." FontSize="13" />
                     </Border>
 
@@ -33,8 +33,8 @@
                                 Text="{Binding LikeCount, StringFormat='♥ {0}'}">
                             <Button.Triggers>
                                 <DataTrigger TargetType="Button" Binding="{Binding LikedByMe}" Value="True">
-                                    <Setter Property="TextColor" Value="{StaticResource Accent}" />
-                                    <Setter Property="BorderColor" Value="{StaticResource Accent}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource Accent}" />
+                                    <Setter Property="BorderColor" Value="{DynamicResource Accent}" />
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
@@ -43,7 +43,7 @@
                                Text="{Binding Comments.Count, StringFormat='{0} comments'}" />
                     </HorizontalStackLayout>
 
-                    <Button Text="{Binding PlaceLabel}" Style="{StaticResource LinkButton}" TextColor="{StaticResource Text}"
+                    <Button Text="{Binding PlaceLabel}" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Text}"
                             HorizontalOptions="Start" Padding="0,2" Command="{Binding OpenPlaceCommand}"
                             IsVisible="{Binding PlaceLabel, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding Photo.Description}" FontSize="16"
@@ -69,17 +69,17 @@
                                         <Label Grid.Row="0" Style="{StaticResource MutedText}">
                                             <Label.FormattedText>
                                                 <FormattedString>
-                                                    <Span Text="{Binding Author.DisplayName}" TextColor="{StaticResource Text}" FontFamily="OpenSansSemibold" />
+                                                    <Span Text="{Binding Author.DisplayName}" TextColor="{DynamicResource Text}" FontFamily="OpenSansSemibold" />
                                                     <Span Text="{Binding CreatedAt, StringFormat='  {0:d MMM yyyy}'}" />
                                                 </FormattedString>
                                             </Label.FormattedText>
                                         </Label>
                                         <Label Grid.Row="1" Text="{Binding Text}" />
                                         <HorizontalStackLayout Grid.Column="1" Grid.RowSpan="2" VerticalOptions="Start">
-                                            <Button Text="Delete" Style="{StaticResource LinkButton}" TextColor="{StaticResource Danger}"
+                                            <Button Text="Delete" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Danger}"
                                                     IsVisible="{Binding CanDelete}" CommandParameter="{Binding .}"
                                                     Command="{Binding DeleteCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoDetailViewModel}}, x:DataType=vm:PhotoDetailViewModel}" />
-                                            <Button Text="Report" Style="{StaticResource LinkButton}" TextColor="{StaticResource Muted}"
+                                            <Button Text="Report" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Muted}"
                                                     IsVisible="{Binding CanReport}" CommandParameter="{Binding .}"
                                                     Command="{Binding ReportCommentCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoDetailViewModel}}, x:DataType=vm:PhotoDetailViewModel}" />
                                         </HorizontalStackLayout>

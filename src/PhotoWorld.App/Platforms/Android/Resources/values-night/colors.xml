@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark mode (Graphite), matching the website and ThemePalette. -->
+<resources>
+    <color name="colorPrimary">#1E2127</color>
+    <color name="colorPrimaryDark">#1E2127</color>
+    <color name="colorAccent">#F2A541</color>
+</resources>

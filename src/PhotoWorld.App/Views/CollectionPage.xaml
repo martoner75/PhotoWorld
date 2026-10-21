@@ -30,7 +30,7 @@
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="dto:PhotoSummaryDto">
-                        <Border Padding="0" StrokeThickness="0" BackgroundColor="{StaticResource PhotoBackground}"
+                        <Border Padding="0" StrokeThickness="0" BackgroundColor="{DynamicResource PhotoBackground}"
                                 SemanticProperties.Description="{Binding Title}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:CollectionViewModel}}, x:DataType=vm:CollectionViewModel}"
@@ -46,9 +46,9 @@
                                         </LinearGradientBrush>
                                     </Grid.Background>
                                     <VerticalStackLayout Spacing="0">
-                                        <Label Text="{Binding Title}" Style="{StaticResource Strong}" FontSize="14" LineBreakMode="TailTruncation" />
-                                        <Label Text="{Binding Owner.DisplayName}" Style="{StaticResource MutedText}" FontSize="12" />
-                                        <Button Text="Remove" Style="{StaticResource LinkButton}" TextColor="{StaticResource Danger}" FontSize="12"
+                                        <Label Text="{Binding Title}" Style="{StaticResource OnPhoto}" FontSize="14" LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding Owner.DisplayName}" Style="{StaticResource OnPhotoMuted}" FontSize="12" />
+                                        <Button Text="Remove" Style="{StaticResource LinkButton}" TextColor="#FFB3B3" FontSize="12"
                                                 Padding="0,4" MinimumHeightRequest="28" HorizontalOptions="Start" CommandParameter="{Binding .}"
                                                 IsVisible="{Binding CanEdit, Source={RelativeSource AncestorType={x:Type vm:CollectionViewModel}}, x:DataType=vm:CollectionViewModel}"
                                                 Command="{Binding RemoveCommand, Source={RelativeSource AncestorType={x:Type vm:CollectionViewModel}}, x:DataType=vm:CollectionViewModel}" />

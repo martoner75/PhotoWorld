@@ -85,7 +85,7 @@
 
     <div class="form-card" id="activity">
         <h2 class="settings-heading">Activity</h2>
-        <p class="text-muted mb-0">What shows under 🔔 in the menu and on the app's Activity screen.</p>
+        <p class="text-muted mb-0">What shows under the bell in the menu and on the app's Activity screen.</p>
         <form asp-controller="Activity" asp-action="Settings" method="post" class="notify-form">
             @foreach (var (name, label) in ActivityText.SettingLabels)
             {

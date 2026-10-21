@@ -9,7 +9,7 @@
         <ScrollView>
             <VerticalStackLayout Padding="18" Spacing="14" MaximumWidthRequest="640">
                 <!-- Step 1: choose a photo. -->
-                <Border Padding="0" HeightRequest="{OnIdiom Phone=280, Tablet=420, Default=360}" BackgroundColor="{StaticResource PhotoBackground}">
+                <Border Padding="0" HeightRequest="{OnIdiom Phone=280, Tablet=420, Default=360}" BackgroundColor="{DynamicResource PhotoBackground}">
                     <Grid>
                         <Image Source="{Binding Preview}" Aspect="AspectFit" IsVisible="{Binding HasPhoto}" />
                         <VerticalStackLayout VerticalOptions="Center" Spacing="12" Padding="24" IsVisible="{Binding HasPhoto, Converter={StaticResource Not}}">
@@ -39,7 +39,7 @@
                     <Label Text="Where was it taken? (optional)" Style="{StaticResource Strong}" />
                     <Border Style="{StaticResource Field}">
                         <Picker ItemsSource="{Binding PlaceOptions}" SelectedIndex="{Binding PlaceIndex}" Title="Where was it taken?"
-                                TextColor="{StaticResource Text}" />
+                                TextColor="{DynamicResource Text}" />
                     </Border>
                     <Label Text="Shows the photo on the Spots map for members, with the place's name and pin. Your other places stay private."
                            Style="{StaticResource MutedText}" />

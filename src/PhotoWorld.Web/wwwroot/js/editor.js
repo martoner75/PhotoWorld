@@ -54,8 +54,8 @@
         container: [
           [{ header: [2, 3, false] }],
           ["bold", "italic", "underline", "strike"],
-          // Light shades that stay readable on the dark post pages; the blank swatch resets to the default colour.
-          [{ color: [false, "#ffffff", "#9e9e9e", "#ff8a80", "#ffb74d", "#fff176", "#a5d6a7", "#80deea", "#90caf9", "#ce93d8", "#f48fb1"] }],
+          // Mid-tones that stay readable on both the light and the dark theme; the blank swatch resets to the default colour.
+          [{ color: [false, "#8a8f98", "#e0453a", "#e07b16", "#c29a00", "#2e9e5b", "#0f9ba8", "#2f7fe0", "#8b5cd6", "#d64584"] }],
           [{ list: "ordered" }, { list: "bullet" }],
           ["blockquote", "link"],
           ["photo"],
