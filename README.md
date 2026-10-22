@@ -136,6 +136,15 @@ paints. App: `Resources/Styles/Colors.xaml` holds the light values and `ThemePal
 choice sets `UserAppTheme` (pages use `DynamicResource`). Text drawn on photos stays light in both. The Activity (inbox tray) and challenge (trophy)
 buttons are outline icons (`Resources/Images/icon_*.svg`).
 
+## Cookies
+
+Every cookie PhotoWorld sets is essential (sign-in, form and sign-in protection, one-time messages); there are no
+analytics or advertising cookies. A message at the bottom of the website says so until the visitor chooses
+**Accept all**, **Essential only** or **Settings**; **Cookie settings** in every page's footer changes it later. The
+choice is kept for a year in the `PhotoWorld.Consent` cookie (`_CookieBanner.cshtml`, `site.js`). The only optional
+item is remembering the light/dark choice: with "preferences" it's kept in `localStorage`, otherwise in
+`sessionStorage` until the browser closes. The privacy policy lists every cookie.
+
 ## Photos
 
 The whole site is members-only: everything except the landing, sign-in and privacy pages needs a Google

@@ -63,3 +63,23 @@ document.querySelectorAll("[data-no-save]").forEach((img) => {
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", sync);
   sync();
 })();
+
+// Cookie message and settings (_CookieBanner). The choice is kept for a year; "preferences" also lets the theme
+// choice be remembered in this browser.
+(() => {
+  const dialog = document.getElementById("cookie-settings");
+  const preferences = dialog?.querySelector("[data-cookie-preferences]");
+  const choose = (value) => {
+    document.cookie = `PhotoWorld.Consent=${value}; Max-Age=${60 * 60 * 24 * 365}; Path=/; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+    window.pwMoveTheme?.();
+    document.querySelector("[data-cookie-banner]")?.remove();
+    if (preferences) preferences.checked = value === "preferences";
+  };
+  document.querySelectorAll("[data-cookie-choice]").forEach((button) =>
+    button.addEventListener("click", () => choose(button.dataset.cookieChoice)));
+  document.querySelectorAll("[data-cookie-settings]").forEach((button) =>
+    button.addEventListener("click", () => dialog?.showModal()));
+  dialog?.addEventListener("close", () => {
+    if (dialog.returnValue === "save") choose(preferences.checked ? "preferences" : "essential");
+  });
+})();

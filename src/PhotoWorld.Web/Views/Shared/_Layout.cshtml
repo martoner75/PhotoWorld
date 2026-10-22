@@ -10,10 +10,13 @@
        no flash of the wrong colours. site.css and Bootstrap's own components both read the attributes set here. *@
     <script>
         (() => {
+            // The theme choice lives in localStorage only if the visitor accepted preference storage (Cookie
+            // settings); otherwise in sessionStorage, which the browser clears when it closes.
             const dark = matchMedia("(prefers-color-scheme: dark)");
+            const store = () => /(?:^|; )PhotoWorld\.Consent=preferences(?:;|$)/.test(document.cookie) ? localStorage : sessionStorage;
             const apply = () => {
                 let choice = "auto";
-                try { choice = localStorage.getItem("pw-theme") || "auto"; } catch { }
+                try { choice = store().getItem("pw-theme") || "auto"; } catch { }
                 const theme = choice === "light" || choice === "dark" ? choice : dark.matches ? "dark" : "light";
                 const root = document.documentElement;
                 root.dataset.theme = root.dataset.bsTheme = theme;
@@ -21,8 +24,16 @@
                 document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#1e2127" : "#ffffff");
             };
             window.pwSetTheme = (choice) => {
-                try { choice === "auto" ? localStorage.removeItem("pw-theme") : localStorage.setItem("pw-theme", choice); } catch { }
+                try { choice === "auto" ? store().removeItem("pw-theme") : store().setItem("pw-theme", choice); } catch { }
                 apply();
+            };
+            // Consent changed: carry the current choice over to the right storage and clear the other one.
+            window.pwMoveTheme = () => {
+                try {
+                    const choice = localStorage.getItem("pw-theme") || sessionStorage.getItem("pw-theme");
+                    localStorage.removeItem("pw-theme"); sessionStorage.removeItem("pw-theme");
+                    if (choice) store().setItem("pw-theme", choice);
+                } catch { }
             };
             apply();
             dark.addEventListener("change", apply);
@@ -120,8 +131,10 @@
     <footer class="site-footer">
         <div class="container">
             &copy; @DateTime.Now.Year PhotoWorld · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+            · <button type="button" class="link-button" data-cookie-settings>Cookie settings</button>
         </div>
     </footer>
+    <partial name="_CookieBanner" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

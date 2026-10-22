@@ -696,3 +696,14 @@ img.no-save { -webkit-touch-callout: none; -webkit-user-select: none; user-selec
 .store-badge-apple img { height: 40px; width: auto; display: block; }
 .store-badge-google img { height: 59px; width: auto; display: block; margin: -9.5px -12px; }
 .store-badges-note { color: var(--pw-muted); font-size: .85rem; flex-basis: 100%; }
+
+/* Cookie message (fixed at the bottom until the visitor chooses) and the Cookie settings dialog. */
+.cookie-banner { position: fixed; inset: auto 0 0 0; z-index: 1040; background: var(--pw-raised); border-top: 1px solid var(--pw-line);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, .12); padding: .9rem 0; font-size: .92rem; }
+.cookie-banner-inner { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.5rem; }
+.cookie-banner-inner p { flex: 1 1 28rem; }
+.cookie-banner-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.cookie-dialog { max-width: 32rem; width: calc(100% - 2rem); border: 1px solid var(--pw-line); border-radius: var(--pw-radius);
+  background: var(--pw-ink-2); color: var(--pw-text); padding: 1.5rem; }
+.cookie-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.link-button { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }

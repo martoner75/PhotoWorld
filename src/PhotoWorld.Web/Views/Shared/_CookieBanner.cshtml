@@ -1,0 +1,45 @@
+@* The cookie message (until the visitor chooses) and the Cookie settings dialog (footer link, any time).
+   PhotoWorld's cookies are all essential; the only optional item is remembering the light/dark choice.
+   site.js saves the choice in the PhotoWorld.Consent cookie ("essential" or "preferences"), for a year. *@
+@{
+    var consent = Context.Request.Cookies["PhotoWorld.Consent"];
+}
+@if (consent is null)
+{
+    <div class="cookie-banner" role="region" aria-label="Cookie message" data-cookie-banner>
+        <div class="container cookie-banner-inner">
+            <p class="mb-0">
+                PhotoWorld uses <strong>essential cookies</strong> to keep you signed in and secure. With your OK, we also
+                remember your light or dark theme in this browser. No analytics or advertising cookies.
+                <a asp-controller="Home" asp-action="Privacy" asp-fragment="cookies">More about cookies</a>
+            </p>
+            <div class="cookie-banner-actions">
+                <button type="button" class="btn btn-ghost btn-sm" data-cookie-settings>Settings</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-cookie-choice="essential">Essential only</button>
+                <button type="button" class="btn btn-accent btn-sm" data-cookie-choice="preferences">Accept all</button>
+            </div>
+        </div>
+    </div>
+}
+
+<dialog class="cookie-dialog" id="cookie-settings" aria-labelledby="cookie-settings-title">
+    <form method="dialog">
+        <h2 id="cookie-settings-title" class="settings-heading">Cookie settings</h2>
+        <label class="check-row">
+            <input type="checkbox" checked disabled />
+            <span><strong>Essential</strong> (always on)<br />
+                <span class="text-muted small">Keep you signed in, protect forms and sign-in against forgery, and carry
+                    one-time messages to the next page. The site can't work without them.</span></span>
+        </label>
+        <label class="check-row">
+            <input type="checkbox" data-cookie-preferences @(consent == "preferences" ? "checked" : "") />
+            <span><strong>Preferences</strong><br />
+                <span class="text-muted small">Remember your light, dark or automatic theme in this browser. Without it, your
+                    choice lasts until you close the browser.</span></span>
+        </label>
+        <div class="form-actions">
+            <button type="submit" value="cancel" class="btn btn-ghost">Cancel</button>
+            <button type="submit" value="save" class="btn btn-accent" data-cookie-save>Save</button>
+        </div>
+    </form>
+</dialog>
