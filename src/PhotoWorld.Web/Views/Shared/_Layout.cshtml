@@ -5,13 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · PhotoWorld</title>
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1e2127" media="(prefers-color-scheme: dark)" />
-    @* Bootstrap's own components (alerts, menus, close buttons) follow the device's light/dark setting, like site.css. *@
+    <meta name="theme-color" content="#ffffff" />
+    @* Light, dark or automatic (follow the device), remembered in this browser. Runs before the page paints, so there's
+       no flash of the wrong colours. site.css and Bootstrap's own components both read the attributes set here. *@
     <script>
         (() => {
             const dark = matchMedia("(prefers-color-scheme: dark)");
-            const apply = () => document.documentElement.dataset.bsTheme = dark.matches ? "dark" : "light";
+            const apply = () => {
+                let choice = "auto";
+                try { choice = localStorage.getItem("pw-theme") || "auto"; } catch { }
+                const theme = choice === "light" || choice === "dark" ? choice : dark.matches ? "dark" : "light";
+                const root = document.documentElement;
+                root.dataset.theme = root.dataset.bsTheme = theme;
+                root.dataset.themeChoice = choice;
+                document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#1e2127" : "#ffffff");
+            };
+            window.pwSetTheme = (choice) => {
+                try { choice === "auto" ? localStorage.removeItem("pw-theme") : localStorage.setItem("pw-theme", choice); } catch { }
+                apply();
+            };
             apply();
             dark.addEventListener("change", apply);
         })();
@@ -106,6 +118,14 @@
     <footer class="site-footer">
         <div class="container">
             &copy; @DateTime.Now.Year PhotoWorld · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <label class="theme-picker">
+                <span>Theme</span>
+                <select data-theme-picker>
+                    <option value="auto">Automatic</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </label>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

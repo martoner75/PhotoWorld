@@ -45,6 +45,32 @@
 
                 <Border Padding="16">
                     <VerticalStackLayout Spacing="10">
+                        <Label Text="Appearance" Style="{StaticResource Subheading}" />
+                        <Label Text="Automatic follows your device's light or dark setting." Style="{StaticResource MutedText}" FontSize="14" />
+                        <Border Padding="3" StrokeShape="RoundRectangle 10">
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="3">
+                                <Button Text="Automatic" Style="{StaticResource SegmentButton}" Command="{Binding SetThemeCommand}" CommandParameter="auto">
+                                    <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ThemeChoice}" Value="auto">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                    </DataTrigger></Button.Triggers>
+                                </Button>
+                                <Button Grid.Column="1" Text="Light" Style="{StaticResource SegmentButton}" Command="{Binding SetThemeCommand}" CommandParameter="light">
+                                    <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ThemeChoice}" Value="light">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                    </DataTrigger></Button.Triggers>
+                                </Button>
+                                <Button Grid.Column="2" Text="Dark" Style="{StaticResource SegmentButton}" Command="{Binding SetThemeCommand}" CommandParameter="dark">
+                                    <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ThemeChoice}" Value="dark">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                    </DataTrigger></Button.Triggers>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="16">
+                    <VerticalStackLayout Spacing="10">
                         <Label Text="Activity" Style="{StaticResource Subheading}" />
                         <Label Text="What shows on your Activity screen (the inbox icon on the Gallery tab)." Style="{StaticResource MutedText}" FontSize="14" />
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Likes on your photos" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityLikes}" /></Grid>

@@ -28,6 +28,23 @@ public static class ThemePalette
         ["PhotoBackground"] = Color.FromArgb("#16181C"), ["Scrim"] = Color.FromArgb("#E01E2127"),
     };
 
+    private const string PreferenceKey = "theme";
+
+    /// <summary>The member's choice on this device: Light, Dark, or Unspecified (Automatic, follow the device).</summary>
+    public static AppTheme Saved => Preferences.Default.Get(PreferenceKey, "auto") switch
+    {
+        "light" => AppTheme.Light,
+        "dark" => AppTheme.Dark,
+        _ => AppTheme.Unspecified,
+    };
+
+    /// <summary>Remembers the choice and switches straight away (the app's RequestedThemeChanged re-applies the palette).</summary>
+    public static void Choose(AppTheme theme)
+    {
+        Preferences.Default.Set(PreferenceKey, theme switch { AppTheme.Light => "light", AppTheme.Dark => "dark", _ => "auto" });
+        Application.Current!.UserAppTheme = theme;
+    }
+
     public static void Apply(ResourceDictionary resources, AppTheme theme)
     {
         foreach (var (key, color) in theme == AppTheme.Dark ? Dark : Light) resources[key] = color;

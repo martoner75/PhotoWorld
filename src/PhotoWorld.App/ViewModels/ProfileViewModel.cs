@@ -52,6 +52,22 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
         _ => "Off.",
     };
 
+    // ----- Appearance: Automatic (follow the device), Light or Dark, remembered on this device -----
+    [ObservableProperty]
+    public partial string ThemeChoice { get; set; } = ThemePalette.Saved switch
+    {
+        AppTheme.Light => "light",
+        AppTheme.Dark => "dark",
+        _ => "auto",
+    };
+
+    [RelayCommand]
+    private void SetTheme(string choice)
+    {
+        ThemeChoice = choice;
+        ThemePalette.Choose(choice switch { "light" => AppTheme.Light, "dark" => AppTheme.Dark, _ => AppTheme.Unspecified });
+    }
+
     // ----- Activity: which kinds of notification the member wants -----
     [ObservableProperty] public partial bool ActivityLikes { get; set; } = true;
     [ObservableProperty] public partial bool ActivityComments { get; set; } = true;

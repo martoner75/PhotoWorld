@@ -42,3 +42,12 @@ document.querySelectorAll("[data-no-save]").forEach((img) => {
   img.addEventListener("contextmenu", (e) => e.preventDefault());
   img.addEventListener("dragstart", (e) => e.preventDefault());
 });
+
+// Theme pickers (footer, account settings): show the current choice and apply a new one straight away.
+document.querySelectorAll("[data-theme-picker]").forEach((select) => {
+  select.value = document.documentElement.dataset.themeChoice || "auto";
+  select.addEventListener("change", () => {
+    window.pwSetTheme(select.value);
+    document.querySelectorAll("[data-theme-picker]").forEach((other) => { other.value = select.value; });
+  });
+});
