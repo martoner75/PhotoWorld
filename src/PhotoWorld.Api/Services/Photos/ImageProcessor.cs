@@ -73,18 +73,22 @@ public sealed class ImageProcessor
     {
         var size = Math.Max(12f, Math.Max(bitmap.Width, bitmap.Height) * 0.024f);
         var margin = size * 0.9f;
-        using var font = new SKFont(WatermarkFont.Value, size);
+        // No hinting and linear metrics: what's measured is what's drawn, on macOS and Linux alike.
+        using var font = new SKFont(WatermarkFont.Value, size)
+        {
+            Hinting = SKFontHinting.None, Subpixel = true, LinearMetrics = true, Edging = SKFontEdging.Antialias,
+        };
         using var paint = new SKPaint { IsAntialias = true, Color = new SKColor(255, 255, 255, 190) };
         paint.ImageFilter = SKImageFilter.CreateDropShadow(0, size * 0.06f, size * 0.12f, size * 0.12f, new SKColor(0, 0, 0, 150));
-        // Never wider than half the photo: long names shrink rather than run off the edge.
-        var width = font.MeasureText(text);
-        if (width > bitmap.Width / 2f)
-        {
-            font.Size = size * (bitmap.Width / 2f) / width;
-            width = font.MeasureText(text);
-        }
+
+        // Never wider than half the photo: long names shrink (down to 10px, still readable), then are shortened with "…".
+        var limit = bitmap.Width / 2f;
+        float Width(string s) { font.MeasureText(s, out var bounds); return bounds.Right; }
+        if (Width(text) > limit) font.Size = Math.Max(10f, font.Size * limit / Width(text));
+        while (text.Length > 2 && Width(text) > limit) text = text[..^(text.EndsWith('…') ? 2 : 1)].TrimEnd() + "…";
+
         using var canvas = new SKCanvas(bitmap);
-        canvas.DrawText(text, bitmap.Width - margin - width, bitmap.Height - margin, SKTextAlign.Left, font, paint);
+        canvas.DrawText(text, bitmap.Width - margin - Width(text), bitmap.Height - margin, SKTextAlign.Left, font, paint);
     }
 
     internal static bool IsHeif(byte[] file) =>
