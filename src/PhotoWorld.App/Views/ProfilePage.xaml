@@ -28,6 +28,8 @@
                                 Command="{Binding OpenMyPageCommand}" />
                         <Button Text="My collections" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenCollectionsCommand}" />
+                        <Button Text="Insights" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenInsightsCommand}" />
                         <Button Text="Photo walks" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenWalksCommand}" />
                         <Button Text="Photo challenges" Style="{StaticResource LinkButton}" HorizontalOptions="Start"

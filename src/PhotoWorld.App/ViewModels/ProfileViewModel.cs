@@ -134,6 +134,9 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     private Task OpenCollectionsAsync() => Shell.Current.GoToAsync(Routes.Collections);
 
     [RelayCommand]
+    private Task OpenInsightsAsync() => Shell.Current.GoToAsync(Routes.Insights);
+
+    [RelayCommand]
     private Task OpenWalksAsync() => Shell.Current.GoToAsync(Routes.Walks);
 
     [RelayCommand]

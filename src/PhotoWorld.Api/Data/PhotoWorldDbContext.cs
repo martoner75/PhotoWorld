@@ -20,6 +20,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<PhotoLike> PhotoLikes => Set<PhotoLike>();
     public DbSet<PhotoTag> PhotoTags => Set<PhotoTag>();
+    public DbSet<PhotoViewDay> PhotoViewDays => Set<PhotoViewDay>();
     public DbSet<PhotoOfTheDay> PhotosOfTheDay => Set<PhotoOfTheDay>();
     public DbSet<PhotoFeedback> PhotoFeedback => Set<PhotoFeedback>();
     public DbSet<PhotoComment> PhotoComments => Set<PhotoComment>();
@@ -87,6 +88,14 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(p => p.CreatedAt).IsDescending();
             e.HasIndex(p => new { p.OwnerId, p.CreatedAt }).IsDescending(false, true);
             e.HasIndex(p => new { p.ShowOnHome, p.CreatedAt }).IsDescending(false, true);
+        });
+
+        modelBuilder.Entity<PhotoViewDay>(e =>
+        {
+            e.ToTable("photo_view_days");
+            e.HasKey(v => new { v.PhotoId, v.Day });
+            e.HasOne(v => v.Photo).WithMany().HasForeignKey(v => v.PhotoId);
+            e.HasIndex(v => v.Day);
         });
 
         modelBuilder.Entity<PhotoTag>(e =>

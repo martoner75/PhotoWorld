@@ -45,6 +45,7 @@ public interface IPhotoWorldApiClient
     /// <summary>Deletes the caller's feedback, or (for the photo's owner) <paramref name="feedbackId"/>.</summary>
     Task<bool> DeleteFeedbackAsync(Guid photoId, Guid? feedbackId, CancellationToken ct = default);
     Task<SearchResultsDto> SearchAsync(string query, CancellationToken ct = default);
+    Task<InsightsDto?> GetInsightsAsync(CancellationToken ct = default);
     /// <summary>Today's photo of the day (or the latest), or null.</summary>
     Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default);
     Task<IReadOnlyList<PhotoOfTheDayScheduleDto>?> GetPhotoOfTheDayScheduleAsync(CancellationToken ct = default);

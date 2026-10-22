@@ -33,6 +33,14 @@ public class MembersController(IPhotoWorldApiClient api) : Controller
         return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Details), new { id });
     }
 
+    /// <summary>The signed-in member's insights: views, likes, followers and comments, and what works best.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Insights(CancellationToken ct)
+    {
+        var insights = await api.GetInsightsAsync(ct);
+        return insights is null ? NotFound() : View(insights);
+    }
+
     /// <summary>Shortcut to the signed-in member's own page.</summary>
     [HttpGet]
     public IActionResult Me() => RedirectToAction(nameof(Details), new { id = User.GetUserId() });

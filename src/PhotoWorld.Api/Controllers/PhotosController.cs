@@ -67,7 +67,25 @@ public class PhotosController(
     public async Task<ActionResult<PhotoDetailDto>> Get(Guid id, CancellationToken ct)
     {
         var detail = await LoadDetailAsync(id, ct);
-        return detail is null ? NotFound() : detail;
+        if (detail is null) return NotFound();
+        if (!detail.CanEdit) await CountViewAsync(id, ct);
+        return detail;
+    }
+
+    /// <summary>Adds one to today's views (a single upsert). A failure never stops the photo from showing.</summary>
+    private async Task CountViewAsync(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            var day = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+            await db.Database.ExecuteSqlInterpolatedAsync($@"
+                insert into photoworld.photo_view_days (photo_id, day, views) values ({id}, {day}, 1)
+                on conflict (photo_id, day) do update set views = photo_view_days.views + 1", ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Could not count a view of photo {PhotoId}", id);
+        }
     }
 
     [HttpPost(ApiRoutes.Photos)]

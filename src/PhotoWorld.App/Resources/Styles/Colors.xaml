@@ -11,6 +11,8 @@
     <Color x:Key="Text">#17181B</Color>
     <Color x:Key="Muted">#6B6F78</Color>
     <Color x:Key="Accent">#C96F14</Color>
+    <Color x:Key="Chart">#C96F14</Color>
+    <Color x:Key="Up">#2E7D4F</Color>
     <Color x:Key="AccentInk">#FFFFFF</Color>
     <Color x:Key="AccentSoft">#FBF1E4</Color>
     <Color x:Key="AccentLine">#ECC89E</Color>

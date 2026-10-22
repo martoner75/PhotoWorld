@@ -1,0 +1,117 @@
+@model InsightsDto
+@{
+    ViewData["Title"] = "Insights";
+    string Compact(int n) => n >= 10_000 ? $"{n / 1000.0:0}K" : n >= 1_000 ? $"{n / 1000.0:0.#}K" : n.ToString("N0");
+}
+
+@functions {
+    // "▲ 12% vs previous 30 days": sign and arrow carry the direction, so it's never colour alone.
+    static (string Text, string Css) Delta(InsightStatDto s)
+    {
+        if (s.Previous == 0) return s.Current == 0 ? ("No change", "is-flat") : ("New this month", "is-up");
+        var change = (s.Current - s.Previous) * 100.0 / s.Previous;
+        if (Math.Abs(change) < 0.5) return ("No change", "is-flat");
+        return change > 0 ? ($"▲ {change:0}%", "is-up") : ($"▼ {-change:0}%", "is-down");
+    }
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Insights</h1>
+            <p class="text-muted">The last 30 days on your photos, compared with the 30 days before. Views are photo pages opened by
+                other members, counted per day; nobody is recorded.</p>
+        </div>
+        <a class="btn btn-ghost" asp-action="Me">Back to my page</a>
+    </header>
+
+    <div class="stat-row">
+        @foreach (var (label, stat) in new[] { ("Views", Model.Views), ("Likes", Model.Likes), ("New followers", Model.NewFollowers), ("Comments", Model.Comments) })
+        {
+            var (text, css) = Delta(stat);
+            <div class="stat-tile">
+                <span class="stat-label">@label</span>
+                <span class="stat-value">@Compact(stat.Current)</span>
+                <span class="stat-delta @css">@text <span class="text-muted">vs previous 30 days</span></span>
+            </div>
+        }
+        <div class="stat-tile">
+            <span class="stat-label">Followers</span>
+            <span class="stat-value">@Compact(Model.Followers)</span>
+            <span class="stat-delta is-flat">@Model.Photos @(Model.Photos == 1 ? "photo" : "photos") shared</span>
+        </div>
+    </div>
+
+    <div class="chart-grid">
+        <figure class="chart-card" data-chart="views">
+            <figcaption><strong>Views per day</strong><span class="text-muted small">last 30 days</span></figcaption>
+            <div class="chart" role="img" aria-label="Column chart of views per day over the last 30 days"></div>
+        </figure>
+        <figure class="chart-card" data-chart="likes">
+            <figcaption><strong>Likes per day</strong><span class="text-muted small">last 30 days</span></figcaption>
+            <div class="chart" role="img" aria-label="Column chart of likes per day over the last 30 days"></div>
+        </figure>
+    </div>
+
+    <details class="chart-table">
+        <summary>Show as a table</summary>
+        <div class="manage-table-wrap">
+            <table class="manage-table">
+                <thead><tr><th>Day</th><th class="num">Views</th><th class="num">Likes</th></tr></thead>
+                <tbody>
+                    @foreach (var d in Model.Days.Reverse())
+                    {
+                        <tr><td>@d.Date.ToString("ddd d MMM")</td><td class="num">@d.Views</td><td class="num">@d.Likes</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </details>
+
+    <div class="insight-lists">
+        <section>
+            <h2 class="section-heading">Top photos</h2>
+            @if (Model.TopPhotos.Count == 0)
+            {
+                <p class="text-muted">No views or likes in the last 30 days yet.</p>
+            }
+            else
+            {
+                <ol class="insight-photos">
+                    @foreach (var t in Model.TopPhotos)
+                    {
+                        <li>
+                            <a asp-controller="Photos" asp-action="Details" asp-route-id="@t.Photo.Id" class="photo-card-owner">
+                                <img src="@t.Photo.ThumbnailUrl" alt="" class="activity-thumb" /> <strong>@t.Photo.Title</strong>
+                            </a>
+                            <span class="text-muted num">@t.Views views · @t.Likes likes</span>
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+        <section>
+            <h2 class="section-heading">Tags that get the most likes</h2>
+            @if (Model.TopTags.Count == 0)
+            {
+                <p class="text-muted">Tag your photos to see which subjects members like most.</p>
+            }
+            else
+            {
+                <ul class="insight-tags">
+                    @foreach (var t in Model.TopTags)
+                    {
+                        <li><a class="tag-chip" asp-controller="Photos" asp-action="Index" asp-route-tag="@t.Tag">#@t.Tag</a>
+                            <span class="text-muted num">@t.Likes likes on @t.Photos @(t.Photos == 1 ? "photo" : "photos")</span></li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+</section>
+
+<script type="application/json" id="insights-data">@Json.Serialize(Model.Days)</script>
+
+@section Scripts {
+    <script src="~/js/insights.js" asp-append-version="true"></script>
+}

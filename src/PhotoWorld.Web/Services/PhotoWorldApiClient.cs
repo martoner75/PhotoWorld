@@ -94,6 +94,8 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         await GetOrNullAsync<SearchResultsDto>($"{ApiRoutes.Search}?q={Uri.EscapeDataString(query)}", ct)
         ?? new SearchResultsDto(query, [], [], [], 0, []);
 
+    public Task<InsightsDto?> GetInsightsAsync(CancellationToken ct = default) => GetOrNullAsync<InsightsDto>(ApiRoutes.Insights, ct);
+
     public async Task<PhotoOfTheDayDto?> GetPhotoOfTheDayAsync(CancellationToken ct = default)
     {
         using var res = await http.GetAsync(ApiRoutes.PhotoOfTheDay, ct);

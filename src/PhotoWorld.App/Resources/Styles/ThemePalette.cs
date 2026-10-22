@@ -13,6 +13,7 @@ public static class ThemePalette
         ["Accent"] = Color.FromArgb("#C96F14"), ["AccentInk"] = Color.FromArgb("#FFFFFF"),
         ["AccentSoft"] = Color.FromArgb("#FBF1E4"), ["AccentLine"] = Color.FromArgb("#ECC89E"),
         ["Danger"] = Color.FromArgb("#B3261E"), ["DangerSoft"] = Color.FromArgb("#FBECEB"), ["DangerLine"] = Color.FromArgb("#E9B8B4"),
+        ["Chart"] = Color.FromArgb("#C96F14"), ["Up"] = Color.FromArgb("#2E7D4F"),
         ["PhotoBackground"] = Color.FromArgb("#F1F0ED"), ["Scrim"] = Color.FromArgb("#E0FFFFFF"),
     };
 
@@ -23,6 +24,7 @@ public static class ThemePalette
         ["Accent"] = Color.FromArgb("#F2A541"), ["AccentInk"] = Color.FromArgb("#1A1206"),
         ["AccentSoft"] = Color.FromArgb("#33291A"), ["AccentLine"] = Color.FromArgb("#6B5021"),
         ["Danger"] = Color.FromArgb("#F19999"), ["DangerSoft"] = Color.FromArgb("#3A1E1E"), ["DangerLine"] = Color.FromArgb("#6B2A2A"),
+        ["Chart"] = Color.FromArgb("#CF7F22"), ["Up"] = Color.FromArgb("#6EC88C"),
         ["PhotoBackground"] = Color.FromArgb("#16181C"), ["Scrim"] = Color.FromArgb("#E01E2127"),
     };
 

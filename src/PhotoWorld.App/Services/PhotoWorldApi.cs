@@ -190,6 +190,8 @@ public sealed class PhotoWorldApi(HttpClient http)
 
     public Task MarkActivityReadAsync(CancellationToken ct = default) => SendAsync(HttpMethod.Post, ApiRoutes.ActivityRead, null, ct);
 
+    public Task<InsightsDto> GetInsightsAsync(CancellationToken ct = default) => GetAsync<InsightsDto>(ApiRoutes.Insights, ct);
+
     public Task<ActivitySettingsDto> GetActivitySettingsAsync(CancellationToken ct = default) =>
         GetAsync<ActivitySettingsDto>(ApiRoutes.ActivitySettings, ct);
 

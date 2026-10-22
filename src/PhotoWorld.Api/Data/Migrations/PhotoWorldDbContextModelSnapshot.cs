@@ -1118,6 +1118,29 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("photo_tags", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoViewDay", b =>
+                {
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.Property<int>("Views")
+                        .HasColumnType("integer")
+                        .HasColumnName("views");
+
+                    b.HasKey("PhotoId", "Day")
+                        .HasName("pk_photo_view_days");
+
+                    b.HasIndex("Day")
+                        .HasDatabaseName("ix_photo_view_days_day");
+
+                    b.ToTable("photo_view_days", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Place", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1821,6 +1844,18 @@ namespace PhotoWorld.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_photo_tags_photos_photo_id");
+
+                    b.Navigation("Photo");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PhotoViewDay", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_view_days_photos_photo_id");
 
                     b.Navigation("Photo");
                 });

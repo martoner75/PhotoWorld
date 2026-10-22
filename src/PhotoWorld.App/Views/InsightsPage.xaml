@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:views="clr-namespace:PhotoWorld.App.Views"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos;assembly=PhotoWorld.Shared"
+             x:Class="PhotoWorld.App.Views.InsightsPage"
+             x:DataType="vm:InsightsViewModel"
+             Title="Insights">
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16,12" Spacing="14">
+                <Label Text="The last 30 days on your photos, compared with the 30 days before. Views are photo pages opened by other members, counted per day; nobody is recorded."
+                       Style="{StaticResource MutedText}" FontSize="14" />
+
+                <FlexLayout BindableLayout.ItemsSource="{Binding Tiles}" Wrap="Wrap" JustifyContent="SpaceBetween">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:InsightTile">
+                            <Border Padding="12,10" Margin="0,0,0,10" FlexLayout.Basis="48%" BackgroundColor="{DynamicResource Ink2}"
+                                    Stroke="{DynamicResource Line}" StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding Label}" Style="{StaticResource MutedText}" FontSize="13" />
+                                    <Label Text="{Binding Value}" FontSize="26" FontAttributes="Bold" TextColor="{DynamicResource Text}" />
+                                    <Label Text="{Binding Change}" FontSize="12" TextColor="{DynamicResource Muted}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsUp}" Value="True">
+                                                <Setter Property="TextColor" Value="{DynamicResource Up}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsDown}" Value="True">
+                                                <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+
+                <Border Padding="12,10" BackgroundColor="{DynamicResource Ink2}" Stroke="{DynamicResource Line}" StrokeShape="RoundRectangle 12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Views per day" Style="{StaticResource Strong}" />
+                        <Label Style="{StaticResource MutedText}" FontSize="13"
+                               Text="{Binding Selected, Source={x:Reference ViewsChart}, x:DataType=views:ColumnChart}" />
+                        <views:ColumnChart x:Name="ViewsChart" Days="{Binding Days}" Measure="views" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="12,10" BackgroundColor="{DynamicResource Ink2}" Stroke="{DynamicResource Line}" StrokeShape="RoundRectangle 12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Likes per day" Style="{StaticResource Strong}" />
+                        <Label Style="{StaticResource MutedText}" FontSize="13"
+                               Text="{Binding Selected, Source={x:Reference LikesChart}, x:DataType=views:ColumnChart}" />
+                        <views:ColumnChart x:Name="LikesChart" Days="{Binding Days}" Measure="likes" />
+                    </VerticalStackLayout>
+                </Border>
+                <Label Text="Tap or drag across a chart to see each day." Style="{StaticResource MutedText}" FontSize="12" />
+
+                <Label Text="Top photos" Style="{StaticResource Subheading}" />
+                <Label Text="No views or likes in the last 30 days yet." Style="{StaticResource MutedText}"
+                       IsVisible="{Binding HasTopPhotos, Converter={StaticResource Not}}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding TopPhotos}" Spacing="8">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="dto:InsightPhotoDto">
+                            <Grid ColumnDefinitions="56,*" ColumnSpacing="10">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:InsightsViewModel}}, x:DataType=vm:InsightsViewModel}"
+                                                          CommandParameter="{Binding .}" />
+                                </Grid.GestureRecognizers>
+                                <Border Padding="0" StrokeShape="RoundRectangle 8" HeightRequest="56">
+                                    <Image Source="{Binding Photo.ThumbnailUrl}" Aspect="AspectFill" BackgroundColor="{DynamicResource PhotoBackground}" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                    <Label Text="{Binding Photo.Title}" Style="{StaticResource Strong}" LineBreakMode="TailTruncation" />
+                                    <Label Style="{StaticResource MutedText}" FontSize="13">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{Binding Views}" /><Span Text=" views · " /><Span Text="{Binding Likes}" /><Span Text=" likes" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="Tags that get the most likes" Style="{StaticResource Subheading}" />
+                <Label Text="Tag your photos to see which subjects members like most." Style="{StaticResource MutedText}"
+                       IsVisible="{Binding HasTopTags, Converter={StaticResource Not}}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding TopTags}" Spacing="6" Margin="0,0,0,24">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="dto:InsightTagDto">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="{Binding Tag, StringFormat='#{0}'}" Style="{StaticResource Strong}" />
+                                <Label Grid.Column="1" Style="{StaticResource MutedText}" FontSize="13">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding Likes}" /><Span Text=" likes on " /><Span Text="{Binding Photos}" /><Span Text=" photos" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

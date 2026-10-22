@@ -66,6 +66,15 @@ public class PhotoFeedback
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
+/// <summary>How many times other members opened a photo's page on a day (UTC). Counts only: viewers aren't recorded.</summary>
+public class PhotoViewDay
+{
+    public Guid PhotoId { get; set; }
+    public Photo Photo { get; set; } = null!;
+    public DateOnly Day { get; set; }
+    public int Views { get; set; }
+}
+
 /// <summary>A tag on a photo, stored normalised without '#' (see PhotoTags).</summary>
 public class PhotoTag
 {
