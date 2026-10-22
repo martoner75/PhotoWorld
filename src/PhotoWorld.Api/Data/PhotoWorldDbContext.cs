@@ -88,6 +88,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(p => p.CreatedAt).IsDescending();
             e.HasIndex(p => new { p.OwnerId, p.CreatedAt }).IsDescending(false, true);
             e.HasIndex(p => new { p.ShowOnHome, p.CreatedAt }).IsDescending(false, true);
+            e.Property(p => p.AllowDownload).HasDefaultValue(true).HasSentinel(true);
         });
 
         modelBuilder.Entity<PhotoViewDay>(e =>
@@ -357,8 +358,10 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
         modelBuilder.Entity<ActivitySettings>(e =>
         {
             e.HasKey(s => s.UserId);
-            e.Property(s => s.Push).HasDefaultValue(true);
-            e.Property(s => s.Walks).HasDefaultValue(true);
+            // Sentinel true: EF leaves "on" to the column default and always writes "off" (with the CLR default
+            // false as sentinel, a new row saved with false would silently get the database's true).
+            e.Property(s => s.Push).HasDefaultValue(true).HasSentinel(true);
+            e.Property(s => s.Walks).HasDefaultValue(true).HasSentinel(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 

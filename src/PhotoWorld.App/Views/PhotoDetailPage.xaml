@@ -41,6 +41,8 @@
                             </Button.Triggers>
                         </Button>
                         <Button Text="＋ Save" Command="{Binding SaveToCollectionCommand}" Style="{StaticResource GhostButton}" Padding="14,8" />
+                        <Button Text="Share" Command="{Binding ShareCommand}" Style="{StaticResource GhostButton}" Padding="14,8"
+                                IsVisible="{Binding CanShare}" />
                         <Label VerticalOptions="Center" Style="{StaticResource MutedText}"
                                Text="{Binding Comments.Count, StringFormat='{0} comments'}" />
                     </HorizontalStackLayout>
@@ -58,6 +60,8 @@
                     </FlexLayout>
                     <Button Text="{Binding FeedbackButton}" Style="{StaticResource GhostButton}" HorizontalOptions="Start" Padding="14,8"
                             Command="{Binding OpenFeedbackCommand}" IsVisible="{Binding HasFeedbackButton}" />
+                    <Button Text="{Binding DownloadsLabel}" Style="{StaticResource LinkButton}" HorizontalOptions="Start" Padding="0,2"
+                            Command="{Binding ToggleDownloadsCommand}" IsVisible="{Binding DownloadsLabel, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding Photo.Description}" FontSize="16"
                            IsVisible="{Binding Photo.Description, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding CameraSummary}" Style="{StaticResource MutedText}"

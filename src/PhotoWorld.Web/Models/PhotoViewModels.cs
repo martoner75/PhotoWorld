@@ -36,6 +36,9 @@ public sealed class UploadPhotoViewModel
 
     public bool WantsFeedback { get; set; }
 
+    public bool Watermark { get; set; }
+    public bool AllowDownload { get; set; } = true;
+
     /// <summary>The member's places for the picker (filled in by the controller).</summary>
     public IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places { get; set; } = [];
 }
@@ -61,7 +64,13 @@ public sealed class EditPhotoViewModel
     public string? Tags { get; set; }
 
     public bool WantsFeedback { get; set; }
+
+    public bool AllowDownload { get; set; } = true;
+    public bool Watermarked { get; set; }
 }
+
+/// <summary>Upload and edit: the watermark (upload only) and the "allow downloads" switch.</summary>
+public sealed record ProtectionFieldViewModel(bool CanWatermark, bool Watermark, bool AllowDownload);
 
 /// <summary>The Spots map; <see cref="Focus"/> is a photo to open on arrival.</summary>
 public sealed record SpotsPageViewModel(IReadOnlyList<PhotoSpotDto> Spots, Guid? Focus);

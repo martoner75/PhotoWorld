@@ -88,7 +88,7 @@ public sealed class PhotoWorldApi(HttpClient http)
 
     public async Task<PhotoDetailDto> UploadPhotoAsync(Stream file, string fileName, string contentType, string title,
         string? description, bool showOnHome, Guid? placeId = null, string? tags = null, bool wantsFeedback = false,
-        CancellationToken ct = default)
+        bool watermark = false, bool allowDownload = true, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var content = new StreamContent(file);
@@ -100,7 +100,19 @@ public sealed class PhotoWorldApi(HttpClient http)
         if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
         if (!string.IsNullOrWhiteSpace(tags)) form.Add(new StringContent(tags), "tags");
         form.Add(new StringContent(wantsFeedback ? "true" : "false"), "wantsFeedback");
+        form.Add(new StringContent(watermark ? "true" : "false"), "watermark");
+        form.Add(new StringContent(allowDownload ? "true" : "false"), "allowDownload");
         return await SendAsync<PhotoDetailDto>(HttpMethod.Post, ApiRoutes.Photos, form, ct);
+    }
+
+    public Task<PhotoDetailDto> UpdatePhotoAsync(Guid id, UpdatePhotoRequest request, CancellationToken ct = default) =>
+        SendAsync<PhotoDetailDto>(HttpMethod.Put, WithId(ApiRoutes.Photo, id), JsonContent.Create(request, options: Json), ct);
+
+    /// <summary>A public image (storage URL), fetched without the member's token.</summary>
+    public static async Task<byte[]> DownloadImageAsync(string url, CancellationToken ct = default)
+    {
+        using var http = new HttpClient();
+        return await http.GetByteArrayAsync(url, ct);
     }
 
     public Task<LikeStateDto> SetLikeAsync(Guid id, bool liked, CancellationToken ct = default) =>

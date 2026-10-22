@@ -53,7 +53,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return View(model);
         }
 
-        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags, model.WantsFeedback, ct);
+        var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags, model.WantsFeedback, model.Watermark, model.AllowDownload, ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
@@ -75,7 +75,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     [RequestSizeLimit(PhotoUploadLimits.MaxBytes + 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
     public async Task<IActionResult> UploadOne(IFormFile? photo, string? title, string? description, string? tags, Guid? placeId,
-        bool wantsFeedback, bool showOnHome, CancellationToken ct)
+        bool wantsFeedback, bool showOnHome, bool watermark, bool allowDownload, CancellationToken ct)
     {
         if (photo is null || photo.Length == 0) return BadRequest(new { error = "Choose a photo." });
         if (string.IsNullOrWhiteSpace(title)) return BadRequest(new { error = "Give the photo a title." });
@@ -83,7 +83,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return BadRequest(new { error = $"Photos can be up to {PhotoUploadLimits.MaxBytes / (1024 * 1024)} MB." });
 
         var result = await api.UploadPhotoAsync(photo, title.Trim(), string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
-            showOnHome, placeId, tags, wantsFeedback, ct);
+            showOnHome, placeId, tags, wantsFeedback, watermark, allowDownload, ct);
         return result.Succeeded
             ? Json(new { id = result.Value!.Id, url = Url.Action(nameof(Details), new { id = result.Value.Id }) })
             : BadRequest(new { error = result.Errors.Values.SelectMany(m => m).FirstOrDefault() ?? "That photo couldn't be uploaded." });
@@ -100,6 +100,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             Id = photo.Id, ThumbnailUrl = photo.ThumbnailUrl, Title = photo.Title, Description = photo.Description,
             ShowOnHome = photo.ShowOnHome, PlaceId = photo.Place?.Id, Places = await api.GetPlacesAsync(ct),
             Tags = PhotoTags.Join(photo.Tags), WantsFeedback = photo.WantsFeedback,
+            AllowDownload = photo.AllowDownload, Watermarked = photo.Watermarked,
         });
     }
 
@@ -112,7 +113,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return View(model);
         }
 
-        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags ?? "", model.WantsFeedback), ct);
+        var result = await api.UpdatePhotoAsync(id, new UpdatePhotoRequest(model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags ?? "", model.WantsFeedback, model.AllowDownload), ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);

@@ -66,6 +66,8 @@
 	<!-- Shown by iOS when the app first asks. -->
 	<key>NSCameraUsageDescription</key>
 	<string>PhotoWorld uses the camera when you choose to take a photo to share.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PhotoWorld saves a photo to your library when you choose Save Image after sharing it.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>PhotoWorld opens your photo library when you choose a photo to share. Only the photo you pick is uploaded.</string>
 

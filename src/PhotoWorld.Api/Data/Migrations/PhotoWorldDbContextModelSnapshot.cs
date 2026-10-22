@@ -825,6 +825,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<bool>("AllowDownload")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("allow_download");
+
                     b.Property<decimal?>("Aperture")
                         .HasPrecision(4, 1)
                         .HasColumnType("numeric(4,1)")
@@ -917,6 +923,10 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Property<bool>("WantsFeedback")
                         .HasColumnType("boolean")
                         .HasColumnName("wants_feedback");
+
+                    b.Property<bool>("Watermarked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("watermarked");
 
                     b.Property<int>("Width")
                         .HasColumnType("integer")

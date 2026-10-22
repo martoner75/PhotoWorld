@@ -38,6 +38,15 @@ public class Photo
 
     public List<PhotoFeedback> Feedback { get; set; } = [];
 
+    /// <summary>
+    /// Off: the site and apps hide "open full size" and saving, and discourage right-click and dragging. A deterrent,
+    /// not a lock: the image is still sent to the browser to be shown.
+    /// </summary>
+    public bool AllowDownload { get; set; } = true;
+
+    /// <summary>The owner's name was drawn on the image at upload (it can't be removed later; originals aren't kept).</summary>
+    public bool Watermarked { get; set; }
+
     /// <summary>The owner opted in to the public home-page slideshow.</summary>
     public bool ShowOnHome { get; set; }
 

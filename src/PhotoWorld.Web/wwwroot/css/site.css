@@ -675,3 +675,6 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .insight-photos, .insight-tags { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
 .insight-photos li, .insight-tags li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .insight-photos .photo-card-owner { color: var(--pw-text); }
+
+/* Downloads off: no long-press "Save image" on iOS, no selection highlight. */
+img.no-save { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }

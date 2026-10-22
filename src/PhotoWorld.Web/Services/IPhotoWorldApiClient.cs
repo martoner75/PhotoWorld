@@ -38,7 +38,7 @@ public interface IPhotoWorldApiClient
     Task<CameraOptionsDto> GetCameraOptionsAsync(CancellationToken ct = default);
     Task<PhotoDetailDto?> GetPhotoAsync(Guid id, CancellationToken ct = default);
     Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
-        string? tags = null, bool wantsFeedback = false, CancellationToken ct = default);
+        string? tags = null, bool wantsFeedback = false, bool watermark = false, bool allowDownload = true, CancellationToken ct = default);
     Task<PhotoFeedbackDto?> GetFeedbackAsync(Guid photoId, CancellationToken ct = default);
     /// <summary>Null on success, otherwise a message for the member.</summary>
     Task<string?> SaveFeedbackAsync(Guid photoId, SaveFeedbackRequest request, CancellationToken ct = default);

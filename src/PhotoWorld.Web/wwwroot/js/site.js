@@ -36,3 +36,9 @@ document.querySelectorAll("time[data-local-time]").forEach((el) => {
     ? d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : d.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 });
+
+// Photos whose owner turned downloads off: no "Save image as…" menu and no dragging the image out. A deterrent only.
+document.querySelectorAll("[data-no-save]").forEach((img) => {
+  img.addEventListener("contextmenu", (e) => e.preventDefault());
+  img.addEventListener("dragstart", (e) => e.preventDefault());
+});

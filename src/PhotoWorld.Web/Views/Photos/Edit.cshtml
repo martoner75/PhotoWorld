@@ -34,6 +34,12 @@
 
         <partial name="_FeedbackField" model="Model.WantsFeedback" />
 
+        <partial name="_ProtectionField" model="new ProtectionFieldViewModel(false, false, Model.AllowDownload)" />
+        @if (Model.Watermarked)
+        {
+            <p class="text-muted small">This photo carries your name as a watermark.</p>
+        }
+
         <partial name="_ShowOnHomeField" model="Model.ShowOnHome" />
 
         <div class="form-actions">

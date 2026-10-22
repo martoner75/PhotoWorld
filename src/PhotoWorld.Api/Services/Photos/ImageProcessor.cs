@@ -32,7 +32,12 @@ public sealed class ImageProcessor
     // ISO base media "ftyp" brands used by HEIC/HEIF stills (iPhone photos are "heic").
     private static readonly string[] HeifBrands = ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"];
 
-    public ProcessedPhoto Process(byte[] file)
+    // Open Sans (open font licence; the same file the app ships), embedded: the Linux build of Skia has no system fonts.
+    private static readonly Lazy<SKTypeface> WatermarkFont = new(() =>
+        SKTypeface.FromStream(typeof(ImageProcessor).Assembly.GetManifestResourceStream("watermark-font.ttf")!));
+
+    /// <param name="watermark">Text drawn in the bottom-right corner of the display image (not the thumbnail), or null.</param>
+    public ProcessedPhoto Process(byte[] file, string? watermark = null)
     {
         if (file.Length == 0) throw new ImageValidationException("The file is empty.");
         if (file.Length > PhotoUploadLimits.MaxBytes)
@@ -54,10 +59,32 @@ public sealed class ImageProcessor
 
         using var decoded = DecodeForDisplay(codec);
         using var oriented = ApplyOrientation(decoded, codec.EncodedOrigin);
-        return new ProcessedPhoto(
-            EncodeJpeg(oriented, DisplayMaxSide, DisplayQuality),
-            EncodeJpeg(oriented, ThumbnailMaxSide, ThumbnailQuality),
-            camera);
+        var thumbnail = EncodeJpeg(oriented, ThumbnailMaxSide, ThumbnailQuality);
+        using var display = Resize(oriented, DisplayMaxSide);
+        if (!string.IsNullOrWhiteSpace(watermark)) DrawWatermark(display, watermark.Trim());
+        return new ProcessedPhoto(Encode(display, DisplayQuality), thumbnail, camera);
+    }
+
+    /// <summary>
+    /// Light text with a soft shadow, sized to the image (about 2.4% of the long side) so it reads on bright and dark
+    /// photos alike without covering the subject.
+    /// </summary>
+    internal static void DrawWatermark(SKBitmap bitmap, string text)
+    {
+        var size = Math.Max(12f, Math.Max(bitmap.Width, bitmap.Height) * 0.024f);
+        var margin = size * 0.9f;
+        using var font = new SKFont(WatermarkFont.Value, size);
+        using var paint = new SKPaint { IsAntialias = true, Color = new SKColor(255, 255, 255, 190) };
+        paint.ImageFilter = SKImageFilter.CreateDropShadow(0, size * 0.06f, size * 0.12f, size * 0.12f, new SKColor(0, 0, 0, 150));
+        // Never wider than half the photo: long names shrink rather than run off the edge.
+        var width = font.MeasureText(text);
+        if (width > bitmap.Width / 2f)
+        {
+            font.Size = size * (bitmap.Width / 2f) / width;
+            width = font.MeasureText(text);
+        }
+        using var canvas = new SKCanvas(bitmap);
+        canvas.DrawText(text, bitmap.Width - margin - width, bitmap.Height - margin, SKTextAlign.Left, font, paint);
     }
 
     internal static bool IsHeif(byte[] file) =>
@@ -136,17 +163,26 @@ public sealed class ImageProcessor
 
     private static EncodedImage EncodeJpeg(SKBitmap source, int maxSide, int quality)
     {
+        using var resized = Resize(source, maxSide);
+        return Encode(resized, quality);
+    }
+
+    private static SKBitmap Resize(SKBitmap source, int maxSide)
+    {
         var scale = Math.Min(1f, maxSide / (float)Math.Max(source.Width, source.Height));
         var width = Math.Max(1, (int)Math.Round(source.Width * scale));
         var height = Math.Max(1, (int)Math.Round(source.Height * scale));
-
-        using var resized = scale < 1f
+        return scale < 1f
             ? source.Resize(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Opaque),
                 new SKSamplingOptions(SKCubicResampler.Mitchell))
             : source.Copy();
-        using var image = SKImage.FromBitmap(resized);
+    }
+
+    private static EncodedImage Encode(SKBitmap bitmap, int quality)
+    {
+        using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Jpeg, quality);
-        return new EncodedImage(data.ToArray(), width, height);
+        return new EncodedImage(data.ToArray(), bitmap.Width, bitmap.Height);
     }
 
     internal static CameraDetailsDto ReadCamera(byte[] file)

@@ -134,7 +134,7 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         await GetOrNullAsync<List<ShowcasePhotoDto>>(ApiRoutes.Showcase, ct) ?? [];
 
     public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
-        string? tags = null, bool wantsFeedback = false, CancellationToken ct = default)
+        string? tags = null, bool wantsFeedback = false, bool watermark = false, bool allowDownload = true, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var fileContent = new StreamContent(file.OpenReadStream());
@@ -147,6 +147,8 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         if (placeId is not null) form.Add(new StringContent(placeId.Value.ToString()), "placeId");
         if (!string.IsNullOrWhiteSpace(tags)) form.Add(new StringContent(tags), "tags");
         form.Add(new StringContent(wantsFeedback ? "true" : "false"), "wantsFeedback");
+        form.Add(new StringContent(watermark ? "true" : "false"), "watermark");
+        form.Add(new StringContent(allowDownload ? "true" : "false"), "allowDownload");
 
         using var res = await http.PostAsync(ApiRoutes.Photos, form, ct);
         return await ReadResultAsync<PhotoDetailDto>(res, ct);

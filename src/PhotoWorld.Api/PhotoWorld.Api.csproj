@@ -28,6 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Services\Photos\OpenSans-Semibold.ttf" LogicalName="watermark-font.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="PhotoWorld.Api.Tests" />
   </ItemGroup>
 

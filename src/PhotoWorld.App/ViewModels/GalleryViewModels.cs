@@ -257,8 +257,40 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(AspectHeight),
         nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags), nameof(FeaturedLabel),
-        nameof(FeedbackButton), nameof(HasFeedbackButton))]
+        nameof(FeedbackButton), nameof(HasFeedbackButton), nameof(CanShare), nameof(DownloadsLabel))]
     public partial PhotoDetailDto? Photo { get; set; }
+
+    /// <summary>Sharing (and so saving) the full-size image, unless the owner turned downloads off.</summary>
+    public bool CanShare => Photo is { } p && (p.AllowDownload || p.CanEdit);
+
+    /// <summary>The owner's switch, as a link: "Downloads on · turn off".</summary>
+    public string? DownloadsLabel => Photo is { CanEdit: true } p
+        ? p.AllowDownload ? "Downloads on · turn off" : "Downloads off · turn on" : null;
+
+    [RelayCommand]
+    private Task ShareAsync() => RunAsync(async () =>
+    {
+        if (Photo is not { } p || !CanShare) return;
+        var path = Path.Combine(FileSystem.CacheDirectory, $"photoworld-{p.Id:N}.jpg");
+        try
+        {
+            await File.WriteAllBytesAsync(path, await PhotoWorldApi.DownloadImageAsync(p.ImageUrl));
+        }
+        catch (HttpRequestException)
+        {
+            await Ui.AlertAsync("The photo couldn't be downloaded. Check your connection and try again.");
+            return;
+        }
+        await Share.Default.RequestAsync(new ShareFileRequest(p.Title, new ShareFile(path, "image/jpeg")));
+    });
+
+    [RelayCommand]
+    private Task ToggleDownloadsAsync() => RunAsync(async () =>
+    {
+        if (Photo is not { CanEdit: true } p) return;
+        Photo = await api.UpdatePhotoAsync(p.Id, new UpdatePhotoRequest(p.Title, p.Description, p.ShowOnHome, p.Place?.Id,
+            PhotoTags.Join(p.Tags ?? []), p.WantsFeedback, !p.AllowDownload));
+    });
 
     public bool HasCamera => Photo?.Camera is { } c && (c.Model ?? c.Make) is not null;
     public bool HasLens => Photo?.Camera.Lens is not null;

@@ -1,0 +1,22 @@
+@model ProtectionFieldViewModel
+@* Watermark only at upload (it's drawn into the image, and originals aren't kept); downloads can change any time. *@
+@if (Model.CanWatermark)
+{
+    <label class="check-row">
+        <input type="checkbox" name="Watermark" value="true" @(Model.Watermark ? "checked" : "") />
+        <span>
+            <strong>Add my name as a watermark</strong>
+            <span class="text-muted small d-block">"© your name" in the bottom-right corner. It's part of the image and can't be removed later.</span>
+        </span>
+    </label>
+    <input type="hidden" name="Watermark" value="false" />
+}
+<label class="check-row">
+    <input type="checkbox" name="AllowDownload" value="true" @(Model.AllowDownload ? "checked" : "") />
+    <span>
+        <strong>Allow downloads</strong>
+        <span class="text-muted small d-block">When off, PhotoWorld hides "open full size" and saving, and discourages right-click and dragging.
+            It's a deterrent: anything shown on a screen can still be captured.</span>
+    </span>
+</label>
+<input type="hidden" name="AllowDownload" value="false" />

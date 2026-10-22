@@ -14,9 +14,17 @@
 
 <section class="container page photo-page">
     <div class="photo-stage">
-        <a href="@p.ImageUrl" target="_blank" rel="noopener" title="Open full size">
-            <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" />
-        </a>
+        @if (p.AllowDownload || p.CanEdit)
+        {
+            <a href="@p.ImageUrl" target="_blank" rel="noopener" title="Open full size">
+                <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" />
+            </a>
+        }
+        else
+        {
+            @* The owner turned downloads off: no full-size link, no right-click "save image", no dragging out. *@
+            <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" class="no-save" draggable="false" data-no-save />
+        }
     </div>
 
     <aside class="photo-panel">
@@ -34,6 +42,10 @@
             @if (p.CanEdit && p.ShowOnHome)
             {
                 <span class="home-badge" title="This photo appears in the public home-page slideshow">· On the home page</span>
+            }
+            @if (p.CanEdit && !p.AllowDownload)
+            {
+                <span title="Other members don't get the full-size link or saving">· Downloads off</span>
             }
         </p>
 

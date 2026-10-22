@@ -60,6 +60,13 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
     [ObservableProperty]
     public partial bool WantsFeedback { get; set; }
 
+    /// <summary>"© name" drawn into the image at upload; it can't be taken off later.</summary>
+    [ObservableProperty]
+    public partial bool Watermark { get; set; }
+
+    [ObservableProperty]
+    public partial bool AllowDownload { get; set; } = true;
+
     // "Where was it taken?": one of the member's places (index 0 = none), to show the photo on the Spots map.
     private List<PlaceDto> _places = [];
 
@@ -152,7 +159,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
             {
                 await using var stream = await item.File.OpenReadAsync();
                 await api.UploadPhotoAsync(stream, item.File.FileName, ContentTypeOf(item.File), item.Title.Trim(),
-                    Description.Trim(), ShowOnHome, placeId, Tags, WantsFeedback);
+                    Description.Trim(), ShowOnHome, placeId, Tags, WantsFeedback, Watermark, AllowDownload);
                 (item.Status, item.Done) = ("✓ Uploaded", true);
             }
             catch (ApiException ex)
@@ -186,7 +193,8 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         }
 
         var photo = await api.UploadPhotoAsync(stream, _file.FileName, ContentTypeOf(_file), Title.Trim(),
-            Description.Trim(), ShowOnHome, PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : null, Tags, WantsFeedback);
+            Description.Trim(), ShowOnHome, PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : null, Tags, WantsFeedback,
+            Watermark, AllowDownload);
         Reset();
         WeakReferenceMessenger.Default.Send(new PhotoUploadedMessage(photo.Id));
         await Shell.Current.GoToAsync($"{Routes.Gallery}/{Routes.Photo}", new ShellNavigationQueryParameters { ["id"] = photo.Id });
@@ -200,6 +208,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         Batch.Clear();
         IsBatch = false;
         (Title, Description, ShowOnHome, PlaceIndex, Tags, WantsFeedback) = ("", "", false, 0, "", false);
+        (Watermark, AllowDownload) = (false, true);
     }
 
     /// <summary>iOS often reports a UTI rather than a MIME type, so go by the file extension the picker gives.</summary>

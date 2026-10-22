@@ -94,7 +94,7 @@ public class PhotosController(
     public async Task<ActionResult<PhotoDetailDto>> Upload(
         [FromForm] IFormFile? file, [FromForm] string? title, [FromForm] string? description,
         [FromForm] bool showOnHome, [FromForm] Guid? placeId, [FromForm] string? tags, [FromForm] bool wantsFeedback,
-        CancellationToken ct)
+        [FromForm] bool watermark, [FromForm] bool? allowDownload, CancellationToken ct)
     {
         if (CurrentUserId() is not { } userId || !await db.Users.AnyAsync(u => u.Id == userId, ct)) return Unauthorized();
 
@@ -112,7 +112,8 @@ public class PhotosController(
         {
             using var buffer = new MemoryStream((int)file!.Length);
             await file.CopyToAsync(buffer, ct);
-            processed = images.Process(buffer.ToArray());
+            var mark = watermark ? $"© {await db.Users.Where(u => u.Id == userId).Select(u => u.DisplayName).SingleAsync(ct)}" : null;
+            processed = images.Process(buffer.ToArray(), mark);
         }
         catch (ImageValidationException ex)
         {
@@ -142,6 +143,8 @@ public class PhotosController(
             ShowOnHome = showOnHome,
             PlaceId = placeId,
             WantsFeedback = wantsFeedback,
+            Watermarked = watermark,
+            AllowDownload = allowDownload ?? true,
             Tags = PhotoTags.Parse(tags, description).Select(name => new PhotoTag { Name = name }).ToList(),
             CreatedAt = now,
             UpdatedAt = now,
@@ -186,6 +189,7 @@ public class PhotosController(
         photo.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         photo.ShowOnHome = request.ShowOnHome;
         if (request.WantsFeedback is { } wants) photo.WantsFeedback = wants;
+        if (request.AllowDownload is { } allow) photo.AllowDownload = allow;
         // Clients that don't send tags (older apps) leave them alone; #hashtags in the description always count.
         var tagNames = PhotoTags.Parse(request.Tags ?? PhotoTags.Join(photo.Tags.Select(t => t.Name)), photo.Description);
         photo.Tags.RemoveAll(t => !tagNames.Contains(t.Name));
@@ -386,7 +390,9 @@ public class PhotosController(
             Place: row.Place,
             Tags: row.Tags,
             PhotoOfTheDay: row.Featured,
-            WantsFeedback: p.WantsFeedback);
+            WantsFeedback: p.WantsFeedback,
+            AllowDownload: p.AllowDownload,
+            Watermarked: p.Watermarked);
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(

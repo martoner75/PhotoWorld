@@ -83,6 +83,22 @@
                 </Grid>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout>
+                        <Label Text="Add my name as a watermark" Style="{StaticResource Strong}" />
+                        <Label Text="“© your name” in the bottom-right corner. It's part of the image and can't be removed later."
+                               Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding Watermark}" VerticalOptions="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Allow downloads" Style="{StaticResource Strong}" />
+                        <Label Text="When off, PhotoWorld hides sharing and saving the full-size photo. A deterrent: screens can still be captured."
+                               Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding AllowDownload}" VerticalOptions="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
                         <Label Text="Show on the PhotoWorld home page" Style="{StaticResource Strong}" />
                         <Label Text="Anyone can see it in the public slideshow, with your name. Off by default."
                                Style="{StaticResource MutedText}" />

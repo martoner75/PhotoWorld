@@ -22,6 +22,41 @@ public class ImageProcessorTests
     }
 
     [Fact]
+    public void Watermark_is_drawn_bottom_right_on_the_display_image_only()
+    {
+        var plain = _processor.Process(TestImages.Jpeg(1200, 800));
+        var marked = _processor.Process(TestImages.Jpeg(1200, 800), "© Ada Lovelace");
+
+        static int Changed(byte[] a, byte[] b, SKRectI area)
+        {
+            using var x = SKBitmap.Decode(a);
+            using var y = SKBitmap.Decode(b);
+            var changed = 0;
+            for (var i = area.Left; i < area.Right; i++)
+            for (var j = area.Top; j < area.Bottom; j++)
+                if (Math.Abs(x.GetPixel(i, j).Red - y.GetPixel(i, j).Red) > 40) changed++;
+            return changed;
+        }
+
+        Assert.True(Changed(plain.Display.Bytes, marked.Display.Bytes, new SKRectI(700, 700, 1200, 800)) > 200);
+        Assert.Equal(0, Changed(plain.Display.Bytes, marked.Display.Bytes, new SKRectI(0, 0, 600, 600)));
+        Assert.Equal(plain.Thumbnail.Bytes, marked.Thumbnail.Bytes);
+    }
+
+    [Fact]
+    public void Long_watermark_stays_inside_the_photo()
+    {
+        using var bitmap = new SKBitmap(400, 300);
+        using (var canvas = new SKCanvas(bitmap)) canvas.Clear(SKColors.Black);
+        ImageProcessor.DrawWatermark(bitmap, "© " + new string('W', 80));
+
+        // At most half the width, in from the right margin: nothing left of x = 400 - 200 - margin.
+        for (var i = 0; i < 180; i++)
+        for (var j = 0; j < 300; j++)
+            Assert.True(bitmap.GetPixel(i, j).Red < 30, $"pixel {i},{j}");
+    }
+
+    [Fact]
     public void Does_not_upscale_small_photo()
     {
         var result = _processor.Process(TestImages.Jpeg(500, 300));
