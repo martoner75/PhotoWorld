@@ -249,6 +249,12 @@ sequenceDiagram
     M->>S: Browser or app loads the JPEGs directly from the public bucket
 ```
 
+- **Several at once.** The website's *Upload several* page and the app's multi-select send the same `POST api/photos`
+  once per photo, one after another, so each has its own result and a failure doesn't stop the rest.
+- **Watermark and downloads.** With `watermark=true` the processor draws "© display name" (Open Sans, an embedded
+  resource) on the display image only, before encoding; `photos.watermarked` records it. `photos.allow_download`
+  (default true) is read by the clients: off hides the full-size link and *Share* from other members and blocks
+  right-click and dragging on the website. It can't stop a determined copier, because the image is public.
 - **Originals are never stored.** Only the two re-encoded JPEGs exist, without EXIF, so locations can't leak
   through the public bucket.
 - The **API is the only writer** to Storage (with the Supabase service key). Clients receive public URLs.
@@ -298,6 +304,10 @@ erDiagram
     blog_posts ||--o{ blog_attachments : attaches
     blog_posts ||--o{ blog_comments : has
     photos ||--o{ reports : "reported in"
+    photos ||--o{ photo_view_days : "viewed on"
+    users ||--o{ walks : organises
+    walks ||--o{ walk_attendees : "joined by"
+    users ||--o{ walk_attendees : joins
     photo_comments ||--o{ reports : "reported in"
     blog_posts ||--o{ reports : "reported in"
     blog_comments ||--o{ reports : "reported in"
@@ -334,6 +344,30 @@ erDiagram
         int iso
         timestamptz taken_at
         bool show_on_home
+        bool allow_download
+        bool watermarked
+    }
+    photo_view_days {
+        uuid photo_id PK
+        date day PK
+        int views
+    }
+    walks {
+        uuid id PK
+        uuid organizer_id FK
+        text title
+        timestamptz starts_at
+        timestamptz ends_at
+        text meeting_point
+        float latitude
+        float longitude
+        int max_people
+        timestamptz cancelled_at
+    }
+    walk_attendees {
+        uuid walk_id PK
+        uuid user_id PK
+        timestamptz joined_at
     }
     photo_likes {
         uuid photo_id PK
@@ -394,6 +428,8 @@ erDiagram
         timestamptz confirmed_at
         timestamptz notified_through
         timestamptz period_started_at
+        bool weekly_summary
+        timestamptz weekly_summary_from
     }
     follows {
         uuid follower_id PK
@@ -507,6 +543,16 @@ account is sent. The privacy policy names each provider.
 - **Feedback.** `photos.wants_feedback` opens a photo to `photo_feedback` (one row per member: composition, light,
   focus 1–5 and a comment). `GET api/photos/{id}/feedback` gives the owner everything plus averages, a giver their
   own, everyone else only the count.
+- **Photo walks.** `walks` (organiser, plan, time, meeting point, optional people limit, `cancelled_at`) and
+  `walk_attendees`. `WalkRules` holds the checks (length ≤ 12 h, joining before the start, not full, not blocked);
+  `WalksController.Visible` applies suspension and blocks both ways. Followers get `walk_new`, attendees
+  `walk_changed`/`walk_cancelled`, and `ScheduledActivitySender` sends `walk_reminder` within 24 h of the start.
+  Photos join a walk through its tag, `walk-` plus the first 8 hex characters of its id.
+- **Insights.** `GET api/photos/{id}` adds one to `photo_view_days` (an upsert per photo per UTC day) when the
+  caller isn't the owner; the viewer is not recorded and a failure never blocks the photo. `GET api/users/me/insights`
+  returns the last 30 days and the 30 before (views, likes, new followers, comments), per-day views and likes, the
+  top 5 photos and the top 8 tags by likes. The website draws two SVG column charts (one measure each, never two
+  scales on one plot); the app draws the same with `GraphicsView`.
 - **In the app** the same API calls back the Gallery's Everyone / Following switch, Filter page and challenge
   banner, the Blogs switch, a member page (follow, trophies, photos) and the challenge, entries and "enter a
   photo" pages. Challenge wording (`ChallengeDisplay`) lives in Shared so the website and app read the same.
@@ -549,7 +595,11 @@ sequenceDiagram
 ```
 
 - Data: one `email_subscriptions` row per member (address, frequency, on/off, confirmed, cursor, digest period,
-  unsubscribe token); it cascades on account deletion.
+  weekly summary on/off and its period, unsubscribe token); it cascades on account deletion.
+- **Weekly summary.** `WeeklySummarySender` (same schedule, its own advisory lock) emails members who switched it
+  on, once 7 days have passed since `weekly_summary_from`: views, likes, comments, feedback and new followers on their
+  photos, walks in the coming week from people they follow, and open challenges. A quiet week sends nothing; the
+  period moves on either way, and a failed send is retried. The unsubscribe link switches off both kinds of email.
 - Only posts the subscriber could see on the site are sent: published, not hidden by moderation, not their own.
 - No SMTP host configured (development): emails are written as `.eml` files to `src/PhotoWorld.Api/emails/`.
 

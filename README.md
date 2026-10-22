@@ -151,6 +151,18 @@ decoded with Magick.NET (libheif) into an upright, metadata-free image first. It
 the image as two JPEGs: `display` (longest side ≤ 2560 px) and `thumb` (≤ 640 px). The original is never kept,
 and the re-encoding drops all metadata, so GPS locations never reach the public bucket.
 
+**Several photos at once.** *Upload several* on the upload page (website) takes up to 20 photos, each with its own
+title, sharing the description, tags, place and switches. They're sent one by one with a status per photo, so a
+failure doesn't lose the rest. In the app, picking several photos does the same.
+
+**Protecting photos.** Two choices when uploading:
+- **Add my name as a watermark** draws "© name" in the bottom-right corner of the display image (Open Sans,
+  embedded in the API because the Linux build of Skia has no fonts). It's part of the image, so it can't be added
+  to or removed from a photo later: originals aren't kept.
+- **Allow downloads** (on by default; also on the edit page and, for owners, on the app's photo screen). When off,
+  other members don't get the full-size link on the website or *Share* in the app, and right-click "save" and
+  dragging are blocked. It's a deterrent: the image is still sent to be shown, and screens can be captured.
+
 **Photo storage setup.** The `AddPhotos` migration creates the public `photos` bucket. The API uploads to it
 with your project's secret key (Supabase dashboard → Project Settings → API Keys → *Secret keys*, `sb_secret_…`;
 the legacy `service_role` key also works). The key stays in the API; the UI never sees it.
@@ -238,6 +250,23 @@ focus** (1–5) and add a comment, once each, and can change or delete it. Feedb
 it with the averages and can remove any; a giver sees their own; everyone else only how many gave feedback. Blocked
 and suspended members can't give it. The gallery filters to **photos asking for feedback** (also linked from
 Explore), and the owner gets an Activity notification for each new giver.
+
+## Insights
+
+**Insights** (on your own member page, and on the app's Me tab) shows your last 30 days against the 30 before:
+views, likes, new followers and comments, a column chart each for views and likes per day (tap or hover a day; the
+website also has a table view), your top photos, and the tags that get the most likes. A **view** is another
+signed-in member opening a photo's page: `photo_view_days` keeps one count per photo per day and never who viewed.
+The owner's own views don't count.
+
+## Photo walks
+
+**Walks** (in the menu; on the app's Me tab and Explore) are meetups to shoot together: a title, plan, start and
+length (up to 12 hours), an optional limit on people, and a meeting point picked on the map (or from your places).
+Members join and leave until it starts; the organiser edits, cancels or deletes it. Followers hear about a new walk,
+those going hear about changes and cancellations, and everyone going gets a reminder within the last day
+(Activity, so push too once it's on). Each walk has a tag (`walk-1a2b3c4d`): photos tagged with it show on the
+walk's page. Members blocked either way don't see each other's walks; suspended organisers' walks are hidden.
 
 ## Activity
 
@@ -344,6 +373,10 @@ tab): on/off, any address, and how often: **as soon as a post is published**, a 
   confirmation link (valid 2 days, single use, only its SHA-256 is stored) and nothing else until it's clicked.
 - **Unsubscribe** links in every email, plus RFC 8058 one-click `List-Unsubscribe` headers. The website's
   `/Notifications/Unsubscribe` page asks before unsubscribing, so link scanners can't do it by accident.
+- **Weekly summary** (a separate switch, same address): once a week, the views, likes, comments, feedback and new
+  followers your photos got, walks coming up from people you follow and open challenges, with a link to Insights.
+  Nothing is sent after a quiet week. `WeeklySummarySender` runs alongside the blog sender, with its own advisory
+  lock. The unsubscribe link in any email stops both.
 - **Sender.** `BlogNotificationSender` (a background service in the API) runs every `Email:PollMinutes` (5). It
   emails each due subscriber the posts they could see on the site (published, not hidden, not their own) since
   their cursor, then advances it, so each post is sent once; a failed email is retried on the next run. A Postgres
