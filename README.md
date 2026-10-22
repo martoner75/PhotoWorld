@@ -18,17 +18,18 @@ PhotoWorld.slnx
 
 ## What it looks like
 
-PhotoWorld uses a light look (Gallery White) that switches to a soft dark one (Graphite) with the device's dark mode.
-These are the signed-out screens; everything else needs a member account.
+PhotoWorld has a light look (Gallery White) and a soft dark one (Graphite). It follows the device's setting, and the
+moon/sun icon switches it on the website and in the apps. These are the signed-out screens; everything else needs a
+member account.
 
 | Website, light | Website, dark |
 |---|---|
 | ![PhotoWorld home page, light](docs/images/web-home-light.png) | ![PhotoWorld home page, dark](docs/images/web-home-dark.png) |
 | ![Sign-in page, light](docs/images/web-login-light.png) | ![Sign-in page, dark](docs/images/web-login-dark.png) |
 
-| iPhone, light | iPhone, dark | Android |
-|---|---|---|
-| ![App sign-in on iPhone, light](docs/images/app-ios-light.png) | ![App sign-in on iPhone, dark](docs/images/app-ios-dark.png) | ![App sign-in on Android](docs/images/app-android.png) |
+| iPhone, light | iPhone, dark | Android, light | Android, dark |
+|---|---|---|---|
+| ![App sign-in on iPhone, light](docs/images/app-ios-light.png) | ![App sign-in on iPhone, dark](docs/images/app-ios-dark.png) | ![App sign-in on Android, light](docs/images/app-android-light.png) | ![App sign-in on Android, dark](docs/images/app-android-dark.png) |
 
 ## How sign-in works
 
