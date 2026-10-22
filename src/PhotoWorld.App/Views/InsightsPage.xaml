@@ -42,7 +42,7 @@
                         <Label Text="Views per day" Style="{StaticResource Strong}" />
                         <Label Style="{StaticResource MutedText}" FontSize="13"
                                Text="{Binding Selected, Source={x:Reference ViewsChart}, x:DataType=views:ColumnChart}" />
-                        <views:ColumnChart x:Name="ViewsChart" Days="{Binding Days}" Measure="views" />
+                        <views:ColumnChart x:Name="ViewsChart" Days="{Binding Days}" Metric="views" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -51,7 +51,7 @@
                         <Label Text="Likes per day" Style="{StaticResource Strong}" />
                         <Label Style="{StaticResource MutedText}" FontSize="13"
                                Text="{Binding Selected, Source={x:Reference LikesChart}, x:DataType=views:ColumnChart}" />
-                        <views:ColumnChart x:Name="LikesChart" Days="{Binding Days}" Measure="likes" />
+                        <views:ColumnChart x:Name="LikesChart" Days="{Binding Days}" Metric="likes" />
                     </VerticalStackLayout>
                 </Border>
                 <Label Text="Tap or drag across a chart to see each day." Style="{StaticResource MutedText}" FontSize="12" />

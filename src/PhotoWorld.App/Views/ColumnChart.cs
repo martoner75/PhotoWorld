@@ -3,7 +3,7 @@ using PhotoWorld.Shared.Photos;
 namespace PhotoWorld.App.Views;
 
 /// <summary>
-/// A single-series column chart of one measure per day (views or likes; never both on one scale). Columns are at most
+/// A single-series column chart of one metric per day (views or likes; never both on one scale). Columns are at most
 /// 24px with 4px rounded tops and a square foot, a hairline baseline, and a few clean ticks. Tapping or dragging over a
 /// column shows its day and value in <see cref="Selected"/>.
 /// </summary>
@@ -12,7 +12,7 @@ public class ColumnChart : GraphicsView, IDrawable
     public static readonly BindableProperty DaysProperty = BindableProperty.Create(nameof(Days), typeof(IReadOnlyList<InsightDayDto>),
         typeof(ColumnChart), null, propertyChanged: (b, _, _) => ((ColumnChart)b).Changed());
 
-    public static readonly BindableProperty MeasureProperty = BindableProperty.Create(nameof(Measure), typeof(string),
+    public static readonly BindableProperty MetricProperty = BindableProperty.Create(nameof(Metric), typeof(string),
         typeof(ColumnChart), "views", propertyChanged: (b, _, _) => ((ColumnChart)b).Changed());
 
     public static readonly BindableProperty SelectedProperty = BindableProperty.Create(nameof(Selected), typeof(string),
@@ -31,10 +31,10 @@ public class ColumnChart : GraphicsView, IDrawable
     }
 
     public IReadOnlyList<InsightDayDto>? Days { get => (IReadOnlyList<InsightDayDto>?)GetValue(DaysProperty); set => SetValue(DaysProperty, value); }
-    public string Measure { get => (string)GetValue(MeasureProperty); set => SetValue(MeasureProperty, value); }
+    public string Metric { get => (string)GetValue(MetricProperty); set => SetValue(MetricProperty, value); }
     public string Selected { get => (string)GetValue(SelectedProperty); set => SetValue(SelectedProperty, value); }
 
-    private int Value(InsightDayDto d) => Measure == "likes" ? d.Likes : d.Views;
+    private int Value(InsightDayDto d) => Metric == "likes" ? d.Likes : d.Views;
 
     private void Changed()
     {
@@ -49,7 +49,7 @@ public class ColumnChart : GraphicsView, IDrawable
         if (Days is not { Count: > 0 } days) return "";
         var total = days.Sum(Value);
         var best = days.MaxBy(Value)!;
-        return total == 0 ? $"No {Measure} in the last 30 days" : $"{total:N0} {Measure} · busiest {best.Date:ddd d MMM} ({Value(best):N0})";
+        return total == 0 ? $"No {Metric} in the last 30 days" : $"{total:N0} {Metric} · busiest {best.Date:ddd d MMM} ({Value(best):N0})";
     }
 
     private void Select(float x)
@@ -59,7 +59,7 @@ public class ColumnChart : GraphicsView, IDrawable
         var i = Math.Clamp((int)((x - Left) / slot), 0, days.Count - 1);
         if (i == _selected) return;
         _selected = i;
-        Selected = $"{days[i].Date:ddd d MMM}: {Value(days[i]):N0} {Measure}";
+        Selected = $"{days[i].Date:ddd d MMM}: {Value(days[i]):N0} {Metric}";
         Invalidate();
     }
 
