@@ -198,13 +198,13 @@ public class AccountController(
             ModelState.AddModelError($"{nameof(AccountSettingsViewModel.Notifications)}.{nameof(model.Frequency)}", "Choose how often to get emails.");
         if (ModelState.IsValid)
         {
-            var result = await api.SaveNotificationsAsync(new SaveEmailNotificationsRequest(model.Email, model.Frequency, model.Enabled), ct);
+            var result = await api.SaveNotificationsAsync(new SaveEmailNotificationsRequest(model.Email, model.Frequency, model.Enabled, model.WeeklySummary), ct);
             if (result.Succeeded)
             {
                 var saved = result.Value!;
-                TempData["Flash"] = !saved.Enabled ? "Email notifications are off."
-                    : saved.Confirmed ? $"Saved. We'll email {saved.Email} about new blog posts."
-                    : $"Almost there: we've sent a confirmation link to {saved.Email}. Notifications start once you click it.";
+                TempData["Flash"] = !saved.Enabled && !saved.WeeklySummary ? "Emails are off."
+                    : saved.Confirmed ? $"Saved. We'll email {saved.Email}."
+                    : $"Almost there: we've sent a confirmation link to {saved.Email}. Emails start once you click it.";
                 return Redirect(Url.Action(nameof(Settings)) + "#notifications");
             }
             ModelState.AddApiErrors(result.Errors, new Dictionary<string, string>

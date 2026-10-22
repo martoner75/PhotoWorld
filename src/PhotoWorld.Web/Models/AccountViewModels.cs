@@ -24,11 +24,15 @@ public sealed class NotificationsFormViewModel
 
     public bool Enabled { get; set; }
 
+    /// <summary>The weekly email about the member's own photos (views, likes, comments, followers) and walks.</summary>
+    public bool WeeklySummary { get; set; }
+
     public static NotificationsFormViewModel From(EmailNotificationsDto? dto) => new()
     {
         Email = dto?.Email ?? dto?.AccountEmail ?? "",
         Frequency = dto?.Frequency ?? NotificationFrequency.Daily,
         Enabled = dto?.Enabled ?? false,
+        WeeklySummary = dto?.WeeklySummary ?? false,
     };
 }
 

@@ -63,9 +63,12 @@ public class NotificationsController(
         if (sub.Frequency != request.Frequency) sub.PeriodStartedAt = now;
         sub.Frequency = request.Frequency;
         sub.Enabled = request.Enabled;
+        // The first summary covers a whole week from switching on.
+        if (request.WeeklySummary && (isNew || !sub.WeeklySummary)) sub.WeeklySummaryFrom = now;
+        sub.WeeklySummary = request.WeeklySummary;
         sub.UpdatedAt = now;
 
-        var token = sub.ConfirmedAt is null && sub.Enabled ? IssueConfirmToken(sub, now) : null;
+        var token = sub.ConfirmedAt is null && (sub.Enabled || sub.WeeklySummary) ? IssueConfirmToken(sub, now) : null;
         await db.SaveChangesAsync(ct);
 
         if (token is not null && !await TrySendConfirmationAsync(sub.Email, token, ct))
@@ -103,25 +106,26 @@ public class NotificationsController(
         sub.ConfirmedAt = now;
         (sub.ConfirmTokenHash, sub.ConfirmTokenExpiresAt) = (null, null);
         StartFrom(sub, now);
+        sub.WeeklySummaryFrom = now;
         sub.UpdatedAt = now;
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Member {UserId} confirmed their notification email", sub.UserId);
         return NoContent();
     }
 
-    /// <summary>One-click unsubscribe from an email. Idempotent; unknown tokens answer 404.</summary>
+    /// <summary>One-click unsubscribe from an email: stops every PhotoWorld email. Idempotent; unknown tokens answer 404.</summary>
     [AllowAnonymous]
     [HttpPost(ApiRoutes.Unsubscribe)]
     public async Task<IActionResult> Unsubscribe(NotificationTokenRequest request, CancellationToken ct)
     {
         var sub = await db.EmailSubscriptions.SingleOrDefaultAsync(s => s.UnsubscribeToken == request.Token, ct);
         if (sub is null) return NotFound();
-        if (sub.Enabled)
+        if (sub.Enabled || sub.WeeklySummary)
         {
-            sub.Enabled = false;
+            (sub.Enabled, sub.WeeklySummary) = (false, false);
             sub.UpdatedAt = clock.GetUtcNow();
             await db.SaveChangesAsync(ct);
-            logger.LogInformation("Member {UserId} unsubscribed from blog notifications by email link", sub.UserId);
+            logger.LogInformation("Member {UserId} unsubscribed from emails by email link", sub.UserId);
         }
         return NoContent();
     }
@@ -161,5 +165,5 @@ public class NotificationsController(
 
     private static EmailNotificationsDto ToDto(EmailSubscription? sub, string? accountEmail) => sub is null
         ? new EmailNotificationsDto(null, NotificationFrequency.Daily, false, false, accountEmail)
-        : new EmailNotificationsDto(sub.Email, sub.Frequency, sub.Enabled, sub.ConfirmedAt is not null, accountEmail);
+        : new EmailNotificationsDto(sub.Email, sub.Frequency, sub.Enabled, sub.ConfirmedAt is not null, accountEmail, sub.WeeklySummary);
 }

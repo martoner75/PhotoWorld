@@ -69,6 +69,14 @@
                             <Label Text="Email me about new blog posts" Style="{StaticResource Strong}" VerticalOptions="Center" />
                             <Switch Grid.Column="1" IsToggled="{Binding NotifyEnabled}" />
                         </Grid>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout>
+                                <Label Text="Send me a weekly summary" Style="{StaticResource Strong}" />
+                                <Label Text="Views, likes, comments, feedback and new followers on your photos, and walks coming up. Nothing after a quiet week."
+                                       Style="{StaticResource MutedText}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" IsToggled="{Binding WeeklySummary}" VerticalOptions="Center" />
+                        </Grid>
                         <Label Text="Send them to" Style="{StaticResource Strong}" />
                         <Border Style="{StaticResource Field}">
                             <Entry Text="{Binding NotifyEmail}" Keyboard="Email" Placeholder="you@example.com" />

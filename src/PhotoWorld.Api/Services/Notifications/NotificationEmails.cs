@@ -5,6 +5,13 @@ using PhotoWorld.Shared.Notifications;
 namespace PhotoWorld.Api.Services.Notifications;
 
 /// <summary>A published post, as listed in a notification email.</summary>
+/// <summary>A member's last 7 days, for the weekly summary.</summary>
+public sealed record WeeklyStats(int Views, int Likes, int Comments, int Feedback, int NewFollowers, int UpcomingWalks, int OpenChallenges)
+{
+    /// <summary>Nothing on their work and no walks coming up: no email (open challenges alone aren't news).</summary>
+    public bool IsQuiet => Views + Likes + Comments + Feedback + NewFollowers + UpcomingWalks == 0;
+}
+
 public sealed record PostNotice(Guid Id, string Title, string Excerpt, string AuthorName, string? CoverUrl);
 
 /// <summary>Builds the notification emails. Everything a member wrote is HTML-encoded.</summary>
@@ -91,6 +98,65 @@ public sealed class NotificationEmails(string webBaseUrl)
         };
         return new EmailMessage(to, subject, Layout(html.ToString(), footer), text.ToString(), headers);
     }
+
+    /// <summary>The member's week: what happened on their work, walks coming up from people they follow, open challenges.</summary>
+    public EmailMessage WeeklySummary(string to, string name, WeeklyStats stats, string unsubscribeToken)
+    {
+        var unsubscribe = UnsubscribeUrl(unsubscribeToken);
+        (int N, string One, string Many)[] rows =
+        [
+            (stats.Views, "view of your photos", "views of your photos"),
+            (stats.Likes, "like", "likes"),
+            (stats.Comments, "comment", "comments"),
+            (stats.Feedback, "piece of feedback", "pieces of feedback"),
+            (stats.NewFollowers, "new follower", "new followers"),
+        ];
+        var lines = rows.Where(r => r.N > 0).Select(r => $"{r.N:N0} {(r.N == 1 ? r.One : r.Many)}").ToList();
+        var subject = lines.Count > 0 ? $"Your week on PhotoWorld: {lines[0]}" : "Your week on PhotoWorld";
+
+        var html = new StringBuilder($"""<h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 16px">Your week on PhotoWorld</h1>""");
+        var text = new StringBuilder($"Your week on PhotoWorld\n\nHi {name},\n\n");
+        html.Append($"""<p style="margin:0 0 14px">Hi {E(name)},</p>""");
+        if (lines.Count > 0)
+        {
+            html.Append("""<p style="margin:0 0 6px">In the last 7 days your photos got:</p><ul style="margin:0 0 18px;padding-left:20px">""");
+            foreach (var line in lines) html.Append($"<li>{E(line)}</li>");
+            html.Append("</ul>");
+            text.Append("In the last 7 days your photos got:\n").Append(string.Concat(lines.Select(l => $"- {l}\n"))).Append('\n');
+        }
+        if (stats.UpcomingWalks > 0)
+        {
+            var walks = stats.UpcomingWalks == 1 ? "1 photo walk" : $"{stats.UpcomingWalks} photo walks";
+            html.Append($"""<p style="margin:0 0 14px">{walks} by people you follow in the next 7 days. <a href="{E(WalksUrl)}" style="color:#b86e0a">See the walks</a></p>""");
+            text.Append($"{walks} by people you follow in the next 7 days: {WalksUrl}\n\n");
+        }
+        if (stats.OpenChallenges > 0)
+        {
+            var challenges = stats.OpenChallenges == 1 ? "1 photo challenge is" : $"{stats.OpenChallenges} photo challenges are";
+            html.Append($"""<p style="margin:0 0 18px">{challenges} open for entries. <a href="{E(ChallengesUrl)}" style="color:#b86e0a">Take part</a></p>""");
+            text.Append($"{challenges} open for entries: {ChallengesUrl}\n\n");
+        }
+        html.Append(Button(InsightsUrl, "See your insights"));
+        text.Append($"See your insights: {InsightsUrl}\n\n");
+
+        var footer = $"""
+            You're getting this because you turned on the weekly summary on PhotoWorld for {E(to)}.
+            <a href="{E(ManageUrl)}" style="color:#6b6d75">Email settings</a> ·
+            <a href="{E(unsubscribe)}" style="color:#6b6d75">Unsubscribe from all PhotoWorld emails</a>
+            """;
+        text.Append($"You're getting this because you turned on the weekly summary on PhotoWorld for {to}.\n" +
+                    $"Email settings: {ManageUrl}\nUnsubscribe from all PhotoWorld emails: {unsubscribe}\n");
+        var headers = new Dictionary<string, string>
+        {
+            ["List-Unsubscribe"] = $"<{unsubscribe}>",
+            ["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click",
+        };
+        return new EmailMessage(to, subject, Layout(html.ToString(), footer), text.ToString(), headers);
+    }
+
+    private string WalksUrl => $"{_web}Walks";
+    private string ChallengesUrl => $"{_web}Challenges";
+    private string InsightsUrl => $"{_web}Members/Insights";
 
     private static string Count(int n) => n == 1 ? "1 new blog post" : $"{n} new blog posts";
 

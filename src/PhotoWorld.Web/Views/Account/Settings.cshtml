@@ -24,14 +24,17 @@
 
     <div class="form-card" id="notifications">
         <h2 class="settings-heading">Email notifications</h2>
-        <p class="text-muted mb-0">Get an email when members publish new blog posts.</p>
+        <p class="text-muted mb-0">Get an email when members publish new blog posts, and a summary of your week.</p>
 
-        @if (current is { Enabled: true, Email: not null })
+        @if (current is { Email: not null } && (current.Enabled || current.WeeklySummary))
         {
             @if (current.Confirmed)
             {
+                var parts = new List<string>();
+                if (current.Enabled) parts.Add($"new blog posts {NotificationFrequency.Labels[current.Frequency].ToLowerInvariant()}");
+                if (current.WeeklySummary) parts.Add("your weekly summary");
                 <p class="notify-status is-on mb-0">
-                    On: <strong>@NotificationFrequency.Labels[current.Frequency].ToLowerInvariant()</strong>, to @current.Email.
+                    On: <strong>@string.Join(" and ", parts)</strong>, to @current.Email.
                 </p>
             }
             else
@@ -53,6 +56,13 @@
                 <input asp-for="Notifications.Enabled" type="checkbox" />
                 <span><strong>Email me about new blog posts</strong><br />
                     <span class="text-muted small">Untick to stop. Every email also has an unsubscribe link.</span></span>
+            </label>
+
+            <label class="check-row">
+                <input asp-for="Notifications.WeeklySummary" type="checkbox" />
+                <span><strong>Send me a weekly summary</strong><br />
+                    <span class="text-muted small">Once a week: views, likes, comments, feedback and new followers on your photos, and
+                        walks coming up from people you follow. Nothing is sent after a quiet week.</span></span>
             </label>
 
             <div class="field">

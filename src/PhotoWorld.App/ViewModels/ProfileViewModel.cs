@@ -32,15 +32,23 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     public partial int FrequencyIndex { get; set; } = 1; // daily
 
     [ObservableProperty]
+    public partial bool WeeklySummary { get; set; }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NotifyStatus), nameof(AwaitingConfirmation))]
     public partial EmailNotificationsDto? Notifications { get; set; }
 
-    public bool AwaitingConfirmation => Notifications is { Enabled: true, Confirmed: false };
+
+    public bool AwaitingConfirmation => Notifications is { Confirmed: false } n && (n.Enabled || n.WeeklySummary);
 
     public string NotifyStatus => Notifications switch
     {
-        { Enabled: true, Confirmed: true } n => $"On: {NotificationFrequency.Labels[n.Frequency].ToLowerInvariant()}, to {n.Email}.",
-        { Enabled: true, Confirmed: false } n => $"Waiting for you to confirm {n.Email}: open the link we emailed you.",
+        { Confirmed: true } n when n.Enabled || n.WeeklySummary => $"On: {string.Join(" and ", new[]
+            {
+                n.Enabled ? $"new blog posts {NotificationFrequency.Labels[n.Frequency].ToLowerInvariant()}" : null,
+                n.WeeklySummary ? "your weekly summary" : null,
+            }.OfType<string>())}, to {n.Email}.",
+        { Confirmed: false } n when n.Enabled || n.WeeklySummary => $"Waiting for you to confirm {n.Email}: open the link we emailed you.",
         _ => "Off.",
     };
 
@@ -101,6 +109,7 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
         NotifyEnabled = dto.Enabled;
         NotifyEmail = dto.Email ?? dto.AccountEmail ?? "";
         FrequencyIndex = Math.Max(0, NotificationFrequency.Labels.Keys.ToList().IndexOf(dto.Frequency));
+        WeeklySummary = dto.WeeklySummary;
     }
 
     [RelayCommand]
@@ -112,11 +121,11 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
             return;
         }
         var frequency = NotificationFrequency.Labels.Keys.ElementAt(Math.Clamp(FrequencyIndex, 0, NotificationFrequency.Labels.Count - 1));
-        var saved = await api.SaveNotificationsAsync(new SaveEmailNotificationsRequest(NotifyEmail.Trim(), frequency, NotifyEnabled));
+        var saved = await api.SaveNotificationsAsync(new SaveEmailNotificationsRequest(NotifyEmail.Trim(), frequency, NotifyEnabled, WeeklySummary));
         ShowNotifications(saved);
-        await Ui.AlertAsync(!saved.Enabled ? "Email notifications are off."
-            : saved.Confirmed ? $"Saved. We'll email {saved.Email} about new blog posts."
-            : $"Almost there: we've sent a confirmation link to {saved.Email}. Notifications start once you open it.");
+        await Ui.AlertAsync(!saved.Enabled && !saved.WeeklySummary ? "Emails are off."
+            : saved.Confirmed ? $"Saved. We'll email {saved.Email}."
+            : $"Almost there: we've sent a confirmation link to {saved.Email}. Emails start once you open it.");
     });
 
     [RelayCommand]

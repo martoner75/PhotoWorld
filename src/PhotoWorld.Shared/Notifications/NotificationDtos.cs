@@ -26,21 +26,23 @@ public static class NotificationLimits
 }
 
 /// <summary>
-/// A member's email notification settings. <see cref="Email"/> is null until they first save; <see cref="AccountEmail"/>
-/// is their verified Google address, offered as the default. Emails go out only when <see cref="Enabled"/> and
-/// <see cref="Confirmed"/>.
+/// A member's email settings. <see cref="Email"/> is null until they first save; <see cref="AccountEmail"/> is their
+/// verified Google address, offered as the default. <see cref="Enabled"/> is for new blog posts; <see cref="WeeklySummary"/>
+/// is the weekly email about their own activity. Either goes out only once the address is <see cref="Confirmed"/>.
 /// </summary>
 public sealed record EmailNotificationsDto(
     string? Email,
     string Frequency,
     bool Enabled,
     bool Confirmed,
-    string? AccountEmail);
+    string? AccountEmail,
+    bool WeeklySummary = false);
 
 public sealed record SaveEmailNotificationsRequest(
     [Required, EmailAddress, StringLength(NotificationLimits.EmailMax)] string Email,
     [Required] string Frequency,
-    bool Enabled);
+    bool Enabled,
+    bool WeeklySummary = false);
 
 /// <summary>The secret from a confirmation or unsubscribe link.</summary>
 public sealed record NotificationTokenRequest([Required, StringLength(100)] string Token);

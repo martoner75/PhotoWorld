@@ -33,6 +33,12 @@ public class EmailSubscription
     public DateTimeOffset PeriodStartedAt { get; set; }
 
     public DateTimeOffset? LastSentAt { get; set; }
+
+    /// <summary>The weekly email about the member's own activity (views, likes, comments, followers, walks).</summary>
+    public bool WeeklySummary { get; set; }
+
+    /// <summary>Start of the week the next weekly summary covers.</summary>
+    public DateTimeOffset WeeklySummaryFrom { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

@@ -646,6 +646,14 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<bool>("WeeklySummary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("weekly_summary");
+
+                    b.Property<DateTimeOffset>("WeeklySummaryFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("weekly_summary_from");
+
                     b.HasKey("UserId")
                         .HasName("pk_email_subscriptions");
 

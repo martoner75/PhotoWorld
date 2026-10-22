@@ -34,6 +34,8 @@ public static class NotificationRules
     public static bool IsDue(string frequency, DateTimeOffset periodStartedAt, DateTimeOffset now) =>
         now >= periodStartedAt + Period(frequency);
 
+    public static readonly TimeSpan WeeklySummaryPeriod = TimeSpan.FromDays(7);
+
     /// <summary>The verified Google address needs no confirmation link; any other address does.</summary>
     public static bool IsAccountEmail(string email, string? accountEmail) =>
         accountEmail is not null && string.Equals(email.Trim(), accountEmail.Trim(), StringComparison.OrdinalIgnoreCase);

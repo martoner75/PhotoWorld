@@ -114,3 +114,43 @@ public class NotificationEmailsTests
         Assert.Null(email.Headers);
     }
 }
+
+public class WeeklySummaryEmailTests
+{
+    private readonly NotificationEmails _emails = new("https://photoworld.example");
+
+    [Fact]
+    public void Lists_only_what_happened_and_leads_with_it_in_the_subject()
+    {
+        var email = _emails.WeeklySummary("me@example.com", "Ana", new WeeklyStats(1240, 1, 0, 0, 3, 0, 0), "unsub-token");
+
+        Assert.Equal("Your week on PhotoWorld: 1,240 views of your photos", email.Subject);
+        Assert.Contains("1 like", email.TextBody);
+        Assert.Contains("3 new followers", email.TextBody);
+        Assert.DoesNotContain("comment", email.TextBody);
+        Assert.DoesNotContain("walk", email.TextBody);
+        Assert.Contains("https://photoworld.example/Members/Insights", email.HtmlBody);
+    }
+
+    [Fact]
+    public void Mentions_walks_and_challenges_and_unsubscribes_from_everything()
+    {
+        var email = _emails.WeeklySummary("me@example.com", "Ana <b>", new WeeklyStats(0, 0, 0, 0, 0, 2, 1), "unsub-token");
+
+        Assert.Equal("Your week on PhotoWorld", email.Subject);
+        Assert.Contains("2 photo walks by people you follow", email.TextBody);
+        Assert.Contains("1 photo challenge is open", email.TextBody);
+        Assert.Contains("Ana &lt;b&gt;", email.HtmlBody);
+        Assert.Contains("Unsubscribe from all PhotoWorld emails", email.HtmlBody);
+        Assert.Equal("<https://photoworld.example/Notifications/Unsubscribe?token=unsub-token>", email.Headers!["List-Unsubscribe"]);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0, 0, 0, 0, 5, true)]   // open challenges alone aren't news
+    [InlineData(1, 0, 0, 0, 0, 0, 0, false)]
+    [InlineData(0, 0, 0, 0, 0, 1, 0, false)]
+    public void A_quiet_week_sends_nothing(int views, int likes, int comments, int feedback, int followers, int walks, int challenges, bool quiet)
+    {
+        Assert.Equal(quiet, new WeeklyStats(views, likes, comments, feedback, followers, walks, challenges).IsQuiet);
+    }
+}

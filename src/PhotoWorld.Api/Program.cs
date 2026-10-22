@@ -69,6 +69,7 @@ if (email.UsesSmtp) builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>
 else builder.Services.AddSingleton<IEmailSender, PickupDirectoryEmailSender>();
 builder.Services.AddSingleton(sp => new NotificationEmails(sp.GetRequiredService<IOptions<EmailOptions>>().Value.WebBaseUrl));
 builder.Services.AddHostedService<BlogNotificationSender>();
+builder.Services.AddHostedService<WeeklySummarySender>();
 
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (jwt.SigningKey.Length < 32)
