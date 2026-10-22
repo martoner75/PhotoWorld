@@ -43,7 +43,11 @@ public static class ThemePalette
     {
         Preferences.Default.Set(PreferenceKey, theme switch { AppTheme.Light => "light", AppTheme.Dark => "dark", _ => "auto" });
         Application.Current!.UserAppTheme = theme;
+        Chosen?.Invoke(null, theme);
     }
+
+    /// <summary>A new choice from anywhere (top-bar icon or the Me tab), so every control showing it can follow.</summary>
+    public static event EventHandler<AppTheme>? Chosen;
 
     public static void Apply(ResourceDictionary resources, AppTheme theme)
     {

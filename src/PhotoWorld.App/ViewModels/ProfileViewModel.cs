@@ -54,19 +54,16 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
 
     // ----- Appearance: Automatic (follow the device), Light or Dark, remembered on this device -----
     [ObservableProperty]
-    public partial string ThemeChoice { get; set; } = ThemePalette.Saved switch
-    {
-        AppTheme.Light => "light",
-        AppTheme.Dark => "dark",
-        _ => "auto",
-    };
+    public partial string ThemeChoice { get; set; } = ChoiceName(ThemePalette.Saved);
+
+    private static string ChoiceName(AppTheme theme) => theme switch { AppTheme.Light => "light", AppTheme.Dark => "dark", _ => "auto" };
 
     [RelayCommand]
-    private void SetTheme(string choice)
-    {
-        ThemeChoice = choice;
+    private void SetTheme(string choice) =>
         ThemePalette.Choose(choice switch { "light" => AppTheme.Light, "dark" => AppTheme.Dark, _ => AppTheme.Unspecified });
-    }
+
+    // Also follows the top-bar icon. The Me tab's page and view model live as long as the app, so no unsubscribing.
+    private bool _followsThemeChoice;
 
     // ----- Activity: which kinds of notification the member wants -----
     [ObservableProperty] public partial bool ActivityLikes { get; set; } = true;
@@ -105,6 +102,11 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
 
     public async Task LoadAsync()
     {
+        if (!_followsThemeChoice)
+        {
+            ThemePalette.Chosen += (_, theme) => ThemeChoice = ChoiceName(theme);
+            _followsThemeChoice = true;
+        }
         User ??= auth.User;
         try
         {

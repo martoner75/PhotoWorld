@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:PhotoWorld.App.Views"
              xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
              xmlns:dto="clr-namespace:PhotoWorld.Shared.Blogs"
              x:Class="PhotoWorld.App.Views.BlogsPage"
              x:DataType="vm:BlogsViewModel"
              Title="Blogs">
+    <ContentPage.ToolbarItems>
+        <views:ThemeToolbarItem />
+    </ContentPage.ToolbarItems>
     <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
         <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8"
                         RemainingItemsThreshold="4" RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">

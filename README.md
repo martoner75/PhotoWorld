@@ -129,8 +129,7 @@ server build is green, it applies any pending EF migrations to Supabase. It need
 PhotoWorld uses **Gallery White** (white pages, amber accent) and **Graphite** (soft charcoal) for dark mode. Members
 choose **Automatic** (follow the device, the default), **Light** or **Dark**. On the website, the moon/sun icon in
 the header switches between light and dark in one click, and Account settings → Appearance also offers Automatic
-(remembered in that browser); in the app under Appearance on the Me tab (remembered on
-that device). Website: the colours are CSS variables at the top of `site.css` (`:root` and its `[data-theme="dark"]`
+(remembered in that browser); in the app, the same moon/sun icon is in the top bar of every tab, and Appearance on the Me tab offers all three (remembered on that device). Website: the colours are CSS variables at the top of `site.css` (`:root` and its `[data-theme="dark"]`
 block); a small script in the layout's `<head>` sets `data-theme` and Bootstrap's `data-bs-theme` before the page
 paints. App: `Resources/Styles/Colors.xaml` holds the light values and `ThemePalette` swaps in the dark ones; the
 choice sets `UserAppTheme` (pages use `DynamicResource`). Text drawn on photos stays light in both. The Activity (inbox tray) and challenge (trophy)
