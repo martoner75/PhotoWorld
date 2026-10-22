@@ -45,14 +45,14 @@ public sealed class AuthService(ILogger<AuthService> logger)
     }
 
     /// <summary>
-    /// Signs in with Google through the website. Throws <see cref="TaskCanceledException"/> if the member closes the
+    /// Signs in with Google or LinkedIn through the website. Throws <see cref="TaskCanceledException"/> if the member closes the
     /// sheet, and <see cref="SignInException"/> if sign-in fails.
     /// </summary>
-    public async Task SignInAsync(CancellationToken ct = default)
+    public async Task SignInAsync(string provider = AuthProviders.Google, CancellationToken ct = default)
     {
         var verifier = AppSignIn.NewVerifier();
         var start = new Uri(AppConfig.WebBaseUrl,
-            $"{AppSignIn.StartPath}?provider={AuthProviders.Google}&challenge={AppSignIn.ChallengeFor(verifier)}");
+            $"{AppSignIn.StartPath}?provider={Uri.EscapeDataString(provider)}&challenge={AppSignIn.ChallengeFor(verifier)}");
 
         var result = await WebAuthenticator.Default.AuthenticateAsync(new WebAuthenticatorOptions
         {

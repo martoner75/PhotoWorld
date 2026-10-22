@@ -111,7 +111,7 @@
                         <Border Style="{StaticResource Field}">
                             <Entry Text="{Binding NotifyEmail}" Keyboard="Email" Placeholder="you@example.com" />
                         </Border>
-                        <Label Text="Any address you like. If it isn't your Google email, we'll send a confirmation link first."
+                        <Label Text="Any address you like. If it isn't the email you sign in with, we'll send a confirmation link first."
                                Style="{StaticResource MutedText}" />
                         <Label Text="How often" Style="{StaticResource Strong}" />
                         <Border Style="{StaticResource Field}">

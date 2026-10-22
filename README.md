@@ -479,6 +479,36 @@ dotnet user-secrets set "Authentication:Google:ClientSecret" "<secret>" --projec
 dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/PhotoWorld.Api
 ```
 
+## Configure LinkedIn sign-in
+
+**Continue with LinkedIn** (website and app) stays greyed out until it's configured. A member who signs in with
+LinkedIn and Google using the same verified email gets one PhotoWorld account.
+
+1. [LinkedIn Developers](https://www.linkedin.com/developers/apps) → *Create app* (it needs a LinkedIn company page;
+   any page you admin works).
+2. *Products* → request **Sign In with LinkedIn using OpenID Connect** (approved straight away).
+3. *Auth* → *Authorized redirect URLs*: `https://localhost:7211/signin-linkedin` (and your live site's
+   `https://<domain>/signin-linkedin`). Copy the Client ID and Primary Client Secret.
+```bash
+dotnet user-secrets set "Authentication:LinkedIn:ClientId" "<id>" --project src/PhotoWorld.Web
+dotnet user-secrets set "Authentication:LinkedIn:ClientSecret" "<secret>" --project src/PhotoWorld.Web
+dotnet user-secrets set "Authentication:LinkedIn:ClientId" "<id>" --project src/PhotoWorld.Api
+dotnet user-secrets set "Authentication:LinkedIn:ClientSecret" "<secret>" --project src/PhotoWorld.Api
+```
+Unlike Google, the API needs the secret too: it asks LinkedIn's token introspection which app a token was issued
+to, and LinkedIn only answers the app itself.
+
+## App Store and Google Play badges
+
+The home page shows the official **Download on the App Store** and **Get it on Google Play** badges
+(`wwwroot/images/badges`, unaltered artwork from Apple and Google). Until the apps are published they aren't links
+and the page says "The apps are coming soon". Once they're live, set the store pages in the Web's configuration:
+```bash
+dotnet user-secrets set "Apps:AppStoreUrl" "https://apps.apple.com/app/id<number>" --project src/PhotoWorld.Web
+dotnet user-secrets set "Apps:PlayStoreUrl" "https://play.google.com/store/apps/details?id=com.photoworld.app" --project src/PhotoWorld.Web
+```
+(or `Apps__AppStoreUrl` / `Apps__PlayStoreUrl` environment variables on the server).
+
 ## Mobile app (iPhone, iPad and Android)
 
 `src/PhotoWorld.App` is one .NET MAUI app (native XAML, CommunityToolkit.Mvvm) for iPhone, iPad and

@@ -108,12 +108,15 @@ flowchart TB
 
 ## 3. Authentication
 
-PhotoWorld has **one identity provider (Google)** and **one token format (a PhotoWorld JWT)**. Google tokens never
-reach the API except once, at sign-in, to be verified; after that every component uses the PhotoWorld JWT.
+PhotoWorld has **two identity providers (Google and LinkedIn)** and **one token format (a PhotoWorld JWT)**. Provider
+tokens never reach the API except once, at sign-in, to be verified; after that every component uses the PhotoWorld
+JWT. Each provider is an `IExternalIdentityVerifier` in the API and an authentication scheme in the Web, registered
+only when its client ID is configured.
 
 | Token | Issued by | Lifetime | Held by | Used for |
 |---|---|---|---|---|
 | Google access token | Google | ~1 h | Web, briefly | Proving the Google identity to the API, once |
+| LinkedIn access token | LinkedIn | ~60 days (used once) | Web, briefly | Proving the LinkedIn identity to the API, once |
 | PhotoWorld JWT (HS256) | API (`JwtTokenService`) | 8 h | Web (inside the auth cookie) or App (Keychain / Android Keystore) | Every API call (`Authorization: Bearer …`) |
 | `PhotoWorld.Auth` cookie | Web | Same as the JWT inside it | Browser | The browser session |
 | App one-time code | Web | 2 min, single use | App, briefly | Redeeming the JWT with the app's verifier |
@@ -147,8 +150,12 @@ sequenceDiagram
     W-->>M: Set PhotoWorld.Auth cookie (claims + JWT), redirect
 ```
 
-- First sign-in creates the account. A verified email already known from another provider links to the same member
-  instead of creating a duplicate.
+- First sign-in creates the account. A verified email already known from another provider (compared without
+  capitals) links to the same member instead of creating a duplicate.
+- **LinkedIn** ("Sign In with LinkedIn using OpenID Connect") follows the same flow, with `/signin-linkedin` and the
+  plain OAuth handler. `LinkedInIdentityVerifier` checks the token with LinkedIn's introspection endpoint
+  (authenticated with PhotoWorld's client ID and secret, so it must report PhotoWorld's client ID and `active`), then
+  reads `api.linkedin.com/v2/userinfo` (sub, name, verified email, picture).
 - The cookie expires with the JWT inside it, so a session never outlives its API token.
 
 ### 3.2 App sign-in (through the website)

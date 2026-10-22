@@ -59,9 +59,11 @@ public class AuthController(
         }
         else
         {
-            // Same verified email from a different provider = same person; link instead of duplicating.
-            var existing = identity.Email is null ? null : await db.Users.Include(u => u.ExternalLogins)
-                .FirstOrDefaultAsync(u => u.Email == identity.Email, ct);
+            // Same verified email from a different provider = same person; link instead of duplicating. Providers
+            // don't agree on capitals (Ana@ vs ana@), so compare without them.
+            var email = identity.Email?.ToLowerInvariant();
+            var existing = email is null ? null : await db.Users.Include(u => u.ExternalLogins)
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == email, ct);
             isNewUser = existing is null;
             user = existing ?? db.Users.Add(new User
             {

@@ -42,6 +42,8 @@ foreach (var provider in AuthProviders.All)
 
 builder.Services.AddHttpClient<GoogleIdentityVerifier>();
 builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<GoogleIdentityVerifier>());
+builder.Services.AddHttpClient<LinkedInIdentityVerifier>();
+builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<LinkedInIdentityVerifier>());
 
 builder.Services.Configure<SupabaseStorageOptions>(builder.Configuration.GetSection(SupabaseStorageOptions.Section));
 builder.Services.AddHttpClient<SupabaseStorage>();

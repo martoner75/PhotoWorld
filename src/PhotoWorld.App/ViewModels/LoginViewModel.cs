@@ -10,15 +10,16 @@ public partial class LoginViewModel(AuthService auth, ILogger<LoginViewModel> lo
     [ObservableProperty]
     public partial string? Error { get; set; }
 
+    /// <param name="provider">"Google" or "LinkedIn" (<see cref="PhotoWorld.Shared.Auth.AuthProviders"/>).</param>
     [RelayCommand]
-    private async Task SignInAsync()
+    private async Task SignInAsync(string provider)
     {
         if (IsBusy) return;
         Error = null;
         IsBusy = true;
         try
         {
-            await auth.SignInAsync();
+            await auth.SignInAsync(provider);
             await Shell.Current.GoToAsync(Routes.Gallery);
         }
         catch (TaskCanceledException)

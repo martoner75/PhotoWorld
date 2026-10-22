@@ -18,8 +18,10 @@
         <VerticalStackLayout Grid.Row="1" Spacing="12" MaximumWidthRequest="460">
             <Label Text="{Binding Error}" TextColor="{DynamicResource Danger}" HorizontalTextAlignment="Center"
                    IsVisible="{Binding Error, Converter={StaticResource HasValue}}" />
-            <Button Text="Continue with Google" Command="{Binding SignInCommand}"
+            <Button Text="Continue with Google" Command="{Binding SignInCommand}" CommandParameter="Google"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
+            <Button Text="Continue with LinkedIn" Command="{Binding SignInCommand}" CommandParameter="LinkedIn"
+                    Style="{StaticResource GhostButton}" IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
             <Label Text="New here? Signing in for the first time creates your PhotoWorld account."
                    Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />

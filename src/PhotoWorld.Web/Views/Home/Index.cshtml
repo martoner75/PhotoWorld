@@ -1,6 +1,10 @@
 @model IReadOnlyList<ShowcasePhotoDto>
+@inject IConfiguration Config
 @{
     ViewData["Title"] = "Share the world through your lens";
+    // Store links (Apps:AppStoreUrl / Apps:PlayStoreUrl). Until the apps are published, the badges show as "coming soon".
+    var appStore = Config["Apps:AppStoreUrl"];
+    var playStore = Config["Apps:PlayStoreUrl"];
 }
 
 <section class="hero">
@@ -25,6 +29,33 @@
                 <a class="btn btn-ghost btn-lg" asp-controller="Account" asp-action="Login">Sign in</a>
             </div>
         }
+        <div class="store-badges">
+            @* Official badge artwork from Apple and Google, unaltered, as their guidelines ask. *@
+            @if (!string.IsNullOrWhiteSpace(appStore))
+            {
+                <a href="@appStore" rel="noopener" class="store-badge store-badge-apple">
+                    <img src="~/images/badges/app-store.svg" alt="Download on the App Store" />
+                </a>
+            }
+            else
+            {
+                <span class="store-badge store-badge-apple"><img src="~/images/badges/app-store.svg" alt="Download on the App Store (coming soon)" /></span>
+            }
+            @if (!string.IsNullOrWhiteSpace(playStore))
+            {
+                <a href="@playStore" rel="noopener" class="store-badge store-badge-google">
+                    <img src="~/images/badges/google-play.png" alt="Get it on Google Play" />
+                </a>
+            }
+            else
+            {
+                <span class="store-badge store-badge-google"><img src="~/images/badges/google-play.png" alt="Get it on Google Play (coming soon)" /></span>
+            }
+            @if (string.IsNullOrWhiteSpace(appStore) || string.IsNullOrWhiteSpace(playStore))
+            {
+                <span class="store-badges-note">@(string.IsNullOrWhiteSpace(appStore) && string.IsNullOrWhiteSpace(playStore) ? "The apps are coming soon." : "Coming soon on the other store.")</span>
+            }
+        </div>
     </div>
 </section>
 

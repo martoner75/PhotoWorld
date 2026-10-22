@@ -130,7 +130,7 @@ a:hover { color: var(--pw-accent-hover); }
 .btn-provider svg { width: 20px; height: 20px; flex: none; }
 .btn-provider:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
 .btn-provider:disabled { opacity: .4; cursor: not-allowed; }
-.btn-provider-google { background: #fff; color: #1f1f1f; border-color: #dadce0; }
+.btn-provider-google, .btn-provider-linkedin { background: #fff; color: #1f1f1f; border-color: #dadce0; }
 
 .auth-note, .auth-legal { color: var(--pw-muted); font-size: .85rem; margin-top: 1rem; }
 .auth-switch { margin: 1.5rem 0 0; }
@@ -685,3 +685,11 @@ img.no-save { -webkit-touch-callout: none; -webkit-user-select: none; user-selec
 
 /* Theme picker (account settings). */
 [data-theme-picker] { background: var(--pw-ink-2); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 8px; padding: .15rem .4rem; font-size: .85rem; }
+
+/* App Store and Google Play badges on the home page. The Google PNG has clear space built in, so it's drawn larger
+   (and pulled in) to line up with Apple's 40px-high badge. */
+.store-badges { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; margin-top: 1.5rem; }
+.store-badge { display: inline-flex; align-items: center; }
+.store-badge-apple img { height: 40px; width: auto; display: block; }
+.store-badge-google img { height: 59px; width: auto; display: block; margin: -9.5px -12px; }
+.store-badges-note { color: var(--pw-muted); font-size: .85rem; flex-basis: 100%; }
