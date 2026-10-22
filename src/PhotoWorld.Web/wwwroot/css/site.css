@@ -678,6 +678,10 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 /* Downloads off: no long-press "Save image" on iOS, no selection highlight. */
 img.no-save { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
-/* Theme picker (footer and account settings). */
-.theme-picker { display: inline-flex; align-items: center; gap: .4rem; margin-left: .75rem; }
-.theme-picker select { background: var(--pw-ink-2); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 8px; padding: .15rem .4rem; font-size: .85rem; }
+/* Light/dark switch in the header: the icon shows what a click switches to. */
+.nav-theme { display: inline-flex; align-items: center; background: none; border: 0; cursor: pointer; }
+.theme-icon { display: block; }
+:root[data-theme="dark"] .theme-icon-moon, :root:not([data-theme="dark"]) .theme-icon-sun { display: none; }
+
+/* Theme picker (account settings). */
+[data-theme-picker] { background: var(--pw-ink-2); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 8px; padding: .15rem .4rem; font-size: .85rem; }

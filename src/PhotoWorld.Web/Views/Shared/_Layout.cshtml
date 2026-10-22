@@ -66,6 +66,7 @@
                                     <input name="q" maxlength="100" placeholder="Search" aria-label="Search PhotoWorld" />
                                 </form>
                             </li>
+                            <partial name="_ThemeToggle" />
                             <li class="nav-item">
                                 <a class="nav-link nav-bell" asp-controller="Activity" asp-action="Index" aria-label="Activity" data-activity-bell>
                                     <svg class="nav-bell-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -92,6 +93,7 @@
                         }
                         else
                         {
+                            <partial name="_ThemeToggle" />
                             <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Sign in</a></li>
                             <li class="nav-item"><a class="btn btn-accent btn-sm" asp-controller="Account" asp-action="Register">Join</a></li>
                         }
@@ -118,14 +120,6 @@
     <footer class="site-footer">
         <div class="container">
             &copy; @DateTime.Now.Year PhotoWorld · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
-            <label class="theme-picker">
-                <span>Theme</span>
-                <select data-theme-picker>
-                    <option value="auto">Automatic</option>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                </select>
-            </label>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
