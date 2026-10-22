@@ -31,6 +31,10 @@ public class ExternalLogin
     public int Id { get; set; }
     public required string Provider { get; set; }
     public required string ProviderUserId { get; set; }
+
+    /// <summary>Apple only: the refresh token, used solely to revoke the sign-in when the account is deleted.</summary>
+    public string? RefreshToken { get; set; }
+
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 }

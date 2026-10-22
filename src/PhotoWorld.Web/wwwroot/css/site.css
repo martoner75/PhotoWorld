@@ -131,6 +131,9 @@ a:hover { color: var(--pw-accent-hover); }
 .btn-provider:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
 .btn-provider:disabled { opacity: .4; cursor: not-allowed; }
 .btn-provider-google, .btn-provider-linkedin { background: #fff; color: #1f1f1f; border-color: #dadce0; }
+/* Apple's own style: black in light mode, white in dark mode. */
+.btn-provider-apple { background: #000; color: #fff; border-color: #000; }
+:root[data-theme="dark"] .btn-provider-apple { background: #fff; color: #000; border-color: #fff; }
 
 .auth-note, .auth-legal { color: var(--pw-muted); font-size: .85rem; margin-top: 1rem; }
 .auth-switch { margin: 1.5rem 0 0; }

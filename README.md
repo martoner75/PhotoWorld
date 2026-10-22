@@ -483,7 +483,7 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Configure LinkedIn sign-in
 
 **Continue with LinkedIn** (website and app) stays greyed out until it's configured. A member who signs in with
-LinkedIn and Google using the same verified email gets one PhotoWorld account.
+LinkedIn, Google or Apple using the same verified email gets one PhotoWorld account.
 
 1. [LinkedIn Developers](https://www.linkedin.com/developers/apps) → *Create app* (it needs a LinkedIn company page;
    any page you admin works).
@@ -498,6 +498,36 @@ dotnet user-secrets set "Authentication:LinkedIn:ClientSecret" "<secret>" --proj
 ```
 Unlike Google, the API needs the secret too: it asks LinkedIn's token introspection which app a token was issued
 to, and LinkedIn only answers the app itself.
+
+## Configure Sign in with Apple
+
+**Continue with Apple** (website and app) stays greyed out until it's configured. The App Store requires it in an
+iPhone app that offers Google or LinkedIn sign-in (guideline 4.8). It needs the **Apple Developer Program**.
+
+1. [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list):
+   - the app's **App ID** (`com.photoworld.app`): tick **Sign in with Apple**;
+   - a **Services ID** for the website (for example `com.photoworld.web`): tick **Sign in with Apple** → *Configure*,
+     primary App ID `com.photoworld.app`, your site's domain, and return URL `https://<domain>/signin-apple`;
+   - **Keys** → *+* → **Sign in with Apple** (primary App ID `com.photoworld.app`) → download `AuthKey_XXXXXXXXXX.p8`
+     (once only). Your **Team ID** is at the top right of the developer site.
+2. Configure the Web and the API (the API signs the request that revokes a member's Apple sign-in when they delete
+   their account, as Apple requires):
+   ```bash
+   for p in src/PhotoWorld.Web src/PhotoWorld.Api; do
+     dotnet user-secrets set "Authentication:Apple:ClientId" "com.photoworld.web" --project $p
+     dotnet user-secrets set "Authentication:Apple:TeamId" "<team id>" --project $p
+     dotnet user-secrets set "Authentication:Apple:KeyId" "<key id>" --project $p
+     dotnet user-secrets set "Authentication:Apple:PrivateKey" "$(cat AuthKey_XXXXXXXXXX.p8)" --project $p
+   done
+   ```
+
+**Testing locally:** Apple doesn't accept `localhost` or IP addresses as return URLs. Use the deployed site, or a
+public HTTPS tunnel to `https://localhost:7211` (for example `cloudflared tunnel --url https://localhost:7211`) and
+register the tunnel's domain and `/signin-apple` URL on the Services ID.
+
+**Hide My Email:** members can share a private `@privaterelay.appleid.com` address. Apple only forwards email to it
+from domains registered under *Services → Sign in with Apple for Email Communication*, so register your
+`Email:From` domain there (with SPF) before relying on notification emails for those members.
 
 ## App Store and Google Play badges
 

@@ -151,7 +151,9 @@ public class AccountController(
         await HttpContext.SignOutAsync(AuthSchemes.External);
 
         var provider = external.Properties?.Items.TryGetValue(AuthSchemes.ProviderItem, out var p) == true ? p : null;
-        var providerToken = external.Properties?.GetTokenValue("access_token");
+        // Apple: the API verifies the signed ID token (Apple's access token can't be checked by anyone else).
+        var isApple = provider == AuthProviders.Apple;
+        var providerToken = external.Properties?.GetTokenValue(isApple ? "id_token" : "access_token");
         if (!external.Succeeded || provider is null || providerToken is null)
         {
             logger.LogWarning("External sign-in with {Provider} failed: {Failure}", provider, external.Failure?.Message);
@@ -161,7 +163,11 @@ public class AccountController(
         AuthResponse? session;
         try
         {
-            session = await api.ExternalLoginAsync(new ExternalLoginRequest(provider, providerToken), ct);
+            session = await api.ExternalLoginAsync(isApple
+                ? new ExternalLoginRequest(provider, providerToken,
+                    external.Properties!.Items.TryGetValue(AuthSchemes.AppleNameItem, out var name) ? name : null,
+                    external.Properties.GetTokenValue("refresh_token"))
+                : new ExternalLoginRequest(provider, providerToken), ct);
         }
         catch (AccountSuspendedException ex)
         {

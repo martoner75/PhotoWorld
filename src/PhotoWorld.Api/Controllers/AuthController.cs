@@ -52,8 +52,8 @@ public class AuthController(
         if (login is not null)
         {
             user = login.User;
-            // Keep the profile fresh with whatever the provider tells us now.
-            user.DisplayName = identity.DisplayName;
+            // Keep the profile fresh with whatever the provider tells us now (Apple tells us no name after the first time).
+            if (!string.IsNullOrWhiteSpace(identity.DisplayName)) user.DisplayName = identity.DisplayName;
             user.Email ??= identity.Email;
             user.AvatarUrl = identity.AvatarUrl ?? user.AvatarUrl;
         }
@@ -67,13 +67,14 @@ public class AuthController(
             isNewUser = existing is null;
             user = existing ?? db.Users.Add(new User
             {
-                DisplayName = identity.DisplayName,
+                DisplayName = NewMemberName(identity, request.DisplayName),
                 Email = identity.Email,
                 AvatarUrl = identity.AvatarUrl,
                 CreatedAt = now,
             }).Entity;
-            user.ExternalLogins.Add(new ExternalLogin { Provider = provider, ProviderUserId = identity.ProviderUserId });
+            user.ExternalLogins.Add(login = new ExternalLogin { Provider = provider, ProviderUserId = identity.ProviderUserId });
         }
+        if (provider == AuthProviders.Apple && !string.IsNullOrEmpty(request.RefreshToken)) login.RefreshToken = request.RefreshToken;
         if (user.SuspendedAt is not null)
         {
             logger.LogWarning("Suspended member {UserId} tried to sign in", user.Id);
@@ -86,5 +87,18 @@ public class AuthController(
 
         var (token, expiresAt) = tokens.Issue(user, provider);
         return new AuthResponse(token, expiresAt, isNewUser, user.ToDto() with { IsAdmin = await admins.IsAdminAsync(user.Id, ct) });
+    }
+
+    /// <summary>
+    /// The provider's name; for Apple, the name it sent the website on first sign-in; else the start of the email
+    /// address (not an Apple relay address); else "Photographer". Members change it later from their provider profile.
+    /// </summary>
+    internal static string NewMemberName(ExternalIdentity identity, string? suggested)
+    {
+        if (!string.IsNullOrWhiteSpace(identity.DisplayName)) return identity.DisplayName;
+        if (!string.IsNullOrWhiteSpace(suggested)) return suggested.Trim();
+        if (identity.Email is { } email && !email.EndsWith("@privaterelay.appleid.com", StringComparison.OrdinalIgnoreCase))
+            return email[..email.IndexOf('@')];
+        return "Photographer";
     }
 }

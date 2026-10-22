@@ -5,9 +5,11 @@ using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Api.Services.Challenges;
+using PhotoWorld.Api.Services.Identity;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Activities;
+using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Users;
 
@@ -21,6 +23,7 @@ public class UsersController(
     ChallengeStandings standings,
     AdminAccess admins,
     ActivityFeed activity,
+    AppleTokenRevoker apple,
     TimeProvider clock,
     ILogger<UsersController> logger) : ControllerBase
 {
@@ -51,6 +54,21 @@ public class UsersController(
             .ToList();
 
         var attachments = await db.BlogAttachments.Where(a => a.Post.AuthorId == id).Select(a => a.StoragePath).ToListAsync(ct);
+
+        // Sign in with Apple must be revoked when the account goes. A failure is logged and doesn't stop the deletion.
+        var appleTokens = await db.ExternalLogins.Where(l => l.UserId == id && l.Provider == AuthProviders.Apple && l.RefreshToken != null)
+            .Select(l => l.RefreshToken!).ToListAsync(ct);
+        foreach (var token in appleTokens)
+        {
+            try
+            {
+                await apple.RevokeAsync(token, CancellationToken.None);
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogWarning(ex, "Could not revoke the Apple sign-in for deleted user {UserId}", id);
+            }
+        }
 
         db.Users.Remove(user);
         await db.SaveChangesAsync(ct);

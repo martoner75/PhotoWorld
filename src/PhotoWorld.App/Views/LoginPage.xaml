@@ -20,6 +20,11 @@
                    IsVisible="{Binding Error, Converter={StaticResource HasValue}}" />
             <Button Text="Continue with Google" Command="{Binding SignInCommand}" CommandParameter="Google"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
+            <!-- Apple's own style: black in light mode, white in dark mode. -->
+            <Button Text="Continue with Apple" Command="{Binding SignInCommand}" CommandParameter="Apple"
+                    ImageSource="{AppThemeBinding Light=logo_apple_white.png, Dark=logo_apple_black.png}" ContentLayout="Left,8"
+                    BackgroundColor="{AppThemeBinding Light=Black, Dark=White}" TextColor="{AppThemeBinding Light=White, Dark=Black}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
             <Button Text="Continue with LinkedIn" Command="{Binding SignInCommand}" CommandParameter="LinkedIn"
                     Style="{StaticResource GhostButton}" IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />

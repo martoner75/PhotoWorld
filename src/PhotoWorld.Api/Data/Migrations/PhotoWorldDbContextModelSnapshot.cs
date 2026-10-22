@@ -692,6 +692,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("provider_user_id");
 
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("text")
+                        .HasColumnName("refresh_token");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");

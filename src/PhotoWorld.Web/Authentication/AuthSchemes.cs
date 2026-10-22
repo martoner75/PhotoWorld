@@ -10,4 +10,7 @@ public static class AuthSchemes
 
     /// <summary>AuthenticationProperties item carrying the provider through the OAuth round-trip.</summary>
     public const string ProviderItem = "LoginProvider";
+
+    /// <summary>Apple only: the member's name from Apple's first sign-in, carried to the API with the ID token.</summary>
+    public const string AppleNameItem = "AppleName";
 }

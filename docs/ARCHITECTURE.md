@@ -108,7 +108,7 @@ flowchart TB
 
 ## 3. Authentication
 
-PhotoWorld has **two identity providers (Google and LinkedIn)** and **one token format (a PhotoWorld JWT)**. Provider
+PhotoWorld has **three identity providers (Google, Apple and LinkedIn)** and **one token format (a PhotoWorld JWT)**. Provider
 tokens never reach the API except once, at sign-in, to be verified; after that every component uses the PhotoWorld
 JWT. Each provider is an `IExternalIdentityVerifier` in the API and an authentication scheme in the Web, registered
 only when its client ID is configured.
@@ -117,6 +117,8 @@ only when its client ID is configured.
 |---|---|---|---|---|
 | Google access token | Google | ~1 h | Web, briefly | Proving the Google identity to the API, once |
 | LinkedIn access token | LinkedIn | ~60 days (used once) | Web, briefly | Proving the LinkedIn identity to the API, once |
+| Apple ID token (JWT) | Apple | 10 min | Web, briefly | Proving the Apple identity to the API, once |
+| Apple refresh token | Apple | Until revoked | API (`external_logins.refresh_token`) | Only revoking the sign-in when the account is deleted |
 | PhotoWorld JWT (HS256) | API (`JwtTokenService`) | 8 h | Web (inside the auth cookie) or App (Keychain / Android Keystore) | Every API call (`Authorization: Bearer …`) |
 | `PhotoWorld.Auth` cookie | Web | Same as the JWT inside it | Browser | The browser session |
 | App one-time code | Web | 2 min, single use | App, briefly | Redeeming the JWT with the app's verifier |
@@ -156,6 +158,13 @@ sequenceDiagram
   plain OAuth handler. `LinkedInIdentityVerifier` checks the token with LinkedIn's introspection endpoint
   (authenticated with PhotoWorld's client ID and secret, so it must report PhotoWorld's client ID and `active`), then
   reads `api.linkedin.com/v2/userinfo` (sub, name, verified email, picture).
+- **Apple** ("Sign in with Apple") uses the OpenID Connect handler on `/signin-apple` with `response_mode=form_post`
+  (so the correlation and nonce cookies are `SameSite=None`). There's no fixed client secret: `AppleClientSecret`
+  (Shared) signs a 5-minute ES256 JWT with the team's `.p8` key for each code exchange. The Web sends the **ID token**
+  to the API, plus the name Apple posts only on first sign-in and the refresh token. `AppleIdentityVerifier` checks
+  the token against Apple's published keys (issuer `https://appleid.apple.com`, audience = the Services ID, expiry);
+  the name is only used to create a new member. Deleting the account calls Apple's `auth/revoke` with the stored
+  refresh token (`AppleTokenRevoker`), as Apple requires. Apple shares no picture, and may share a private relay email.
 - The cookie expires with the JWT inside it, so a session never outlives its API token.
 
 ### 3.2 App sign-in (through the website)
