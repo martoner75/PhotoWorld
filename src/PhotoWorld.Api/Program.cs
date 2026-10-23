@@ -14,11 +14,12 @@ using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Api.Services.Push;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Logging;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(o => o.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -42,12 +43,10 @@ foreach (var provider in AuthProviders.All)
 
 builder.Services.AddHttpClient<GoogleIdentityVerifier>();
 builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<GoogleIdentityVerifier>());
-builder.Services.AddHttpClient<LinkedInIdentityVerifier>();
 builder.Services.AddSingleton<AppleSigningKeys>();
 builder.Services.AddTransient<AppleIdentityVerifier>();
 builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<AppleIdentityVerifier>());
 builder.Services.AddHttpClient<AppleTokenRevoker>();
-builder.Services.AddTransient<IExternalIdentityVerifier>(sp => sp.GetRequiredService<LinkedInIdentityVerifier>());
 
 builder.Services.Configure<SupabaseStorageOptions>(builder.Configuration.GetSection(SupabaseStorageOptions.Section));
 builder.Services.AddHttpClient<SupabaseStorage>();
@@ -119,6 +118,8 @@ if (string.IsNullOrWhiteSpace(app.Configuration[$"{SupabaseStorageOptions.Sectio
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    // Interactive API reference at /scalar, reading the document from /openapi/v1.json.
+    app.MapScalarApiReference(o => o.AddPreferredSecuritySchemes(JwtBearerDefaults.AuthenticationScheme));
 }
 
 app.UseExceptionHandler();

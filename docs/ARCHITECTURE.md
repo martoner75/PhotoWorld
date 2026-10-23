@@ -99,6 +99,9 @@ flowchart TB
   server-side logger).
 - The app's platform targets are built only where their tools exist (`net10.0-ios`: Xcode on a Mac;
   `net10.0-android`: Android SDK + JDK). The plain `net10.0` target always compiles the shared C# and XAML.
+- In Development the API publishes an OpenAPI document (`Microsoft.AspNetCore.OpenApi`, `/openapi/v1.json`) and a
+  Scalar API reference (`Scalar.AspNetCore`, `/scalar`). `BearerSecuritySchemeTransformer` adds the `Bearer` (JWT)
+  security scheme to the document, so requests from Scalar can carry a PhotoWorld JWT. Neither is mapped in production.
 
 | Project | Key folders |
 |---|---|
@@ -108,7 +111,7 @@ flowchart TB
 
 ## 3. Authentication
 
-PhotoWorld has **three identity providers (Google, Apple and LinkedIn)** and **one token format (a PhotoWorld JWT)**. Provider
+PhotoWorld has **two identity providers (Google and Apple)** and **one token format (a PhotoWorld JWT)**. Provider
 tokens never reach the API except once, at sign-in, to be verified; after that every component uses the PhotoWorld
 JWT. Each provider is an `IExternalIdentityVerifier` in the API and an authentication scheme in the Web, registered
 only when its client ID is configured.
@@ -116,7 +119,6 @@ only when its client ID is configured.
 | Token | Issued by | Lifetime | Held by | Used for |
 |---|---|---|---|---|
 | Google access token | Google | ~1 h | Web, briefly | Proving the Google identity to the API, once |
-| LinkedIn access token | LinkedIn | ~60 days (used once) | Web, briefly | Proving the LinkedIn identity to the API, once |
 | Apple ID token (JWT) | Apple | 10 min | Web, briefly | Proving the Apple identity to the API, once |
 | Apple refresh token | Apple | Until revoked | API (`external_logins.refresh_token`) | Only revoking the sign-in when the account is deleted |
 | PhotoWorld JWT (HS256) | API (`JwtTokenService`) | 8 h | Web (inside the auth cookie) or App (Keychain / Android Keystore) | Every API call (`Authorization: Bearer …`) |
@@ -154,10 +156,6 @@ sequenceDiagram
 
 - First sign-in creates the account. A verified email already known from another provider (compared without
   capitals) links to the same member instead of creating a duplicate.
-- **LinkedIn** ("Sign In with LinkedIn using OpenID Connect") follows the same flow, with `/signin-linkedin` and the
-  plain OAuth handler. `LinkedInIdentityVerifier` checks the token with LinkedIn's introspection endpoint
-  (authenticated with PhotoWorld's client ID and secret, so it must report PhotoWorld's client ID and `active`), then
-  reads `api.linkedin.com/v2/userinfo` (sub, name, verified email, picture).
 - **Apple** ("Sign in with Apple") uses the OpenID Connect handler on `/signin-apple` with `response_mode=form_post`
   (so the correlation and nonce cookies are `SameSite=None`). There's no fixed client secret: `AppleClientSecret`
   (Shared) signs a 5-minute ES256 JWT with the team's `.p8` key for each code exchange. The Web sends the **ID token**
@@ -699,6 +697,7 @@ production, a git-ignored `Local.props` for the app.
 | `Authentication:Google:ClientId` / `ClientSecret` | Web user-secrets (ID also in API) | Web, API | Google OAuth; the API checks `aud` |
 | `PhotoWorldApi:BaseUrl` | Web `appsettings.json` | Web | Where the API is |
 | `Site:ContactEmail` | Web `appsettings.json` | Web | Privacy policy contact |
+| `Site:Social:Facebook` / `Instagram` / `YouTube` | Web `appsettings.json` | Web | Footer social links (each hidden while empty) |
 | `AppConfig.ApiBaseUrl` / `WebBaseUrl` | `App/AppConfig.cs` | App | API and sign-in URLs (Debug: localhost) |
 | `GoogleMapsApiKey`, `JavaSdkDirectory` | `App/Local.props` (git-ignored) | App (Android) | Places map key; local JDK |
 | `Email:Smtp:*`, `Email:From` | API user-secrets | API | Sending notification emails (none set: `.eml` files) |

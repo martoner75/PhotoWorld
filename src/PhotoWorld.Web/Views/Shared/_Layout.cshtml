@@ -1,3 +1,4 @@
+@inject IConfiguration Configuration
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,7 +49,7 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm site-nav">
+        <nav class="navbar navbar-expand-lg site-nav">
             <div class="container">
                 <a class="navbar-brand brand" asp-controller="Home" asp-action="Index">
                     <span class="brand-mark" aria-hidden="true"></span> PhotoWorld
@@ -57,27 +58,29 @@
                         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
-                    <ul class="navbar-nav align-items-sm-center gap-sm-2">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            var avatar = User.FindFirstValue(PhotoWorldClaimTypes.AvatarUrl);
-                            <li class="nav-item"><a class="nav-link" asp-controller="Photos" asp-action="Index">Gallery</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Search" asp-action="Explore">Explore</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Blogs" asp-action="Index">Blogs</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Challenges" asp-action="Index">Challenges</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Walks" asp-action="Index">Walks</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Places" asp-action="Index">My places</a></li>
-                            @if (User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true"))
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">Admin</a></li>
-                            }
+                <div class="navbar-collapse collapse">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        var avatar = User.FindFirstValue(PhotoWorldClaimTypes.AvatarUrl);
+                        var controller = ViewContext.RouteData.Values["controller"] as string;
+                        // The section being viewed is highlighted, for sighted members and screen readers alike.
+                        string? Active(string section) => controller == section ? "active" : null;
+                        string? Current(string section) => controller == section ? "page" : null;
+                        @* Site sections on the left; search, upload, activity and the member's own menu on the right. *@
+                        <ul class="navbar-nav me-auto ms-lg-3 gap-lg-1">
+                            <li class="nav-item"><a class="nav-link @Active("Photos")" aria-current="@Current("Photos")" asp-controller="Photos" asp-action="Index">Gallery</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Search")" aria-current="@Current("Search")" asp-controller="Search" asp-action="Explore">Explore</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Blogs")" aria-current="@Current("Blogs")" asp-controller="Blogs" asp-action="Index">Blogs</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Challenges")" aria-current="@Current("Challenges")" asp-controller="Challenges" asp-action="Index">Challenges</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Walks")" aria-current="@Current("Walks")" asp-controller="Walks" asp-action="Index">Walks</a></li>
+                        </ul>
+                        <ul class="navbar-nav align-items-lg-center gap-lg-2">
                             <li class="nav-item">
                                 <form asp-controller="Search" asp-action="Index" method="get" class="nav-search" role="search">
                                     <input name="q" maxlength="100" placeholder="Search" aria-label="Search PhotoWorld" />
                                 </form>
                             </li>
-                            <partial name="_ThemeToggle" />
+                            <li class="nav-item"><a class="btn btn-accent btn-sm" asp-controller="Photos" asp-action="Upload">Upload</a></li>
                             <li class="nav-item">
                                 <a class="nav-link nav-bell" asp-controller="Activity" asp-action="Index" aria-label="Activity" data-activity-bell>
                                     <svg class="nav-bell-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -86,29 +89,56 @@
                                     </svg><span class="nav-bell-count" data-activity-count hidden></span>
                                 </a>
                             </li>
-                            <li class="nav-item"><a class="btn btn-accent btn-sm" asp-controller="Photos" asp-action="Upload">Upload</a></li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-user" asp-controller="Members" asp-action="Me">
+                            @* On wide screens a dropdown under the avatar; in the collapsed mobile menu its items are listed in full. *@
+                            <li class="nav-item dropdown nav-account">
+                                <button type="button" class="nav-link nav-user dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+                                        aria-label="Your account: @User.Identity.Name">
                                     @if (avatar is not null)
                                     {
                                         <img src="@avatar" alt="" referrerpolicy="no-referrer" />
                                     }
-                                    @User.Identity.Name
-                                </a>
+                                    else
+                                    {
+                                        <span class="nav-user-initial" aria-hidden="true">@User.Identity.Name?.FirstOrDefault()</span>
+                                    }
+                                    <span class="nav-user-name">@User.Identity.Name</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li class="dropdown-header">@User.Identity.Name</li>
+                                    <li><a class="dropdown-item" asp-controller="Members" asp-action="Me">My profile</a></li>
+                                    <li><a class="dropdown-item @Active("Places")" aria-current="@Current("Places")" asp-controller="Places" asp-action="Index">My places</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Settings">Account settings</a></li>
+                                    @if (User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true"))
+                                    {
+                                        <li><a class="dropdown-item @Active("Admin")" aria-current="@Current("Admin")" asp-controller="Admin" asp-action="Users">Admin</a></li>
+                                    }
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li class="dropdown-theme">
+                                        <span id="nav-theme-label">Theme</span>
+                                        <div class="theme-choices" role="group" aria-labelledby="nav-theme-label">
+                                            <button type="button" data-theme-choice="light">Light</button>
+                                            <button type="button" data-theme-choice="dark">Dark</button>
+                                            <button type="button" data-theme-choice="auto">Auto</button>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item">Sign out</button>
+                                        </form>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post">
-                                    <button type="submit" class="btn btn-ghost btn-sm">Sign out</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
+                        </ul>
+                    }
+                    else
+                    {
+                        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                             <partial name="_ThemeToggle" />
                             <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Sign in</a></li>
                             <li class="nav-item"><a class="btn btn-accent btn-sm" asp-controller="Account" asp-action="Register">Join</a></li>
-                        }
-                    </ul>
+                        </ul>
+                    }
                 </div>
             </div>
         </nav>
@@ -117,7 +147,7 @@
     @if (TempData["Flash"] is string flash)
     {
         <div class="container mt-3">
-            <div class="alert alert-success alert-dismissible fade show" role="status">
+            <div class="alert alert-success alert-dismissible fade show" role="status" data-auto-dismiss="3000">
                 @flash
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -129,9 +159,47 @@
     </main>
 
     <footer class="site-footer">
-        <div class="container">
-            &copy; @DateTime.Now.Year PhotoWorld · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
-            · <button type="button" class="link-button" data-cookie-settings>Cookie settings</button>
+        <div class="container footer-row">
+            <div>
+                &copy; @DateTime.Now.Year PhotoWorld · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+                · <button type="button" class="link-button" data-cookie-settings>Cookie settings</button>
+            </div>
+            @* Each link shows only once its page URL is set (Site:Social in appsettings.json). *@
+            @{
+                var social = Configuration.GetSection("Site:Social");
+                var facebook = social["Facebook"];
+                var instagram = social["Instagram"];
+                var youtube = social["YouTube"];
+            }
+            @if (!string.IsNullOrWhiteSpace(facebook) || !string.IsNullOrWhiteSpace(instagram) || !string.IsNullOrWhiteSpace(youtube))
+            {
+                <ul class="footer-social" aria-label="PhotoWorld on social media">
+                    @if (!string.IsNullOrWhiteSpace(facebook))
+                    {
+                        <li>
+                            <a href="@facebook" rel="noopener" target="_blank" aria-label="PhotoWorld on Facebook" title="Facebook">
+                                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M24 12a12 12 0 1 0-13.9 11.9v-8.4h-3V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12Z" /></svg>
+                            </a>
+                        </li>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(instagram))
+                    {
+                        <li>
+                            <a href="@instagram" rel="noopener" target="_blank" aria-label="PhotoWorld on Instagram" title="Instagram">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4.2" /><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" /></svg>
+                            </a>
+                        </li>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(youtube))
+                    {
+                        <li>
+                            <a href="@youtube" rel="noopener" target="_blank" aria-label="PhotoWorld on YouTube" title="YouTube">
+                                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z" /></svg>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
         </div>
     </footer>
     <partial name="_CookieBanner" />

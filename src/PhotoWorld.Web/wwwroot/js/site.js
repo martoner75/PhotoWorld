@@ -13,6 +13,17 @@ document.querySelectorAll("form[data-confirm]").forEach((form) => {
   });
 });
 
+// Messages such as "Welcome back" close themselves after data-auto-dismiss milliseconds (they can still be closed
+// with the X). The countdown waits while the pointer is over the message, so it can be read in full.
+document.querySelectorAll("[data-auto-dismiss]").forEach((el) => {
+  const delay = Number(el.dataset.autoDismiss) || 3000;
+  let timer;
+  const start = () => { timer = setTimeout(() => bootstrap.Alert.getOrCreateInstance(el).close(), delay); };
+  el.addEventListener("mouseenter", () => clearTimeout(timer));
+  el.addEventListener("mouseleave", start);
+  start();
+});
+
 // The Activity icon in the menu: how many activity items are unread (asked once per page, after it has loaded).
 const bell = document.querySelector("[data-activity-bell]");
 if (bell && !location.pathname.toLowerCase().startsWith("/activity")) {
@@ -43,18 +54,22 @@ document.querySelectorAll("[data-no-save]").forEach((img) => {
   img.addEventListener("dragstart", (e) => e.preventDefault());
 });
 
-// Light/dark: the header icon flips between the two (saving an explicit choice); the picker in account settings
-// also offers Automatic. Both stay in step.
+// Light/dark: the header icon (signed out) flips between the two, saving an explicit choice; the account menu's
+// Light / Dark / Auto buttons and the picker in account settings also offer Automatic. All stay in step.
 (() => {
   const root = document.documentElement;
   const pickers = document.querySelectorAll("[data-theme-picker]");
   const toggles = document.querySelectorAll("[data-theme-toggle]");
+  const choices = document.querySelectorAll("[data-theme-choice]");
   const sync = () => {
     pickers.forEach((select) => { select.value = root.dataset.themeChoice || "auto"; });
+    choices.forEach((button) => button.setAttribute("aria-pressed", button.dataset.themeChoice === (root.dataset.themeChoice || "auto")));
     const label = root.dataset.theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
     toggles.forEach((button) => { button.setAttribute("aria-label", label); button.title = label; });
   };
   pickers.forEach((select) => select.addEventListener("change", () => { window.pwSetTheme(select.value); sync(); }));
+  // stopPropagation keeps the account menu open, so the member sees the new theme take effect.
+  choices.forEach((button) => button.addEventListener("click", (e) => { e.stopPropagation(); window.pwSetTheme(button.dataset.themeChoice); sync(); }));
   toggles.forEach((button) => button.addEventListener("click", () => {
     window.pwSetTheme(root.dataset.theme === "dark" ? "light" : "dark");
     sync();

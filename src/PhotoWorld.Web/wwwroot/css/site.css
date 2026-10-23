@@ -75,9 +75,36 @@ a:hover { color: var(--pw-accent-hover); }
   box-shadow: inset 0 0 0 4px var(--pw-ink), inset 0 0 0 12px var(--pw-accent);
 }
 .site-nav .nav-link { color: var(--pw-text); }
-.site-nav .nav-link:hover { color: var(--pw-accent); }
-.nav-user { display: flex; align-items: center; gap: .5rem; }
-.nav-user img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.site-nav .nav-link:hover, .site-nav .nav-link.active { color: var(--pw-accent); }
+.site-nav .navbar-nav:first-child .nav-link.active { font-weight: 600; }
+.nav-user { display: flex; align-items: center; gap: .5rem; background: none; border: 0; }
+.nav-user img, .nav-user-initial { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.nav-user-initial { display: inline-grid; place-items: center; background: var(--pw-chip); font-weight: 600; font-size: .85rem; text-transform: uppercase; }
+
+/* Account menu under the avatar. */
+.nav-account .dropdown-menu {
+  --bs-dropdown-bg: var(--pw-raised); --bs-dropdown-border-color: var(--pw-line); --bs-dropdown-color: var(--pw-text);
+  --bs-dropdown-link-color: var(--pw-text); --bs-dropdown-link-hover-bg: var(--pw-hover); --bs-dropdown-link-hover-color: var(--pw-text);
+  --bs-dropdown-link-active-bg: var(--pw-hover); --bs-dropdown-link-active-color: var(--pw-accent);
+  --bs-dropdown-divider-bg: var(--pw-line); --bs-dropdown-header-color: var(--pw-muted); min-width: 14rem;
+}
+.nav-account .dropdown-item.active { font-weight: 600; }
+.dropdown-theme { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .25rem 1rem; }
+.theme-choices { display: inline-flex; border: 1px solid var(--pw-line); border-radius: 99px; overflow: hidden; }
+.theme-choices button { background: none; border: 0; color: var(--pw-text); font-size: .82rem; padding: .2rem .6rem; }
+.theme-choices button:hover { background: var(--pw-hover); }
+.theme-choices button[aria-pressed="true"] { background: var(--pw-accent); color: var(--pw-accent-ink); }
+/* Wide screens show only the avatar; the collapsed mobile menu lists the account items in full instead of a dropdown. */
+@media (min-width: 992px) { .nav-user-name { display: none; } }
+@media (max-width: 991.98px) {
+  .site-nav .navbar-collapse { padding-top: .5rem; }
+  .site-nav .navbar-nav + .navbar-nav { border-top: 1px solid var(--pw-line); margin-top: .5rem; padding-top: .5rem; gap: .35rem; }
+  .nav-account .dropdown-toggle { pointer-events: none; }
+  .nav-account .dropdown-toggle::after, .nav-account .dropdown-header { display: none; }
+  .nav-account .dropdown-menu { display: block; position: static; border: 0; background: none; padding: 0; }
+  .nav-account .dropdown-item { padding-left: 0; }
+  .dropdown-theme { padding-left: 0; justify-content: flex-start; }
+}
 
 .btn-accent { background: var(--pw-accent); color: var(--pw-accent-ink); border: 0; font-weight: 600; }
 .btn-accent:hover { background: var(--pw-accent-hover); color: var(--pw-accent-ink); }
@@ -130,7 +157,7 @@ a:hover { color: var(--pw-accent-hover); }
 .btn-provider svg { width: 20px; height: 20px; flex: none; }
 .btn-provider:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
 .btn-provider:disabled { opacity: .4; cursor: not-allowed; }
-.btn-provider-google, .btn-provider-linkedin { background: #fff; color: #1f1f1f; border-color: #dadce0; }
+.btn-provider-google { background: #fff; color: #1f1f1f; border-color: #dadce0; }
 /* Apple's own style: black in light mode, white in dark mode. */
 .btn-provider-apple { background: #000; color: #fff; border-color: #000; }
 :root[data-theme="dark"] .btn-provider-apple { background: #fff; color: #000; border-color: #fff; }
@@ -142,6 +169,11 @@ a:hover { color: var(--pw-accent-hover); }
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--pw-line); color: var(--pw-muted); padding: 1.5rem 0; font-size: .9rem; }
 .site-footer a { color: var(--pw-muted); }
+.footer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; }
+.footer-social { display: flex; gap: .9rem; list-style: none; margin: 0; padding: 0; }
+.footer-social a { display: inline-flex; padding: .15rem; }
+.footer-social a:hover { color: var(--pw-accent); }
+.footer-social svg { display: block; }
 
 /* ---------- Legal pages ---------- */
 .legal { max-width: 760px; padding: 3.5rem 1rem 4rem; line-height: 1.65; }

@@ -128,11 +128,18 @@ server build is green, it applies any pending EF migrations to Supabase. It need
 ## Look and feel
 
 PhotoWorld uses **Gallery White** (white pages, amber accent) and **Graphite** (soft charcoal) for dark mode. Members
-choose **Automatic** (follow the device, the default), **Light** or **Dark**. On the website, the moon/sun icon in
-the header switches between light and dark in one click, and Account settings → Appearance also offers Automatic
-(remembered in that browser); in the app, the same moon/sun icon is in the top bar of every tab, and Appearance on the Me tab offers all three (remembered on that device). Website: the colours are CSS variables at the top of `site.css` (`:root` and its `[data-theme="dark"]`
+choose **Automatic** (follow the device, the default), **Light** or **Dark**. On the website, signed-in members pick
+Light / Dark / Auto in the account menu under their avatar (signed out, a moon/sun icon in the header switches
+between light and dark in one click), and Account settings → Appearance also offers all three (remembered in that browser); in the app, the same moon/sun icon is in the top bar of every tab, and Appearance on the Me tab offers all three (remembered on that device). Website: the colours are CSS variables at the top of `site.css` (`:root` and its `[data-theme="dark"]`
 block); a small script in the layout's `<head>` sets `data-theme` and Bootstrap's `data-bs-theme` before the page
-paints. App: `Resources/Styles/Colors.xaml` holds the light values and `ThemePalette` swaps in the dark ones; the
+paints.
+
+The website header, once signed in, has the sections on the left (Gallery, Explore, Blogs, Challenges, Walks, with
+the current one highlighted) and search, **Upload**, the Activity icon and the avatar on the right. The avatar opens
+the account menu: My profile, My places, Account settings, Admin (admins only), the theme and Sign out. Below 992px it
+all folds into the mobile menu, with the account items listed in full. Green confirmation messages (such as the
+welcome after signing in) close by themselves after 3 seconds (`data-auto-dismiss` on the alert, paused while the
+pointer is over it); error messages stay until the member moves on. App: `Resources/Styles/Colors.xaml` holds the light values and `ThemePalette` swaps in the dark ones; the
 choice sets `UserAppTheme` (pages use `DynamicResource`). Text drawn on photos stays light in both. The Activity (inbox tray) and challenge (trophy)
 buttons are outline icons (`Resources/Images/icon_*.svg`).
 
@@ -326,7 +333,7 @@ The API logs "Push notifications on for: ios, android" at startup once keys are 
 
 ## Admin
 
-Admins see **Admin** in the website's menu (after signing in again once they're made admin):
+Admins see **Admin** in the website's account menu, under their avatar (after signing in again once they're made admin):
 
 - **Users**: every member with their email, join and last sign-in dates and photo and post counts, searchable by
   name or email. **Make admin / Remove admin**, and **Suspend** (with a reason, shown to them when they try to sign
@@ -363,7 +370,7 @@ if the place is deleted. `GET api/spots` returns the newest 2,000 visible photos
 
 ## My places
 
-**My places** (in the menu) is a private map of the places a member has been. They search for a place or click
+**My places** (in the account menu under the avatar) is a private map of the places a member has been. They search for a place or click
 the map to drop a pin (draggable to adjust), then add a name, an optional visit date and notes. Clicking a place in
 the list flies the map to it.
 
@@ -468,6 +475,11 @@ dotnet run --project src/PhotoWorld.Web --launch-profile https   # https://local
 
 In Rider / Visual Studio, use the **Web + API** launch profile (`PhotoWorld.slnLaunch`).
 
+In Development the API also serves its OpenAPI document at `/openapi/v1.json` and an interactive reference
+([Scalar](https://scalar.com)) at `https://localhost:7041/scalar`. Protected endpoints need a PhotoWorld JWT: get one
+from `POST api/auth/external` and paste it, without `Bearer `, into Scalar's authentication box (the document
+declares the `Bearer` scheme).
+
 The API's JWT signing key is already in user-secrets on this machine. On a new machine:
 
 ```bash
@@ -489,29 +501,11 @@ dotnet user-secrets set "Authentication:Google:ClientSecret" "<secret>" --projec
 dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/PhotoWorld.Api
 ```
 
-## Configure LinkedIn sign-in
-
-**Continue with LinkedIn** (website and app) stays greyed out until it's configured. A member who signs in with
-LinkedIn, Google or Apple using the same verified email gets one PhotoWorld account.
-
-1. [LinkedIn Developers](https://www.linkedin.com/developers/apps) → *Create app* (it needs a LinkedIn company page;
-   any page you admin works).
-2. *Products* → request **Sign In with LinkedIn using OpenID Connect** (approved straight away).
-3. *Auth* → *Authorized redirect URLs*: `https://localhost:7211/signin-linkedin` (and your live site's
-   `https://<domain>/signin-linkedin`). Copy the Client ID and Primary Client Secret.
-```bash
-dotnet user-secrets set "Authentication:LinkedIn:ClientId" "<id>" --project src/PhotoWorld.Web
-dotnet user-secrets set "Authentication:LinkedIn:ClientSecret" "<secret>" --project src/PhotoWorld.Web
-dotnet user-secrets set "Authentication:LinkedIn:ClientId" "<id>" --project src/PhotoWorld.Api
-dotnet user-secrets set "Authentication:LinkedIn:ClientSecret" "<secret>" --project src/PhotoWorld.Api
-```
-Unlike Google, the API needs the secret too: it asks LinkedIn's token introspection which app a token was issued
-to, and LinkedIn only answers the app itself.
-
 ## Configure Sign in with Apple
 
-**Continue with Apple** (website and app) stays greyed out until it's configured. The App Store requires it in an
-iPhone app that offers Google or LinkedIn sign-in (guideline 4.8). It needs the **Apple Developer Program**.
+**Continue with Apple** (website and app) stays greyed out until it's configured. A member who signs in with
+Google or Apple using the same verified email gets one PhotoWorld account. The App Store requires it in an
+iPhone app that offers Google sign-in (guideline 4.8). It needs the **Apple Developer Program**.
 
 1. [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list):
    - the app's **App ID** (`com.photoworld.app`): tick **Sign in with Apple**;
@@ -609,6 +603,19 @@ $SDK/platform-tools/adb reverse tcp:7211 tcp:7211
 dotnet build src/PhotoWorld.App "-t:Build;Run" -f net10.0-android
 ```
 
+On Windows (Visual Studio's Android tools), with a phone plugged in by USB (accept *Allow USB debugging* on it first;
+`adb devices` should then say `device`, not `unauthorized`):
+
+```powershell
+$SDK = "C:\Program Files (x86)\Android\android-sdk"
+& "$SDK\platform-tools\adb.exe" reverse tcp:7041 tcp:7041   # repeat after each unplug or reboot
+& "$SDK\platform-tools\adb.exe" reverse tcp:7211 tcp:7211
+dotnet build src/PhotoWorld.App "-t:Build;Run" -f net10.0-android "-p:AndroidSdkDirectory=$SDK" "-p:JavaSdkDirectory=C:\Program Files\Android\openjdk\jdk-21.0.8"
+```
+
+Setting `ANDROID_HOME` and `JavaSdkDirectory` (in `Local.props`) instead saves passing the two paths. Start the API
+and Web on the PC first, or sign-in and content won't load.
+
 `adb reverse` lets the app use the same `localhost` URLs as iOS, which matters because Google sign-in only accepts
 the registered `localhost` redirect. Chrome on the emulator doesn't trust the dev certificate: tap *Advanced →
 Proceed* once, or install it under Settings → Security → Encryption & credentials → Install a certificate.
@@ -640,4 +647,6 @@ Privacy answers in App Store Connect to match the privacy policy.
 ## Notes / next steps
 - The privacy policy is at `/Home/Privacy`; its contact address comes from `Site:ContactEmail` in the Web's
   `appsettings.json`. Use that URL for the Google consent screen. Have it reviewed before going live.
+- The footer's Facebook, Instagram and YouTube icons link to `Site:Social:Facebook`, `Instagram` and `YouTube` in the
+  Web's `appsettings.json` (full page URLs); each icon is hidden until its URL is set.
 - Possible next steps: an in-app moderation page, email notifications for new reports.

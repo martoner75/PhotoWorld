@@ -5,12 +5,12 @@
       {
         "Path": "src\\PhotoWorld.Api\\PhotoWorld.Api.csproj",
         "Action": "Start",
-        "DebugTarget": "https"
+        "DebugTarget": "IIS Express"
       },
       {
         "Path": "src\\PhotoWorld.Web\\PhotoWorld.Web.csproj",
         "Action": "Start",
-        "DebugTarget": "https"
+        "DebugTarget": "IIS Express"
       }
     ]
   }

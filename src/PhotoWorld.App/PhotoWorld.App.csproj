@@ -57,10 +57,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-    <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="$(MauiVersion)" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.120" />
+    <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="10.0.120" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.13" />
   </ItemGroup>
 
   <!--
@@ -68,8 +68,7 @@
     drift apart. Not a project reference: Shared also carries the Supabase logger (Npgsql), which an app mustn't ship.
   -->
   <ItemGroup>
-    <Compile Include="..\PhotoWorld.Shared\**\*.cs" Exclude="..\PhotoWorld.Shared\Logging\**;..\PhotoWorld.Shared\bin\**;..\PhotoWorld.Shared\obj\**"
-             LinkBase="Shared" />
+    <Compile Include="..\PhotoWorld.Shared\**\*.cs" Exclude="..\PhotoWorld.Shared\Logging\**;..\PhotoWorld.Shared\bin\**;..\PhotoWorld.Shared\obj\**" LinkBase="Shared" />
   </ItemGroup>
 
 </Project>

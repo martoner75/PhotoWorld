@@ -11,7 +11,7 @@ namespace PhotoWorld.Web.Authentication;
 public static class AuthenticationSetup
 {
     /// <summary>
-    /// Cookie auth for the site, plus Google, Apple and LinkedIn for registration and sign-in. Each provider is only
+    /// Cookie auth for the site, plus Google and Apple for registration and sign-in. Each provider is only
     /// registered when its ClientId is configured, so the site runs without credentials.
     /// </summary>
     public static IServiceCollection AddPhotoWorldAuthentication(this IServiceCollection services, IConfiguration configuration)
@@ -36,20 +36,6 @@ public static class AuthenticationSetup
 
         if (IsConfigured(AuthProviders.Google))
             auth.AddGoogle(AuthProviders.Google, o => Configure(o, section.GetSection(AuthProviders.Google)));
-
-        // "Sign In with LinkedIn using OpenID Connect" (the product to add to the LinkedIn app). The plain OAuth
-        // handler is enough: the API verifies the access token and reads the profile itself.
-        if (IsConfigured(AuthProviders.LinkedIn))
-            auth.AddOAuth(AuthProviders.LinkedIn, o =>
-            {
-                Configure(o, section.GetSection(AuthProviders.LinkedIn));
-                o.AuthorizationEndpoint = "https://www.linkedin.com/oauth/v2/authorization";
-                o.TokenEndpoint = "https://www.linkedin.com/oauth/v2/accessToken";
-                o.CallbackPath = "/signin-linkedin";
-                o.UsePkce = false; // LinkedIn accepts PKCE from native apps only; this is a confidential web client.
-                o.Scope.Clear();
-                foreach (var scope in new[] { "openid", "profile", "email" }) o.Scope.Add(scope);
-            });
 
         // Sign in with Apple: OpenID Connect, answered by a POST from appleid.apple.com (form_post), with a client
         // secret we sign per request with the team's key. The API verifies Apple's ID token itself.

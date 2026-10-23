@@ -10,7 +10,7 @@ public partial class LoginViewModel(AuthService auth, ILogger<LoginViewModel> lo
     [ObservableProperty]
     public partial string? Error { get; set; }
 
-    /// <param name="provider">"Google", "Apple" or "LinkedIn" (<see cref="PhotoWorld.Shared.Auth.AuthProviders"/>).</param>
+    /// <param name="provider">"Google" or "Apple" (<see cref="PhotoWorld.Shared.Auth.AuthProviders"/>).</param>
     [RelayCommand]
     private async Task SignInAsync(string provider)
     {

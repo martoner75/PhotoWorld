@@ -25,8 +25,6 @@
                     ImageSource="{AppThemeBinding Light=logo_apple_white.png, Dark=logo_apple_black.png}" ContentLayout="Left,8"
                     BackgroundColor="{AppThemeBinding Light=Black, Dark=White}" TextColor="{AppThemeBinding Light=White, Dark=Black}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
-            <Button Text="Continue with LinkedIn" Command="{Binding SignInCommand}" CommandParameter="LinkedIn"
-                    Style="{StaticResource GhostButton}" IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
             <Label Text="New here? Signing in for the first time creates your PhotoWorld account."
                    Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />
