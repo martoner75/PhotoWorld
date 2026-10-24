@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.CollectionEditorPage"
+             x:DataType="vm:CollectionEditorViewModel"
+             Title="{Binding Heading}">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="12" MaximumWidthRequest="560">
+                <Label Text="Name" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Title}" Placeholder="e.g. Fog inspiration" MaxLength="{Binding TitleMaxLength}" />
+                </Border>
+                <Label Text="Description (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Description}" Placeholder="What ties these photos together?" AutoSize="TextChanges"
+                            MinimumHeightRequest="90" MaxLength="{Binding DescriptionMaxLength}" />
+                </Border>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Public" Style="{StaticResource Strong}" />
+                        <Label Text="Shown on your member page to signed-in members. Private ones are only for you. Saving someone's photo doesn't tell them."
+                               Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding IsPublic}" VerticalOptions="Center" />
+                </Grid>
+                <Button Text="Save" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

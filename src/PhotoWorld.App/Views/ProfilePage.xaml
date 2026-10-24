@@ -32,6 +32,8 @@
                                 Command="{Binding OpenMyPageCommand}" />
                         <Button Text="My collections" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenCollectionsCommand}" />
+                        <Button Text="My portfolio" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding OpenPortfolioCommand}" />
                         <Button Text="Insights" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenInsightsCommand}" />
                         <Button Text="Photo walks" Style="{StaticResource LinkButton}" HorizontalOptions="Start"

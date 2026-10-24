@@ -24,9 +24,14 @@ public partial class CollectionsViewModel(PhotoWorldApi api) : ViewModelBase, IQ
     [ObservableProperty] public partial bool IsEmpty { get; set; }
     [ObservableProperty] public partial bool IsRefreshing { get; set; }
 
+    public bool IsMine => _ownerId is null;
+
     public string EmptyMessage => _ownerId is null
-        ? "No collections yet. Use ＋ Save on any photo to start one."
+        ? "No collections yet. Tap New, or use ＋ Save on any photo to start one."
         : "No public collections yet.";
+
+    [RelayCommand]
+    private Task NewAsync() => Shell.Current.GoToAsync(Routes.CollectionEditor);
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
@@ -102,6 +107,9 @@ public partial class CollectionViewModel(PhotoWorldApi api) : PagedListViewModel
         Items.Remove(photo);
         IsEmpty = Items.Count == 0;
     });
+
+    [RelayCommand]
+    private Task EditAsync() => Shell.Current.GoToAsync(Routes.CollectionEditor, new ShellNavigationQueryParameters { ["id"] = _id });
 
     [RelayCommand]
     private Task DeleteAsync() => RunAsync(async () =>

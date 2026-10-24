@@ -641,6 +641,11 @@ account is sent. The privacy policy names each provider.
 - **In the app** the same API calls back the Gallery's Everyone / Following switch, Filter page and challenge
   banner, the Blogs switch, a member page (follow, trophies, photos) and the challenge, entries and "enter a
   photo" pages. Challenge wording (`ChallengeDisplay`) lives in Shared so the website and app read the same.
+  Members manage their own content in the app too: a photo editor (details, before version, delete), collection
+  editor (name, description, public), portfolio settings with a share link, golden hour on photos with a place
+  (`LightText` over `SunTimes`) and approval badges on their tiles (`ReviewBadgeConverter`). Editors announce changes
+  with `PhotoChangedMessage` / `CollectionChangedMessage`, so open pages and lists refresh. Writing blog posts and the
+  admin pages stay on the website.
 
 ## 10. Email notifications
 

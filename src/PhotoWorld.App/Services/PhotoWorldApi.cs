@@ -10,6 +10,7 @@ using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
+using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
 
@@ -108,6 +109,22 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task<PhotoDetailDto> UpdatePhotoAsync(Guid id, UpdatePhotoRequest request, CancellationToken ct = default) =>
         SendAsync<PhotoDetailDto>(HttpMethod.Put, WithId(ApiRoutes.Photo, id), JsonContent.Create(request, options: Json), ct);
 
+    public Task DeletePhotoAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Photo, id), null, ct);
+
+    /// <summary>Adds or replaces the photo's unedited "before" version (a member's approved photo goes back for approval).</summary>
+    public async Task<PhotoDetailDto> AddBeforeAsync(Guid id, Stream file, string fileName, string contentType, CancellationToken ct = default)
+    {
+        using var form = new MultipartFormDataContent();
+        var content = new StreamContent(file);
+        content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        form.Add(content, "file", fileName);
+        return await SendAsync<PhotoDetailDto>(HttpMethod.Post, WithId(ApiRoutes.PhotoBefore, id), form, ct);
+    }
+
+    public Task RemoveBeforeAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, WithId(ApiRoutes.PhotoBefore, id), null, ct);
+
     /// <summary>A public image (storage URL), fetched without the member's token.</summary>
     public static async Task<byte[]> DownloadImageAsync(string url, CancellationToken ct = default)
     {
@@ -183,6 +200,9 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task<CollectionSummaryDto> CreateCollectionAsync(SaveCollectionRequest request, CancellationToken ct = default) =>
         SendAsync<CollectionSummaryDto>(HttpMethod.Post, ApiRoutes.Collections, JsonContent.Create(request, options: Json), ct);
 
+    public Task<CollectionSummaryDto> UpdateCollectionAsync(Guid id, SaveCollectionRequest request, CancellationToken ct = default) =>
+        SendAsync<CollectionSummaryDto>(HttpMethod.Put, WithId(ApiRoutes.Collection, id), JsonContent.Create(request, options: Json), ct);
+
     public Task DeleteCollectionAsync(Guid id, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Collection, id), null, ct);
 
@@ -235,6 +255,13 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task DeletePlaceAsync(Guid id, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Place, id), null, ct);
 
+    // ----- Public portfolio -----
+    public Task<MyPortfolioDto> GetMyPortfolioAsync(CancellationToken ct = default) =>
+        GetAsync<MyPortfolioDto>(ApiRoutes.MyPortfolio, ct);
+
+    public Task<MyPortfolioDto> SavePortfolioAsync(SavePortfolioRequest request, CancellationToken ct = default) =>
+        SendAsync<MyPortfolioDto>(HttpMethod.Put, ApiRoutes.MyPortfolio, JsonContent.Create(request, options: Json), ct);
+
     // ----- Email notifications -----
     public Task<EmailNotificationsDto> GetNotificationsAsync(CancellationToken ct = default) =>
         GetAsync<EmailNotificationsDto>(ApiRoutes.MyNotifications, ct);
@@ -282,7 +309,9 @@ public sealed class PhotoWorldApi(HttpClient http)
                 HttpStatusCode.BadRequest => await ReadProblemAsync(response, ct),
                 HttpStatusCode.Unauthorized => "Your session has ended. Please sign in again.",
                 HttpStatusCode.Forbidden or HttpStatusCode.NotFound => "That's no longer available.",
-                HttpStatusCode.Conflict => "You've already reported this.",
+                // Reports say "already reported"; other conflicts (e.g. a photo that's no longer waiting) explain themselves.
+                HttpStatusCode.Conflict => await ReadProblemAsync(response, ct) is var detail && detail != "That wasn't valid."
+                    ? detail : "You've already reported this.",
                 HttpStatusCode.RequestEntityTooLarge => "That photo is too large.",
                 HttpStatusCode.BadGateway => await ReadProblemAsync(response, ct),
                 _ => "Something went wrong. Please try again.",

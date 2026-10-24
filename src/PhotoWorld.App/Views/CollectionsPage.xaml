@@ -5,6 +5,9 @@
              x:Class="PhotoWorld.App.Views.CollectionsPage"
              x:DataType="vm:CollectionsViewModel"
              Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem x:Name="NewItem" Text="New" Command="{Binding NewCommand}" />
+    </ContentPage.ToolbarItems>
     <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
         <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8">
             <CollectionView.ItemsLayout>

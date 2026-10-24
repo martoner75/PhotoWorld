@@ -7,6 +7,7 @@ using PhotoWorld.App.Services;
 using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Photos;
+using PhotoWorld.Shared.Places;
 
 namespace PhotoWorld.App.ViewModels;
 
@@ -22,6 +23,8 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
         _api = api;
         // A new upload belongs at the top: start over next time the gallery shows.
         WeakReferenceMessenger.Default.Register<GalleryViewModel, PhotoUploadedMessage>(this, (vm, _) => vm.Items.Clear());
+        // An edited or deleted photo: start over too, so its tile is up to date (or gone).
+        WeakReferenceMessenger.Default.Register<GalleryViewModel, PhotoChangedMessage>(this, (vm, _) => vm.Items.Clear());
         WeakReferenceMessenger.Default.Register<GalleryViewModel, PhotoFilterChangedMessage>(this, (vm, m) =>
         {
             vm.Search = m.Search;
@@ -257,7 +260,7 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(ApprovalNotice), nameof(AspectHeight),
         nameof(HasBefore), nameof(ShownImageUrl), nameof(BeforeButton),
-        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags), nameof(FeaturedLabel),
+        nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(LightToday), nameof(Tags), nameof(HasTags), nameof(FeaturedLabel),
         nameof(FeedbackButton), nameof(HasFeedbackButton), nameof(CanShare), nameof(DownloadsLabel))]
     public partial PhotoDetailDto? Photo { get; set; }
 
@@ -368,6 +371,16 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         if (query.TryGetValue("id", out var id) && id is Guid photoId) _ = LoadAsync(photoId);
     }
 
+    /// <summary>The owner edited this photo (deleting it leaves the page from the editor).</summary>
+    public void OnPhotoChanged(PhotoChangedMessage message)
+    {
+        if (!message.Deleted && Photo?.Id == message.PhotoId) _ = LoadAsync(message.PhotoId);
+    }
+
+    [RelayCommand]
+    private Task EditAsync() => Photo is not { CanEdit: true } p ? Task.CompletedTask
+        : Shell.Current.GoToAsync(Routes.PhotoEditor, new ShellNavigationQueryParameters { ["id"] = p.Id });
+
     private Task LoadAsync(Guid id) => RunAsync(async () =>
     {
         var photo = api.GetPhotoAsync(id);
@@ -441,6 +454,17 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
 
     public string? PlaceLabel => Photo?.Place is { } p ? $"📍 {p.Name}" : null;
 
+    /// <summary>Planning a visit: today's golden and blue hours at the photo's place (null without a place).</summary>
+    public string? LightToday => Photo?.Place is { } p
+        ? LightText.Describe(SunTimes.For(SunTimes.LocalDate(DateTimeOffset.UtcNow, p.Longitude), p.Latitude, p.Longitude))
+        : null;
+
+    [ObservableProperty]
+    public partial bool ShowingLight { get; set; }
+
+    [RelayCommand]
+    private void ToggleLight() => ShowingLight = !ShowingLight;
+
     [RelayCommand]
     private Task OpenPlaceAsync() => Photo is null ? Task.CompletedTask
         : Shell.Current.GoToAsync(Routes.Spots, new ShellNavigationQueryParameters { ["photo"] = Photo.Id });
@@ -460,7 +484,7 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         if (picked == newOne)
         {
             var title = await Shell.Current.DisplayPromptAsync("New collection", "Name it, e.g. “Fog inspiration”. It starts private; " +
-                "make it public on the website to show it on your page.", "Create", "Cancel", maxLength: CollectionLimits.TitleMax);
+                "make it public with Edit on the collection to show it on your page.", "Create", "Cancel", maxLength: CollectionLimits.TitleMax);
             if (string.IsNullOrWhiteSpace(title)) return;
             var created = await api.CreateCollectionAsync(new SaveCollectionRequest(title.Trim(), null, IsPublic: false));
             await api.SetCollectionPhotoAsync(created.Id, Photo.Id, true);

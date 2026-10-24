@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.PhotoEditorPage"
+             x:DataType="vm:PhotoEditorViewModel"
+             Title="Edit photo">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="12" MaximumWidthRequest="640">
+                <Border Style="{StaticResource PhotoFrame}" HeightRequest="180">
+                    <Image Source="{Binding Photo.ThumbnailUrl}" Aspect="AspectFill" />
+                </Border>
+
+                <Label Text="Title" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Title}" MaxLength="{Binding TitleMaxLength}" />
+                </Border>
+                <Label Text="Description (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Description}" AutoSize="TextChanges" MinimumHeightRequest="90" MaxLength="{Binding DescriptionMaxLength}" />
+                </Border>
+                <Label Text="Tags (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Tags}" Placeholder="fog wildlife london" Keyboard="Plain" />
+                </Border>
+                <Label Text="Separated by spaces. #hashtags in the description count too." Style="{StaticResource MutedText}" />
+
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding HasPlaces}">
+                    <Label Text="Where was it taken? (optional)" Style="{StaticResource Strong}" />
+                    <Border Style="{StaticResource Field}">
+                        <Picker ItemsSource="{Binding PlaceOptions}" SelectedIndex="{Binding PlaceIndex}" Title="Where was it taken?"
+                                TextColor="{DynamicResource Text}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Ask for feedback" Style="{StaticResource Strong}" />
+                        <Label Text="Members can rate composition, light and focus and comment. Only you see it." Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding WantsFeedback}" VerticalOptions="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Allow downloads" Style="{StaticResource Strong}" />
+                        <Label Text="When off, PhotoWorld hides sharing and saving the full-size photo." Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding AllowDownload}" VerticalOptions="Center" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Show on the PhotoWorld home page" Style="{StaticResource Strong}" />
+                        <Label Text="Anyone can see it in the public slideshow, with your name." Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding ShowOnHome}" VerticalOptions="Center" />
+                </Grid>
+
+                <Button Text="Save changes" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+
+                <!-- Before & after: the unedited version, added or removed straight away (not with "Save changes"). -->
+                <VerticalStackLayout Spacing="8" Margin="0,16,0,0" IsVisible="{Binding CanHaveBefore}">
+                    <Label Text="Before &amp; after" Style="{StaticResource Subheading}" />
+                    <Label Text="{Binding BeforeHint}" Style="{StaticResource MutedText}" />
+                    <Border Style="{StaticResource PhotoFrame}" HeightRequest="140" IsVisible="{Binding HasBefore}">
+                        <Image Source="{Binding Photo.BeforeImageUrl}" Aspect="AspectFill" SemanticProperties.Description="The before version" />
+                    </Border>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Text="{Binding BeforeButton}" Command="{Binding PickBeforeCommand}" Style="{StaticResource GhostButton}" />
+                        <Button Grid.Column="1" Text="Remove" Command="{Binding RemoveBeforeCommand}" Style="{StaticResource GhostButton}"
+                                IsVisible="{Binding HasBefore}" />
+                    </Grid>
+                </VerticalStackLayout>
+
+                <Button Text="Delete photo" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}" Margin="0,24,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

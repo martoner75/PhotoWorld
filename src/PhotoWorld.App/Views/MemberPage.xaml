@@ -89,6 +89,10 @@
                         </Border.GestureRecognizers>
                         <Grid HeightRequest="{OnIdiom Phone=170, Tablet=220, Default=200}">
                             <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill" />
+                            <!-- On the member's own photos only: approval still to come, or refused. -->
+                            <Border Style="{StaticResource TileBadge}" IsVisible="{Binding ReviewStatus, Converter={StaticResource ReviewBadge}, ConverterParameter=visible}">
+                                <Label Text="{Binding ReviewStatus, Converter={StaticResource ReviewBadge}}" FontSize="12" Style="{StaticResource OnPhoto}" />
+                            </Border>
                             <Grid VerticalOptions="End" Padding="10,24,10,8">
                                 <Grid.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">

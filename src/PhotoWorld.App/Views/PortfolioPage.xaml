@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.PortfolioPage"
+             x:DataType="vm:PortfolioViewModel"
+             Title="My portfolio">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="12" MaximumWidthRequest="640">
+                <Label Text="A page of your best photos that anyone can open, even without a PhotoWorld account: share it with clients, editors and friends."
+                       Style="{StaticResource MutedText}" FontSize="14" />
+
+                <!-- Sharing: once it's saved as public. -->
+                <Border Padding="12,10" BackgroundColor="{DynamicResource AccentSoft}" Stroke="{DynamicResource Accent}" IsVisible="{Binding CanShare}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{Binding Link}" FontSize="14" LineBreakMode="CharacterWrap" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Text="Share link" Command="{Binding ShareCommand}" />
+                            <Button Grid.Column="1" Text="Open" Command="{Binding OpenCommand}" Style="{StaticResource GhostButton}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Show my portfolio publicly" Style="{StaticResource Strong}" />
+                        <Label Text="Anyone with the link sees the photos you choose, with your name, picture and the details below."
+                               Style="{StaticResource MutedText}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding IsPublic}" VerticalOptions="Center" />
+                </Grid>
+
+                <Label Text="Address" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Slug}" MaxLength="{Binding SlugMaxLength}" Keyboard="Url" IsSpellCheckEnabled="False" />
+                </Border>
+                <Label Text="The end of your link (…/p/ana-silva): lower-case letters, numbers and single hyphens." Style="{StaticResource MutedText}" />
+
+                <Label Text="About you (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Bio}" Placeholder="Landscape and street photographer based in Lisbon." AutoSize="TextChanges"
+                            MinimumHeightRequest="80" MaxLength="{Binding BioMaxLength}" />
+                </Border>
+                <Label Text="Website (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Website}" Placeholder="https://example.com" Keyboard="Url" MaxLength="{Binding LinkMaxLength}" />
+                </Border>
+                <Label Text="Instagram (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Instagram}" Placeholder="@yourname" Keyboard="Plain" MaxLength="{Binding LinkMaxLength}" />
+                </Border>
+                <Label Text="Contact email (optional, shown publicly)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding ContactEmail}" Keyboard="Email" MaxLength="{Binding LinkMaxLength}" />
+                </Border>
+
+                <Label Text="Photos" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                <Label Text="Tap photos in the order to show them; tap again to take one out." Style="{StaticResource MutedText}" />
+                <Label Text="{Binding ChosenSummary}" Style="{StaticResource Strong}" FontSize="14" />
+                <Label Text="No photos to choose from yet. Once your uploads are approved, they appear here."
+                       Style="{StaticResource MutedText}" IsVisible="{Binding HasCandidates, Converter={StaticResource Not}}" />
+                <FlexLayout BindableLayout.ItemsSource="{Binding Picks}" Wrap="Wrap" JustifyContent="Start">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PortfolioPick">
+                            <Border Style="{StaticResource PhotoFrame}" WidthRequest="104" HeightRequest="104" Margin="0,0,6,6">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding TogglePickCommand, Source={RelativeSource AncestorType={x:Type vm:PortfolioViewModel}}, x:DataType=vm:PortfolioViewModel}" />
+                                </Border.GestureRecognizers>
+                                <Grid>
+                                    <Image Source="{Binding Photo.ThumbnailUrl}" Aspect="AspectFill" SemanticProperties.Description="{Binding Photo.Title}">
+                                        <Image.Triggers>
+                                            <DataTrigger TargetType="Image" Binding="{Binding IsChosen}" Value="False">
+                                                <Setter Property="Opacity" Value="0.55" />
+                                            </DataTrigger>
+                                        </Image.Triggers>
+                                    </Image>
+                                    <Border Style="{StaticResource TileBadge}" BackgroundColor="{DynamicResource Accent}" IsVisible="{Binding IsChosen}">
+                                        <Label Text="{Binding Badge}" FontSize="13" Style="{StaticResource OnPhoto}" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+
+                <Button Text="Save portfolio" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

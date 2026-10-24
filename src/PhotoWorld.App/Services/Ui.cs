@@ -26,6 +26,9 @@ public static class Routes
     public const string Walk = "walk";
     public const string WalkEditor = "walk-editor";
     public const string Insights = "insights";
+    public const string PhotoEditor = "photo-editor";
+    public const string CollectionEditor = "collection-editor";
+    public const string Portfolio = "portfolio";
 
     public static Task OpenWalkAsync(Guid id) =>
         Shell.Current.GoToAsync(Walk, new ShellNavigationQueryParameters { ["id"] = id });

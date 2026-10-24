@@ -174,7 +174,8 @@ and the re-encoding drops all metadata, so GPS locations never reach the public 
 
 **Before & after.** On a photo's *Edit* page the owner can add the unedited shot (**Before & after**). The photo page
 then shows a slider: drag across the photo to compare the two (keyboard: the arrow keys), with Before / After labels.
-In the app, a button swaps between them. The before image goes through the same pipeline (metadata stripped, same
+In the app, a button swaps between them, and the photo's **Edit** screen (owner only, also for title, description,
+tags, place, the three switches and **Delete photo**) adds, replaces or removes it. The before image goes through the same pipeline (metadata stripped, same
 watermark) and is stored as `before-{random}.jpg` next to the photo, so a replaced one never shows from a cache. As
 it's a new image, adding it to an approved photo sends the photo back for approval (not for admins); removing it
 doesn't. It's deleted with the photo or the account.
@@ -187,7 +188,9 @@ their photos in the order they choose. It's off until they switch it on. Only ph
 can be chosen or shown (approved, not hidden by reports), and a suspended member's portfolio answers 404. The page
 sets Open Graph tags, so a shared link shows the first photo, the name and the bio. Watermarks and "downloads off"
 still apply. The address starts as a suggestion from the member's name (`ana-silva`, then `ana-silva-2`, …) and can
-be changed to any free 3–40 characters of lower-case letters, numbers and single hyphens.
+be changed to any free 3–40 characters of lower-case letters, numbers and single hyphens. In the app, **My portfolio**
+on the Me tab has the same settings (tap photos in the order to show them) and, once it's public, **Share link** and
+**Open**.
 
 **Several photos at once.** *Upload several* on the upload page (website) takes up to 20 photos, each with its own
 title, sharing the description, tags, place and switches. They're sent one by one with a status per photo, so a
@@ -400,7 +403,8 @@ update photoworld.users set is_admin = true where lower(email) = 'someone@exampl
 
 Members save any photo they can see (theirs or others') to their own **collections**: **Save to a collection** on a
 photo's page (website) or **＋ Save** (app), which also starts a new one. Collections are private unless the owner
-makes them public (website form), in which case they're listed on the owner's member page. A private collection
+makes them public (the website's form, or **New** / **Edit** in the app), in which case they're listed on the owner's
+member page. A private collection
 answers 404 to everyone else; the photos inside are filtered by the usual visibility rule, so hidden, deleted or
 blocked members' photos never show. Up to 100 collections per member and 1,000 photos per collection. Deleting a
 collection leaves the photos alone.

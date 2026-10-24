@@ -16,6 +16,8 @@ public partial class CollectionsPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        // "New" only on the member's own list (another member's page passes their id).
+        this.SetToolbarItemVisible(NewItem, _viewModel.IsMine);
         _viewModel.EnsureLoaded();
     }
 }

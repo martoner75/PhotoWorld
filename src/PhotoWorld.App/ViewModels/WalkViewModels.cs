@@ -88,14 +88,7 @@ public partial class WalkViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
         {
             if (Walk?.Walk is not { } w) return "";
             var day = SunTimes.For(SunTimes.LocalDate(w.StartsAt, w.Longitude), w.Latitude, w.Longitude);
-            if (day.Sunrise is null) return "The sun doesn't rise or set here that day.";
-            static string T(DateTimeOffset t) => t.ToLocalTime().ToString("HH:mm");
-            static string R(TimeRange? r) => r is null ? "–" : $"{T(r.Start)}–{T(r.End)}";
-            var overlaps = SunTimes.Overlaps(day, w.StartsAt, w.EndsAt);
-            return $"🔵 Blue hour {R(day.MorningBlue)} · 🟠 Golden hour {R(day.MorningGolden)}\n" +
-                   $"🌅 Sunrise {T(day.Sunrise.Value)} · Sunset {T(day.Sunset!.Value)}\n" +
-                   $"🟠 Golden hour {R(day.EveningGolden)} · 🔵 Blue hour {R(day.EveningBlue)}" +
-                   (overlaps.Count > 0 ? $"\n✨ The walk catches the {string.Join(" and ", overlaps)}." : "");
+            return LightText.Describe(day, SunTimes.Overlaps(day, w.StartsAt, w.EndsAt));
         }
     }
 

@@ -8,6 +8,7 @@
              Title="{Binding Photo.Title}">
     <ContentPage.ToolbarItems>
         <ToolbarItem x:Name="ReportItem" Text="Report" Command="{Binding ReportPhotoCommand}" />
+        <ToolbarItem x:Name="EditItem" Text="Edit" Command="{Binding EditCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid>
@@ -58,6 +59,10 @@
                     <Button Text="{Binding PlaceLabel}" Style="{StaticResource LinkButton}" TextColor="{DynamicResource Text}"
                             HorizontalOptions="Start" Padding="0,2" Command="{Binding OpenPlaceCommand}"
                             IsVisible="{Binding PlaceLabel, Converter={StaticResource HasValue}}" />
+                    <!-- Planning a visit: today's light at this spot, folded away until asked for. -->
+                    <Button Text="🌅 Golden hour here today" Style="{StaticResource LinkButton}" HorizontalOptions="Start" Padding="0,2"
+                            Command="{Binding ToggleLightCommand}" IsVisible="{Binding LightToday, Converter={StaticResource HasValue}}" />
+                    <Label Text="{Binding LightToday}" FontSize="14" LineHeight="1.3" IsVisible="{Binding ShowingLight}" />
                     <FlexLayout BindableLayout.ItemsSource="{Binding Tags}" Wrap="Wrap" IsVisible="{Binding HasTags}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
