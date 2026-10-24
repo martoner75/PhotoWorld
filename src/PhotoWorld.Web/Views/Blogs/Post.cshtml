@@ -2,7 +2,8 @@
 @{
     var p = Model.Post;
     ViewData["Title"] = p.Title;
-    var isDraft = p.Status == BlogPostStatus.Draft;
+    // Comments open once a post is published (drafts and posts in review have none yet).
+    var isPublished = p.Status == BlogPostStatus.Published;
 }
 
 <article class="container page post-page">
@@ -10,10 +11,34 @@
     {
         <partial name="_ModerationBanner" model='new ModerationBannerModel(p.Moderation, "post")' />
     }
-    @if (isDraft)
+    @if (p.CanReview)
+    {
+        <div class="alert moderation-banner draft-banner review-banner" role="status">
+            <strong>Waiting for approval.</strong> <span>Only its author and admins can see this post until it's approved.</span>
+            <div class="manage-actions">
+                <partial name="_ReviewActions" model="new ReviewActionsModel(p.Id, p.Title, Context.Request.Path)" />
+            </div>
+        </div>
+    }
+    else if (p.Status == BlogPostStatus.Draft)
     {
         <div class="alert moderation-banner draft-banner" role="status">
             <strong>Draft.</strong> <span>Only you can see this post. Publish it from the editor when it's ready.</span>
+        </div>
+    }
+    else if (p.Status == BlogPostStatus.Pending)
+    {
+        <div class="alert moderation-banner draft-banner" role="status">
+            <strong>Waiting for approval.</strong> <span>An admin will review your post soon; it's published as soon as it's approved,
+                and we'll let you know. Until then only you can see it.</span>
+        </div>
+    }
+    else if (p.Status == BlogPostStatus.Rejected)
+    {
+        <div class="alert moderation-banner" role="status">
+            <strong>Not approved.</strong>
+            <span>@(p.ReviewNote is { Length: > 0 } note ? $"An admin's note: “{note}”." : "An admin sent this post back.")
+                Edit it and submit it again when it's ready. Only you can see it.</span>
         </div>
     }
 
@@ -68,7 +93,7 @@
         <p class="report-link"><a asp-action="Report" asp-route-id="@p.Id">Report this post</a></p>
     }
 
-    @if (!isDraft)
+    @if (isPublished)
     {
         <section class="comments" id="comments">
             <h2>Comments <span class="text-muted" data-comment-count>@Model.Comments.Count</span></h2>

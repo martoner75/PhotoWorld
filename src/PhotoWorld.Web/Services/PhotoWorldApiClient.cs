@@ -11,6 +11,7 @@ using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
+using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
 
@@ -133,6 +134,18 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public async Task<IReadOnlyList<ShowcasePhotoDto>> GetShowcaseAsync(CancellationToken ct = default) =>
         await GetOrNullAsync<List<ShowcasePhotoDto>>(ApiRoutes.Showcase, ct) ?? [];
 
+    public Task<PublicPortfolioDto?> GetPortfolioAsync(string slug, CancellationToken ct = default) =>
+        GetOrNullAsync<PublicPortfolioDto>(ApiRoutes.Format(ApiRoutes.PublicPortfolio, ("slug", slug)), ct);
+
+    public Task<MyPortfolioDto?> GetMyPortfolioAsync(CancellationToken ct = default) =>
+        GetOrNullAsync<MyPortfolioDto>(ApiRoutes.MyPortfolio, ct);
+
+    public async Task<ApiResult<MyPortfolioDto>> SavePortfolioAsync(SavePortfolioRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.MyPortfolio, request, ct);
+        return await ReadResultAsync<MyPortfolioDto>(res, ct, "We couldn't save your portfolio.");
+    }
+
     public async Task<ApiResult<PhotoDetailDto>> UploadPhotoAsync(IFormFile file, string title, string? description, bool showOnHome, Guid? placeId = null,
         string? tags = null, bool wantsFeedback = false, bool watermark = false, bool allowDownload = true, CancellationToken ct = default)
     {
@@ -163,6 +176,25 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     public async Task<bool> DeletePhotoAsync(Guid id, CancellationToken ct = default)
     {
         using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Photo, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<ApiResult<PhotoDetailDto>> AddBeforeAsync(Guid id, IFormFile file, CancellationToken ct = default)
+    {
+        using var form = new MultipartFormDataContent();
+        var fileContent = new StreamContent(file.OpenReadStream());
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.TryParse(file.ContentType, out var type)
+            ? type : new MediaTypeHeaderValue("application/octet-stream");
+        form.Add(fileContent, "file", file.FileName);
+
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.PhotoBefore, ("id", id)), form, ct);
+        if (res.StatusCode == HttpStatusCode.Conflict) return ApiResult<PhotoDetailDto>.Failure(await ProblemDetailAsync(res, ct));
+        return await ReadResultAsync<PhotoDetailDto>(res, ct);
+    }
+
+    public async Task<bool> RemoveBeforeAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.PhotoBefore, ("id", id)), ct);
         return IsSuccess(res);
     }
 
@@ -405,6 +437,39 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminUserSuspension, ("id", id)), request, ct);
         if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
         return IsSuccess(res) ? null : "That member no longer exists, or you're not an admin.";
+    }
+
+    public Task<PagedResult<BlogPostSummaryDto>?> GetPendingPostsAsync(int page, CancellationToken ct = default) =>
+        GetOrNullAsync<PagedResult<BlogPostSummaryDto>>($"{ApiRoutes.AdminPendingPosts}?page={page}", ct);
+
+    public async Task<string?> ApprovePostAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.AdminPostApproval, ("id", id)), null, ct);
+        if (res.StatusCode == HttpStatusCode.Conflict) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That post no longer exists, or you're not an admin.";
+    }
+
+    public async Task<string?> RejectPostAsync(Guid id, string? reason, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminPostRejection, ("id", id)), new RejectPostRequest(reason), ct);
+        if (res.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That post no longer exists, or you're not an admin.";
+    }
+
+    public Task<PagedResult<PhotoSummaryDto>?> GetPendingPhotosAsync(int page, CancellationToken ct = default) =>
+        GetOrNullAsync<PagedResult<PhotoSummaryDto>>($"{ApiRoutes.AdminPendingPhotos}?page={page}", ct);
+
+    public async Task<int?> ApprovePhotosAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.AdminPhotoApproval, new ApprovePhotosRequest(ids), ct);
+        return IsSuccess(res) ? await res.Content.ReadFromJsonAsync<int>(ct) : null;
+    }
+
+    public async Task<string?> RejectPhotoAsync(Guid id, string? reason, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminPhotoRejection, ("id", id)), new RejectPhotoRequest(reason), ct);
+        if (res.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That photo no longer exists, or you're not an admin.";
     }
 
     public async Task<ApiResult<ChallengeSummaryDto>> CreateChallengeAsync(SaveChallengeRequest request, CancellationToken ct = default)

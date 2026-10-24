@@ -12,6 +12,9 @@ public sealed record BlogsIndexViewModel(PagedResult<BlogPostSummaryDto> Posts, 
 
 public sealed record PostPageViewModel(BlogPostDto Post, IReadOnlyList<BlogCommentDto> Comments);
 
+/// <summary>An admin's Approve / Reject buttons for a pending post; <see cref="ReturnUrl"/> is where they go back to.</summary>
+public sealed record ReviewActionsModel(Guid PostId, string Title, string ReturnUrl);
+
 public sealed record BlogCommentItemViewModel(Guid PostId, BlogCommentDto Comment);
 
 public sealed class PostEditorViewModel
@@ -35,6 +38,10 @@ public sealed class PostEditorViewModel
 
     /// <summary>Current status when editing, to label the buttons.</summary>
     public string? Status { get; set; }
+
+    /// <summary>Why an admin sent the post back, shown above the form while it's rejected (display only).</summary>
+    [BindNever]
+    public string? ReviewNote { get; set; }
 
     /// <summary>PDFs chosen in the form, uploaded once the post is saved.</summary>
     public List<IFormFile> NewAttachments { get; set; } = [];

@@ -26,6 +26,11 @@ public static class ActivityText
             ActivityTypes.WalkReminder => $"Reminder: the photo walk {walk} is tomorrow",
             ActivityTypes.Feedback => $"{who} gave feedback on your photo {photo}",
             ActivityTypes.PhotoOfTheDay => $"Your photo {photo} is today's photo of the day! ⭐",
+            ActivityTypes.PostApproved => $"Your post {post} was approved and is now published",
+            // The admin's reason, if any, is the snippet, which every client shows after this text.
+            ActivityTypes.PostRejected => $"Your post {post} wasn't approved. Edit it and submit it again",
+            ActivityTypes.PhotoApproved => $"Your photo {photo} was approved and is now in the gallery",
+            ActivityTypes.PhotoRejected => $"Your photo {photo} wasn't approved, so only you can see it",
             ActivityTypes.ChallengeOpen => $"New photo challenge: {challenge} is open for entries",
             ActivityTypes.ChallengeEnding => $"The {challenge} challenge ends in less than a day",
             ActivityTypes.ChallengeResult => a.Place switch

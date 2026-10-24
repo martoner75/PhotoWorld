@@ -12,6 +12,12 @@ public class Photo
     /// <summary>Object paths inside the Supabase photos bucket. Originals are never stored.</summary>
     public required string DisplayPath { get; set; }
     public required string ThumbnailPath { get; set; }
+
+    /// <summary>
+    /// Optional unedited version, shown with a before/after slider. Processed like the photo (metadata stripped, same
+    /// watermark); adding one sends a member's approved photo back for approval, since it's a new image.
+    /// </summary>
+    public string? BeforeDisplayPath { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }
     public long SizeBytes { get; set; }
@@ -52,6 +58,12 @@ public class Photo
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>See <see cref="PhotoWorld.Shared.Photos.PhotoReviewStatus"/>; only approved photos are shown to others.</summary>
+    public string ReviewStatus { get; set; } = PhotoWorld.Shared.Photos.PhotoReviewStatus.Approved;
+    public DateTimeOffset? ReviewedAt { get; set; }
+    /// <summary>Why an admin rejected it; shown to the owner only.</summary>
+    public string? ReviewNote { get; set; }
 
     public List<PhotoTag> Tags { get; set; } = [];
     public List<PhotoLike> Likes { get; set; } = [];

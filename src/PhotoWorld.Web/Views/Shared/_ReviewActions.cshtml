@@ -1,0 +1,16 @@
+@model ReviewActionsModel
+@* Approve / Reject buttons for a post waiting for approval: on the admin queue and on the post itself. *@
+<form asp-controller="Admin" asp-action="ApprovePost" asp-route-id="@Model.PostId" method="post"
+      data-confirm="Publish “@Model.Title”? Its author's followers will be told about it.">
+    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+    <button type="submit" class="btn btn-accent btn-sm">Approve</button>
+</form>
+<details class="suspend-menu">
+    <summary class="btn btn-danger-ghost btn-sm">Reject</summary>
+    <form asp-controller="Admin" asp-action="RejectPost" asp-route-id="@Model.PostId" method="post" class="suspend-form">
+        <label for="reason-@Model.PostId">Reason <span class="text-muted">(shown to the author)</span></label>
+        <input id="reason-@Model.PostId" name="reason" maxlength="@BlogLimits.ReviewNoteMax" placeholder="e.g. please add your own photos" />
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <button type="submit" class="btn btn-danger btn-sm">Send back to the author</button>
+    </form>
+</details>

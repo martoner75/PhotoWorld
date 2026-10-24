@@ -1,0 +1,51 @@
+@model LightPlannerModel
+@* Sunrise, sunset, golden and blue hours for a place and day (SunTimes, worked out here: no outside service).
+   Times show in the visitor's own time zone, like every other time on the site. *@
+@{
+    var d = Model.Day;
+}
+<section class="light-planner" aria-labelledby="light-@Model.Id">
+    <h2 class="section-heading" id="light-@Model.Id">@Model.Heading</h2>
+    @if (d.Sunrise is null)
+    {
+        <p class="text-muted small">The sun doesn't rise or set here on @d.Date.ToString("d MMMM"): no golden hour that day.</p>
+    }
+    else
+    {
+        <dl class="light-times">
+            @if (d.MorningBlue is { } mb)
+            {
+                <dt><span class="light-dot light-blue" aria-hidden="true"></span>Blue hour</dt>
+                <dd>@Time(mb.Start) – @Time(mb.End)</dd>
+            }
+            @if (d.MorningGolden is { } mg)
+            {
+                <dt><span class="light-dot light-golden" aria-hidden="true"></span>Golden hour</dt>
+                <dd>@Time(mg.Start) – @Time(mg.End)</dd>
+            }
+            <dt>Sunrise</dt><dd>@Time(d.Sunrise.Value)</dd>
+            <dt>Sunset</dt><dd>@Time(d.Sunset!.Value)</dd>
+            @if (d.EveningGolden is { } eg)
+            {
+                <dt><span class="light-dot light-golden" aria-hidden="true"></span>Golden hour</dt>
+                <dd>@Time(eg.Start) – @Time(eg.End)</dd>
+            }
+            @if (d.EveningBlue is { } eb)
+            {
+                <dt><span class="light-dot light-blue" aria-hidden="true"></span>Blue hour</dt>
+                <dd>@Time(eb.Start) – @Time(eb.End)</dd>
+            }
+        </dl>
+        @if (Model.Overlaps is { Count: > 0 } overlaps)
+        {
+            <p class="light-note">✨ The walk catches the @string.Join(" and ", overlaps).</p>
+        }
+    }
+    <p class="text-muted small">@d.Date.ToString("dddd d MMMM") · times in your time zone, to within a few minutes.</p>
+</section>
+
+@functions {
+    private static Microsoft.AspNetCore.Html.IHtmlContent Time(DateTimeOffset t) =>
+        new Microsoft.AspNetCore.Html.HtmlString(
+            $"<time datetime=\"{t:O}\" data-local-time=\"time\">{t:HH:mm} UTC</time>");
+}

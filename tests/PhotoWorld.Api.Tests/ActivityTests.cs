@@ -80,6 +80,20 @@ public class ActivityTests
     }
 
     [Fact]
+    public void Review_answers_always_reach_the_author_and_read_well()
+    {
+        var off = new ActivitySettingsDto(false, false, false, false, false, Walks: false);
+        Assert.True(ActivityRules.Wants(off, ActivityTypes.PostApproved));
+        Assert.True(ActivityRules.Wants(off, ActivityTypes.PostRejected));
+        Assert.Equal("Your post “Trip” was approved and is now published", ActivityText.Describe(Item(ActivityTypes.PostApproved)));
+        Assert.Equal("Your post “Trip” wasn't approved. Edit it and submit it again", ActivityText.Describe(Item(ActivityTypes.PostRejected)));
+        Assert.True(ActivityRules.Wants(off, ActivityTypes.PhotoApproved));
+        Assert.True(ActivityRules.Wants(off, ActivityTypes.PhotoRejected));
+        Assert.Equal("Your photo “Fog” was approved and is now in the gallery", ActivityText.Describe(Item(ActivityTypes.PhotoApproved)));
+        Assert.Equal("Your photo “Fog” wasn't approved, so only you can see it", ActivityText.Describe(Item(ActivityTypes.PhotoRejected)));
+    }
+
+    [Fact]
     public void Times_read_as_ago()
     {
         Assert.Equal("just now", ActivityText.Ago(Start, Start.AddSeconds(20)));

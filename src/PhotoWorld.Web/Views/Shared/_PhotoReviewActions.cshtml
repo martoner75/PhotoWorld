@@ -1,0 +1,16 @@
+@model PhotoReviewActionsModel
+@* Approve / Reject buttons for a photo waiting for approval: on the admin queue and on the photo's page. *@
+<form asp-controller="Admin" asp-action="ApprovePhotos" method="post">
+    <input type="hidden" name="ids" value="@Model.PhotoId" />
+    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+    <button type="submit" class="btn btn-accent btn-sm">Approve</button>
+</form>
+<details class="suspend-menu">
+    <summary class="btn btn-danger-ghost btn-sm">Reject</summary>
+    <form asp-controller="Admin" asp-action="RejectPhoto" asp-route-id="@Model.PhotoId" method="post" class="suspend-form">
+        <label for="photo-reason-@Model.PhotoId">Reason <span class="text-muted">(shown to the owner)</span></label>
+        <input id="photo-reason-@Model.PhotoId" name="reason" maxlength="@PhotoReviewStatus.NoteMax" placeholder="e.g. not your own photo" />
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <button type="submit" class="btn btn-danger btn-sm">Don't approve</button>
+    </form>
+</details>

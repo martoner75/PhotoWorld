@@ -176,6 +176,22 @@
         <Setter Property="FontSize" Value="13" />
     </Style>
 
+    <!-- A photo with rounded corners (12, as on the website). In a PhotoCard it sits 6 in from the card's edge, so the
+         card's 18 corners follow the photo's. -->
+    <Style x:Key="PhotoFrame" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{DynamicResource PhotoBackground}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style x:Key="PhotoCard" TargetType="Border">
+        <Setter Property="Stroke" Value="{DynamicResource Line}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Ink2}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 18" />
+        <Setter Property="Padding" Value="6,6,6,0" />
+    </Style>
+
     <!-- Small label on a photo tile: a place in a challenge, "Hidden"… -->
     <Style x:Key="TileBadge" TargetType="Border">
         <Setter Property="BackgroundColor" Value="#D8141418" />

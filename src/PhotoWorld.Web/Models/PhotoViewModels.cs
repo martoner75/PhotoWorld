@@ -48,6 +48,10 @@ public sealed class EditPhotoViewModel
     public Guid Id { get; set; }
     public string? ThumbnailUrl { get; set; }
 
+    /// <summary>The unedited version, if any, and the approval state (display only, for the before/after section).</summary>
+    public string? BeforeImageUrl { get; set; }
+    public string ReviewStatus { get; set; } = PhotoReviewStatus.Approved;
+
     [Required(ErrorMessage = "Give your photo a title.")]
     [StringLength(PhotoUploadLimits.MaxTitleLength)]
     public string Title { get; set; } = "";
@@ -132,3 +136,9 @@ public sealed class ReportViewModel
 
 /// <summary>Banner shown to the owner of content that moderation is hiding from everyone else.</summary>
 public sealed record ModerationBannerModel(ModerationState State, string Noun);
+
+/// <summary>The golden-hour planner for a place and day; <see cref="Overlaps"/> names the light a walk catches.</summary>
+public sealed record LightPlannerModel(string Id, string Heading, PhotoWorld.Shared.Places.SunDay Day, IReadOnlyList<string>? Overlaps = null);
+
+/// <summary>An admin's Approve / Reject buttons for a pending photo; <see cref="ReturnUrl"/> is where they go back to.</summary>
+public sealed record PhotoReviewActionsModel(Guid PhotoId, string ReturnUrl);

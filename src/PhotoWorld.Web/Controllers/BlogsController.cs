@@ -61,8 +61,7 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
             return Editor(model);
         }
         var id = result.Value!.Id;
-        TempData["Flash"] = await SaveAttachmentsAsync(id, model, ct)
-                            ?? (model.Publish ? "Your post is published." : "Draft saved. Only you can see it.");
+        TempData["Flash"] = await SaveAttachmentsAsync(id, model, ct) ?? SavedMessage(result.Value.Status, isNew: true);
         return RedirectToAction(nameof(Post), new { id });
     }
 
@@ -74,7 +73,7 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
         if (!post.CanEdit) return Forbid();
         return View("Editor", new PostEditorViewModel
         {
-            Id = post.Id, Title = post.Title, BodyHtml = post.BodyHtml, Status = post.Status,
+            Id = post.Id, Title = post.Title, BodyHtml = post.BodyHtml, Status = post.Status, ReviewNote = post.ReviewNote,
             Publish = post.Status == BlogPostStatus.Published, Attachments = post.Attachments,
             CoverPhotoId = post.ChosenCoverPhotoId, CoverUrl = post.ChosenCoverPhotoId is null ? null : post.CoverUrl,
         });
@@ -96,10 +95,17 @@ public class BlogsController(IPhotoWorldApiClient api) : Controller
             ModelState.AddApiErrors(result.Errors, PostFields);
             return Editor(model);
         }
-        TempData["Flash"] = await SaveAttachmentsAsync(id, model, ct)
-                            ?? (model.Publish ? "Post updated." : "Saved as a draft. Only you can see it.");
+        TempData["Flash"] = await SaveAttachmentsAsync(id, model, ct) ?? SavedMessage(result.Value!.Status, isNew: false);
         return RedirectToAction(nameof(Post), new { id });
     }
+
+    /// <summary>What happened to a saved post: the API decides whether publishing needs an admin's approval first.</summary>
+    private static string SavedMessage(string status, bool isNew) => status switch
+    {
+        BlogPostStatus.Published => isNew ? "Your post is published." : "Post updated.",
+        BlogPostStatus.Pending => "Thanks! Your post is waiting for approval. We'll let you know as soon as it's published.",
+        _ => isNew ? "Draft saved. Only you can see it." : "Saved as a draft. Only you can see it.",
+    };
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)

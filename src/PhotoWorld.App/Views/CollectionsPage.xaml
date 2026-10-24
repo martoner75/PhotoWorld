@@ -17,15 +17,16 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:CollectionItem">
-                    <Border Padding="0">
+                    <Border Style="{StaticResource PhotoCard}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:CollectionsViewModel}}, x:DataType=vm:CollectionsViewModel}"
                                                   CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <VerticalStackLayout>
-                            <Image Source="{Binding Collection.CoverUrl}" Aspect="AspectFill" HeightRequest="130"
-                                   BackgroundColor="{DynamicResource PhotoBackground}" />
-                            <VerticalStackLayout Padding="10,8" Spacing="2">
+                            <Border Style="{StaticResource PhotoFrame}" HeightRequest="130">
+                                <Image Source="{Binding Collection.CoverUrl}" Aspect="AspectFill" />
+                            </Border>
+                            <VerticalStackLayout Padding="4,8" Spacing="2">
                                 <Label Text="{Binding Collection.Title}" Style="{StaticResource Strong}" LineBreakMode="TailTruncation" />
                                 <Label Text="{Binding Facts}" Style="{StaticResource MutedText}" FontSize="12" />
                             </VerticalStackLayout>

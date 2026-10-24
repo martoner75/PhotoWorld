@@ -10,6 +10,8 @@
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="ThumbnailUrl" />
+        <input type="hidden" asp-for="BeforeImageUrl" />
+        <input type="hidden" asp-for="ReviewStatus" />
 
         @if (Model.ThumbnailUrl is not null)
         {
@@ -47,6 +49,37 @@
             <button type="submit" class="btn btn-accent">Save changes</button>
         </div>
     </form>
+
+    @if (Model.ReviewStatus != PhotoReviewStatus.Rejected)
+    {
+        <h2 class="section-heading mt-4" id="before-after">Before &amp; after</h2>
+        <div class="form-card">
+            <p class="text-muted small m-0">Add the unedited shot and visitors can drag a slider across your photo to see
+                what your editing did. It's processed like any upload: location and camera data are removed@(Model.Watermarked ? ", and it gets the same watermark" : "").</p>
+            @if (Model.BeforeImageUrl is not null)
+            {
+                <img class="edit-thumb" src="@Model.BeforeImageUrl" alt="The before version" />
+            }
+            <form asp-action="AddBefore" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="before-form">
+                <div class="field">
+                    <label for="before-file">@(Model.BeforeImageUrl is null ? "Unedited photo" : "Replace with another")</label>
+                    <input id="before-file" name="before" type="file" accept="@PhotoUploadLimits.AcceptAttribute" required />
+                </div>
+                @if (Model.ReviewStatus == PhotoReviewStatus.Approved && !User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true"))
+                {
+                    <p class="text-muted small">As it's a new image, your photo goes back for approval and is hidden from
+                        others until an admin approves it again.</p>
+                }
+                <button type="submit" class="btn btn-ghost btn-sm">@(Model.BeforeImageUrl is null ? "Add before version" : "Replace before version")</button>
+            </form>
+            @if (Model.BeforeImageUrl is not null)
+            {
+                <form asp-action="RemoveBefore" asp-route-id="@Model.Id" method="post" data-confirm="Remove the before version?">
+                    <button type="submit" class="btn btn-danger-ghost btn-sm">Remove before version</button>
+                </form>
+            }
+        </div>
+    }
 </section>
 
 @section Scripts {

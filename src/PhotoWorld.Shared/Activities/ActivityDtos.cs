@@ -21,10 +21,16 @@ public static class ActivityTypes
     public const string WalkChanged = "walk_changed";
     public const string WalkCancelled = "walk_cancelled";
     public const string WalkReminder = "walk_reminder";
+    /// <summary>An admin approved the member's post (now published) or sent it back (the snippet is their reason).</summary>
+    public const string PostApproved = "post_approved";
+    public const string PostRejected = "post_rejected";
+    /// <summary>The same for an uploaded photo.</summary>
+    public const string PhotoApproved = "photo_approved";
+    public const string PhotoRejected = "photo_rejected";
 
     public static readonly IReadOnlyList<string> All =
         [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback,
-         WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder];
+         WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected];
 }
 
 /// <summary>

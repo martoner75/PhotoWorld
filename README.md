@@ -154,8 +154,10 @@ item is remembering the light/dark choice: with "preferences" it's kept in `loca
 
 ## Photos
 
-The whole site is members-only: everything except the landing, sign-in and privacy pages needs a Google
-sign-in. Members can upload photos, browse the gallery, like and comment, and edit or delete their own photos.
+The whole site is members-only: everything except the landing, sign-in and privacy pages needs a Google or
+Apple sign-in. Members can upload photos, browse the gallery, like and comment, and edit or delete their own photos.
+A member's new photo appears in the gallery once an admin approves it (see Admin → **Photos to review**); until
+then its owner sees it marked "Waiting for approval".
 
 **Following.** Members follow each other from member pages. The Gallery and Blogs pages have **Everyone /
 Following** tabs; member pages show follower and following counts (not the names).
@@ -169,6 +171,23 @@ to the gallery filtered by that value.
 decoded with Magick.NET (libheif) into an upright, metadata-free image first. It reads the camera settings from EXIF and stores them in `photoworld.photos`, then re-encodes
 the image as two JPEGs: `display` (longest side ≤ 2560 px) and `thumb` (≤ 640 px). The original is never kept,
 and the re-encoding drops all metadata, so GPS locations never reach the public bucket.
+
+**Before & after.** On a photo's *Edit* page the owner can add the unedited shot (**Before & after**). The photo page
+then shows a slider: drag across the photo to compare the two (keyboard: the arrow keys), with Before / After labels.
+In the app, a button swaps between them. The before image goes through the same pipeline (metadata stripped, same
+watermark) and is stored as `before-{random}.jpg` next to the photo, so a replaced one never shows from a cache. As
+it's a new image, adding it to an approved photo sends the photo back for approval (not for admins); removing it
+doesn't. It's deleted with the photo or the account.
+
+## Public portfolio
+
+**My portfolio** (account menu) gives each member one page anyone can open without signing in, at
+`/p/{address}`: their name, picture, a short bio, optional website, Instagram and contact email, and up to 24 of
+their photos in the order they choose. It's off until they switch it on. Only photos visible to signed-out visitors
+can be chosen or shown (approved, not hidden by reports), and a suspended member's portfolio answers 404. The page
+sets Open Graph tags, so a shared link shows the first photo, the name and the bio. Watermarks and "downloads off"
+still apply. The address starts as a suggestion from the member's name (`ana-silva`, then `ana-silva-2`, …) and can
+be changed to any free 3–40 characters of lower-case letters, numbers and single hyphens.
 
 **Several photos at once.** *Upload several* on the upload page (website) takes up to 20 photos, each with its own
 title, sharing the description, tags, place and switches. They're sent one by one with a status per photo, so a
@@ -214,6 +233,14 @@ Every member has a blog (**Blogs** in the menu, or *Blog* on a member page) with
 lists, quotes, links and a **photo** button. That button picks from your gallery or uploads a new photo, which
 also lands in your gallery. Posts can be saved as drafts (visible only to you) or published. Members comment on
 published posts; comment authors and post authors can delete comments.
+
+**Approval.** A member's new post isn't published straight away: **Submit for approval** puts it in the admins'
+queue (Admin → **Posts to review**), where only its author and admins can see it. An admin opens it, then
+**Approves** it (it's published, and its author and their followers are notified; email subscribers get it in
+their next email) or **Rejects** it with an optional reason. A rejected post goes back to its author with the
+reason shown on the post, in the editor and in their notifications; they edit it and submit it again. Admins'
+own posts are published directly, and editing a post that's already published doesn't send it back to the queue
+(reports still apply). Unpublishing a post and publishing it again does go through approval again.
 
 **PDF attachments.** Below the editor, authors can attach up to 5 PDFs (20 MB each) for readers to download,
 such as guides, checklists or maps, and remove them again when editing. The API checks that each file really is
@@ -287,6 +314,13 @@ those going hear about changes and cancellations, and everyone going gets a remi
 (Activity, so push too once it's on). Each walk has a tag (`walk-1a2b3c4d`): photos tagged with it show on the
 walk's page. Members blocked either way don't see each other's walks; suspended organisers' walks are hidden.
 
+**Golden hour.** A walk's page (website and app) shows the light at the meeting point on the day: blue hour, golden
+hour, sunrise, sunset, golden hour, blue hour, and which of them the walk catches ("✨ The walk catches the evening
+golden hour"). A photo linked to a place has a **Golden hour here today** panel. `SunTimes` (Shared) works it out from
+the position and date, within a few minutes (golden hour: sun from 4° below to 6° above the horizon; blue hour: 6° to
+4° below); no outside service is asked. Times show in the viewer's time zone; the day is picked from the place's
+longitude. Near the poles, days without sunrise say so.
+
 ## Activity
 
 Members get notifications (an inbox icon in the website's menu with an unread count; on the app's Gallery tab, with a dot for
@@ -340,6 +374,17 @@ Admins see **Admin** in the website's account menu, under their avatar (after si
   in) / **Reactivate**. A suspended member is signed out within 30 seconds on the website and the app (the API
   re-checks each token against the database, cached briefly), can't sign in, gets no notification emails, and
   everything they shared is hidden from everyone (it's part of the visibility rule). Nothing is deleted.
+- **Photos to review**: members' uploads waiting for approval, longest-waiting first, as gallery tiles with
+  **Approve** and **Reject** (optional reason, shown to the owner), plus **Approve all on this page**. Until it's
+  approved a photo is visible only to its owner and admins (an admin can open it from the queue, where the same
+  buttons appear on its page). Approving tells the owner and their followers; a rejected photo stays visible to its
+  owner only, with the reason, and they can delete it. Admins' own uploads skip the queue, and so do photos in a
+  blog post waiting for approval: approving the post approves its photos. Editing an approved photo's details doesn't
+  send it back. Photos from before approval existed count as approved. As with any photo, the image file itself is
+  at a public address: the approval controls where PhotoWorld shows it.
+- **Posts to review**: members' blog posts waiting for approval, longest-waiting first (see Blogs above), with
+  **Approve** and **Reject** (optional reason, shown to the author). The same buttons appear at the top of a
+  pending post when an admin opens it.
 - **Challenges**: see Photo challenges above.
 
 **Who's an admin** lives only in the database: the `is_admin` column of `photoworld.users`. The

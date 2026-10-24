@@ -35,6 +35,10 @@ public class BlogPost
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? PublishedAt { get; set; }
 
+    /// <summary>When an admin last approved or rejected it, and (on rejection) why: shown to the author only.</summary>
+    public DateTimeOffset? ReviewedAt { get; set; }
+    public string? ReviewNote { get; set; }
+
     public List<BlogPostPhoto> Photos { get; set; } = [];
     public List<BlogAttachment> Attachments { get; set; } = [];
     public List<BlogComment> Comments { get; set; } = [];

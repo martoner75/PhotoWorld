@@ -13,6 +13,26 @@ document.querySelectorAll("form[data-confirm]").forEach((form) => {
   });
 });
 
+// Before/after sliders: the range input sets how much of the unedited photo shows (from the left).
+document.querySelectorAll("[data-compare]").forEach((compare) => {
+  const range = compare.querySelector("[data-compare-range]");
+  const update = () => compare.style.setProperty("--split", `${range.value}%`);
+  range.addEventListener("input", update);
+  update();
+});
+
+// "Copy" buttons next to links: data-copy holds the text; the label confirms for a moment.
+document.querySelectorAll("[data-copy]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy);
+      const label = button.textContent;
+      button.textContent = "Copied";
+      setTimeout(() => { button.textContent = label; }, 1500);
+    } catch { /* No clipboard access (old browser or not allowed): the link is still there to select. */ }
+  });
+});
+
 // Messages such as "Welcome back" close themselves after data-auto-dismiss milliseconds (they can still be closed
 // with the X). The countdown waits while the pointer is over the message, so it can be read in full.
 document.querySelectorAll("[data-auto-dismiss]").forEach((el) => {

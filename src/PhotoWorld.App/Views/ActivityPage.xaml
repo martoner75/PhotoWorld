@@ -43,8 +43,10 @@
                                        IsVisible="{Binding Snippet, Converter={StaticResource HasValue}}" />
                                 <Label Text="{Binding When}" Style="{StaticResource MutedText}" FontSize="12" />
                             </VerticalStackLayout>
-                            <Image Grid.Column="2" Source="{Binding Activity.PhotoThumbnailUrl}" Aspect="AspectFill" WidthRequest="48" HeightRequest="48"
-                                   IsVisible="{Binding Activity.PhotoThumbnailUrl, Converter={StaticResource HasValue}}" />
+                            <Border Grid.Column="2" Style="{StaticResource PhotoFrame}" StrokeShape="RoundRectangle 8" WidthRequest="48" HeightRequest="48"
+                                    IsVisible="{Binding Activity.PhotoThumbnailUrl, Converter={StaticResource HasValue}}">
+                                <Image Source="{Binding Activity.PhotoThumbnailUrl}" Aspect="AspectFill" />
+                            </Border>
                         </Grid>
                     </Border>
                 </DataTemplate>

@@ -21,13 +21,14 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ChallengeItem">
-                    <Border Padding="0">
+                    <Border Style="{StaticResource PhotoCard}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:ChallengesViewModel}}, x:DataType=vm:ChallengesViewModel}"
                                                   CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <VerticalStackLayout>
-                            <Grid HeightRequest="160" BackgroundColor="{DynamicResource PhotoBackground}">
+                            <Border Style="{StaticResource PhotoFrame}">
+                            <Grid HeightRequest="160">
                                 <Image Source="{Binding Challenge.CoverUrl}" Aspect="AspectFill" />
                                 <Border Style="{StaticResource TileBadge}">
                                     <Label Text="{Binding Phase}" FontSize="12" Style="{StaticResource OnPhoto}" />
@@ -38,7 +39,8 @@
                                     </Border.Triggers>
                                 </Border>
                             </Grid>
-                            <VerticalStackLayout Padding="14,12" Spacing="6">
+                            </Border>
+                            <VerticalStackLayout Padding="8,12" Spacing="6">
                                 <Label Text="{Binding Challenge.Title}" Style="{StaticResource Subheading}" />
                                 <Label Text="{Binding Challenge.Description}" TextColor="{DynamicResource Muted}" MaxLines="3"
                                        LineBreakMode="TailTruncation" IsVisible="{Binding Challenge.Description, Converter={StaticResource HasValue}}" />

@@ -2,6 +2,7 @@
 @{
     var w = Model.Walk;
     ViewData["Title"] = w.Title;
+    var light = SunTimes.For(SunTimes.LocalDate(w.StartsAt, w.Longitude), w.Latitude, w.Longitude);
 }
 
 @section Head {
@@ -77,6 +78,7 @@
             <div id="walk-map" class="places-map walk-map" aria-label="Meeting point"
                  data-lat="@w.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                  data-lng="@w.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"></div>
+            <partial name="_LightPlanner" model='new LightPlannerModel("walk", "Light on the day", light, SunTimes.Overlaps(light, w.StartsAt, w.EndsAt))' />
             <h2 class="section-heading mt-3">Going</h2>
             <ul class="member-results">
                 @foreach (var person in Model.Attendees)

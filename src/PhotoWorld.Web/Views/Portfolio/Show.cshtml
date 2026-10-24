@@ -1,0 +1,94 @@
+@model PublicPortfolioDto
+@{
+    ViewData["Title"] = $"{Model.DisplayName}'s portfolio";
+    var url = $"{Context.Request.Scheme}://{Context.Request.Host}/p/{Model.Slug}";
+    var summary = Model.Bio ?? $"Photography by {Model.DisplayName} on PhotoWorld.";
+    var cover = Model.Photos.FirstOrDefault();
+}
+
+@section Head {
+    @* Previews when the link is shared (WhatsApp, LinkedIn, Facebook, Slack…). *@
+    <meta name="description" content="@summary" />
+    <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content="PhotoWorld" />
+    <meta property="og:title" content="@Model.DisplayName · Photography" />
+    <meta property="og:description" content="@summary" />
+    <meta property="og:url" content="@url" />
+    @if (cover is not null)
+    {
+        <meta property="og:image" content="@cover.ImageUrl" />
+        <meta property="og:image:width" content="@cover.Width" />
+        <meta property="og:image:height" content="@cover.Height" />
+        <meta name="twitter:card" content="summary_large_image" />
+    }
+    <link rel="canonical" href="@url" />
+}
+
+<section class="container page portfolio">
+    <header class="portfolio-header">
+        @if (Model.AvatarUrl is not null)
+        {
+            <img src="@Model.AvatarUrl" alt="" class="portfolio-avatar" referrerpolicy="no-referrer" />
+        }
+        <div>
+            <p class="hero-eyebrow">Portfolio</p>
+            <h1>@Model.DisplayName</h1>
+            @if (Model.Bio is not null)
+            {
+                <p class="portfolio-bio">@Model.Bio</p>
+            }
+            <ul class="portfolio-contact">
+                @if (Model.Website is not null)
+                {
+                    <li><a href="@Model.Website" rel="noopener nofollow" target="_blank">@(new Uri(Model.Website).Host)</a></li>
+                }
+                @if (Model.Instagram is not null)
+                {
+                    <li><a href="https://www.instagram.com/@Model.Instagram/" rel="noopener nofollow" target="_blank">@@@Model.Instagram</a></li>
+                }
+                @if (Model.ContactEmail is not null)
+                {
+                    <li><a href="mailto:@Model.ContactEmail">@Model.ContactEmail</a></li>
+                }
+            </ul>
+        </div>
+    </header>
+
+    @if (Model.Photos.Count == 0)
+    {
+        <div class="empty-state"><p>No photos here yet.</p></div>
+    }
+    else
+    {
+        <div class="photo-grid portfolio-grid">
+            @foreach (var p in Model.Photos)
+            {
+                <figure class="photo-card">
+                    <div class="photo-card-image">
+                        @if (p.AllowDownload)
+                        {
+                            <a href="@p.ImageUrl" target="_blank" rel="noopener" title="Open full size">
+                                <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" loading="lazy" />
+                            </a>
+                        }
+                        else
+                        {
+                            <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" loading="lazy" class="no-save" data-no-save />
+                        }
+                    </div>
+                    <figcaption>
+                        <span class="photo-card-title">@p.Title</span>
+                        @if (p.Description is not null)
+                        {
+                            <p class="text-muted small portfolio-caption">@p.Description</p>
+                        }
+                    </figcaption>
+                </figure>
+            }
+        </div>
+    }
+
+    <p class="portfolio-footer text-muted small">
+        © @Model.DisplayName. Shared on <a asp-controller="Home" asp-action="Index">PhotoWorld</a>, a home for photographers.
+    </p>
+</section>

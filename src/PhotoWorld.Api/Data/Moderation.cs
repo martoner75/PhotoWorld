@@ -12,9 +12,15 @@ namespace PhotoWorld.Api.Data;
 /// </summary>
 public static class Moderation
 {
-    public static Expression<Func<Photo, bool>> PhotoVisibleTo(Guid? userId) => p =>
+    /// <summary>
+    /// Approved and not hidden by moderation; owners always see their own photos, including ones waiting for (or
+    /// refused) approval. A <paramref name="reviewer"/> (an admin) also sees photos waiting for approval.
+    /// </summary>
+    public static Expression<Func<Photo, bool>> PhotoVisibleTo(Guid? userId, bool reviewer = false) => p =>
         p.OwnerId == userId
-        || (!(p.Reports.Any(r => r.Status == ReportStatus.Upheld)
+        || (reviewer && p.ReviewStatus == PhotoReviewStatus.Pending)
+        || (p.ReviewStatus == PhotoReviewStatus.Approved
+            && !(p.Reports.Any(r => r.Status == ReportStatus.Upheld)
               || p.Reports.Count(r => r.Status == ReportStatus.Open) >= ReportRules.AutoHideThreshold)
             && p.Owner.SuspendedAt == null
             && !p.Owner.BlockedBy.Any(b => b.BlockerId == userId));
@@ -26,9 +32,13 @@ public static class Moderation
             && c.Author.SuspendedAt == null
             && !c.Author.BlockedBy.Any(b => b.BlockerId == userId));
 
-    /// <summary>Published, not hidden by moderation; authors always see their own posts, drafts included.</summary>
-    public static Expression<Func<BlogPost, bool>> PostVisibleTo(Guid? userId) => p =>
+    /// <summary>
+    /// Published, not hidden by moderation; authors always see their own posts, drafts included. A
+    /// <paramref name="reviewer"/> (an admin) also sees posts waiting for approval.
+    /// </summary>
+    public static Expression<Func<BlogPost, bool>> PostVisibleTo(Guid? userId, bool reviewer = false) => p =>
         p.AuthorId == userId
+        || (reviewer && p.Status == BlogPostStatus.Pending)
         || (p.Status == BlogPostStatus.Published
             && !(p.Reports.Any(r => r.Status == ReportStatus.Upheld)
                  || p.Reports.Count(r => r.Status == ReportStatus.Open) >= ReportRules.AutoHideThreshold)

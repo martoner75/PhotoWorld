@@ -106,6 +106,7 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li class="dropdown-header">@User.Identity.Name</li>
                                     <li><a class="dropdown-item" asp-controller="Members" asp-action="Me">My profile</a></li>
+                                    <li><a class="dropdown-item @Active("Portfolio")" aria-current="@Current("Portfolio")" asp-controller="Portfolio" asp-action="Edit">My portfolio</a></li>
                                     <li><a class="dropdown-item @Active("Places")" aria-current="@Current("Places")" asp-controller="Places" asp-action="Index">My places</a></li>
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Settings">Account settings</a></li>
                                     @if (User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true"))

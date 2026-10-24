@@ -101,6 +101,41 @@ public class ModerationTests
     }
 
     [Fact]
+    public void Photos_waiting_for_approval_are_visible_to_their_owner_and_admins_only()
+    {
+        var pending = PhotoWith();
+        pending.ReviewStatus = PhotoReviewStatus.Pending;
+        Assert.False(VisibleTo(pending, Viewer));
+        Assert.False(VisibleTo(pending, null));
+        Assert.True(VisibleTo(pending, Owner));
+        Assert.True(Moderation.PhotoVisibleTo(Viewer, reviewer: true).Compile()(pending));
+
+        var rejected = PhotoWith();
+        rejected.ReviewStatus = PhotoReviewStatus.Rejected;
+        Assert.False(Moderation.PhotoVisibleTo(Viewer, reviewer: true).Compile()(rejected));
+        Assert.True(VisibleTo(rejected, Owner));
+
+        // Photos from before approval existed are approved, and an admin flag doesn't hide anything.
+        Assert.True(VisibleTo(PhotoWith(), Viewer));
+        Assert.True(Moderation.PhotoVisibleTo(Viewer, reviewer: true).Compile()(PhotoWith()));
+    }
+
+    [Fact]
+    public void Posts_in_review_are_visible_to_their_author_and_admins_only()
+    {
+        var pending = PostWith(BlogPostStatus.Pending);
+        Assert.False(Moderation.PostVisibleTo(Viewer).Compile()(pending));
+        Assert.False(Moderation.PostVisibleTo(null).Compile()(pending));
+        Assert.True(Moderation.PostVisibleTo(Owner).Compile()(pending));
+        Assert.True(Moderation.PostVisibleTo(Viewer, reviewer: true).Compile()(pending));
+
+        // Rejected posts and drafts are the author's business only, even for admins.
+        Assert.False(Moderation.PostVisibleTo(Viewer, reviewer: true).Compile()(PostWith(BlogPostStatus.Rejected)));
+        Assert.False(Moderation.PostVisibleTo(Viewer, reviewer: true).Compile()(PostWith(BlogPostStatus.Draft)));
+        Assert.True(Moderation.PostVisibleTo(Owner).Compile()(PostWith(BlogPostStatus.Rejected)));
+    }
+
+    [Fact]
     public void Posts_and_blog_comments_follow_the_same_hide_rule()
     {
         var post = PostWith(BlogPostStatus.Published, ReportStatus.Open, ReportStatus.Open, ReportStatus.Open);

@@ -67,7 +67,7 @@ public partial class WalkViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     private Guid _id;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Title), nameof(When), nameof(Facts), nameof(TagHint), nameof(CanLeave), nameof(CanCancel),
+    [NotifyPropertyChangedFor(nameof(Title), nameof(When), nameof(Facts), nameof(TagHint), nameof(Light), nameof(CanLeave), nameof(CanCancel),
         nameof(Location), nameof(Reason), nameof(PhotosTitle))]
     public partial WalkDto? Walk { get; set; }
 
@@ -80,6 +80,25 @@ public partial class WalkViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
         ? $"📍 {w.MeetingPoint}\n👥 {w.AttendeeCount} going{(w.MaxPeople is { } m ? $" (up to {m})" : "")} · organised by {w.Organizer.DisplayName}"
         : "";
     public string TagHint => Walk is null ? "" : $"Tag your photos #{Walk.Walk.Tag} to add them here.";
+
+    /// <summary>Golden and blue hours at the meeting point on the day, in this phone's time (SunTimes, worked out here).</summary>
+    public string Light
+    {
+        get
+        {
+            if (Walk?.Walk is not { } w) return "";
+            var day = SunTimes.For(SunTimes.LocalDate(w.StartsAt, w.Longitude), w.Latitude, w.Longitude);
+            if (day.Sunrise is null) return "The sun doesn't rise or set here that day.";
+            static string T(DateTimeOffset t) => t.ToLocalTime().ToString("HH:mm");
+            static string R(TimeRange? r) => r is null ? "–" : $"{T(r.Start)}–{T(r.End)}";
+            var overlaps = SunTimes.Overlaps(day, w.StartsAt, w.EndsAt);
+            return $"🔵 Blue hour {R(day.MorningBlue)} · 🟠 Golden hour {R(day.MorningGolden)}\n" +
+                   $"🌅 Sunrise {T(day.Sunrise.Value)} · Sunset {T(day.Sunset!.Value)}\n" +
+                   $"🟠 Golden hour {R(day.EveningGolden)} · 🔵 Blue hour {R(day.EveningBlue)}" +
+                   (overlaps.Count > 0 ? $"\n✨ The walk catches the {string.Join(" and ", overlaps)}." : "");
+        }
+    }
+
     public bool CanLeave => Walk?.Walk is { IsGoing: true, IsCancelled: false };
     public bool CanCancel => Walk is { CanEdit: true, Walk.IsCancelled: false };
     public string? Reason => Walk is { CanJoin: false, Walk.IsCancelled: false } ? Walk.CannotJoinReason : null;

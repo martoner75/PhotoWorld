@@ -20,6 +20,7 @@ public class PhotosController(
     SupabaseStorage storage,
     ReportService reports,
     ActivityFeed activity,
+    AdminAccess admins,
     TimeProvider clock,
     ILogger<PhotosController> logger) : ControllerBase
 {
@@ -148,6 +149,7 @@ public class PhotosController(
             Tags = PhotoTags.Parse(tags, description).Select(name => new PhotoTag { Name = name }).ToList(),
             CreatedAt = now,
             UpdatedAt = now,
+            ReviewStatus = PhotoReview.StatusOnUpload(await admins.IsAdminAsync(userId, ct)),
         };
         photo.DisplayPath = $"{userId}/{photo.Id}/display.jpg";
         photo.ThumbnailPath = $"{userId}/{photo.Id}/thumb.jpg";
@@ -166,10 +168,80 @@ public class PhotosController(
             throw;
         }
 
-        logger.LogInformation("User {UserId} uploaded photo {PhotoId} ({Width}x{Height}, {Bytes} bytes)",
-            userId, photo.Id, photo.Width, photo.Height, photo.SizeBytes);
-        await activity.NotifyFollowersAsync(userId, ActivityTypes.NewPhoto, photoId: photo.Id, ct: ct);
+        logger.LogInformation("User {UserId} uploaded photo {PhotoId} ({Width}x{Height}, {Bytes} bytes, {Review})",
+            userId, photo.Id, photo.Width, photo.Height, photo.SizeBytes, photo.ReviewStatus);
+        // Followers hear about a photo once others can see it: now for admins, otherwise when it's approved.
+        if (photo.ReviewStatus == PhotoReviewStatus.Approved)
+            await activity.NotifyFollowersAsync(userId, ActivityTypes.NewPhoto, photoId: photo.Id, ct: ct);
         return CreatedAtAction(nameof(Get), new { id = photo.Id }, await LoadDetailAsync(photo.Id, ct));
+    }
+
+    /// <summary>
+    /// Admins: photos waiting for approval, longest-waiting first. Photos in a blog post that's waiting for approval
+    /// are left out (approving the post approves them), and so are suspended members' photos.
+    /// </summary>
+    [HttpGet(ApiRoutes.AdminPendingPhotos)]
+    public async Task<ActionResult<PagedResult<PhotoSummaryDto>>> Pending(int page = 1, CancellationToken ct = default)
+    {
+        var me = CurrentUserId();
+        if (!await admins.IsAdminAsync(me, ct)) return Forbid();
+        page = Math.Max(1, page);
+        var query = db.Photos.AsNoTracking()
+            .Where(p => p.ReviewStatus == PhotoReviewStatus.Pending && p.Owner.SuspendedAt == null)
+            .Where(p => !db.BlogPosts.Any(post => post.Status == Shared.Blogs.BlogPostStatus.Pending
+                && (post.CoverPhotoId == p.Id || post.Photos.Any(x => x.PhotoId == p.Id))));
+
+        var total = await query.CountAsync(ct);
+        var items = await query.OrderBy(p => p.CreatedAt)
+            .Skip((page - 1) * PageSize).Take(PageSize)
+            .ToSummariesAsync(me, storage, ct);
+        return new PagedResult<PhotoSummaryDto>(items, page, PageSize, total);
+    }
+
+    /// <summary>Admins: approves pending photos (others in the list are skipped). Owners and their followers are told.</summary>
+    [HttpPost(ApiRoutes.AdminPhotoApproval)]
+    public async Task<ActionResult<int>> Approve(ApprovePhotosRequest request, CancellationToken ct)
+    {
+        if (CurrentUserId() is not { } me || !await admins.IsAdminAsync(me, ct)) return Forbid();
+        var ids = request.PhotoIds.Distinct().Take(PageSize * 2).ToList();
+        var photos = await db.Photos.Where(p => ids.Contains(p.Id) && p.ReviewStatus == PhotoReviewStatus.Pending).ToListAsync(ct);
+
+        var now = clock.GetUtcNow();
+        foreach (var photo in photos)
+        {
+            photo.ReviewStatus = PhotoReviewStatus.Approved;
+            photo.ReviewedAt = now;
+            photo.ReviewNote = null;
+        }
+        await db.SaveChangesAsync(ct);
+
+        foreach (var photo in photos)
+        {
+            logger.LogInformation("Admin {AdminId} approved photo {PhotoId} by {OwnerId}", me, photo.Id, photo.OwnerId);
+            await activity.NotifyAsync(photo.OwnerId, me, ActivityTypes.PhotoApproved, photoId: photo.Id, ct: ct);
+            await activity.NotifyFollowersAsync(photo.OwnerId, ActivityTypes.NewPhoto, photoId: photo.Id, ct: ct);
+        }
+        return photos.Count;
+    }
+
+    /// <summary>Admins: refuses a pending photo with an optional reason. It stays visible to its owner only.</summary>
+    [HttpPost(ApiRoutes.AdminPhotoRejection)]
+    public async Task<IActionResult> Reject(Guid id, RejectPhotoRequest request, CancellationToken ct)
+    {
+        if (CurrentUserId() is not { } me || !await admins.IsAdminAsync(me, ct)) return Forbid();
+        var photo = await db.Photos.SingleOrDefaultAsync(p => p.Id == id, ct);
+        if (photo is null) return NotFound();
+        if (!PhotoReview.CanReview(photo.ReviewStatus))
+            return Problem("This photo isn't waiting for approval any more.", statusCode: StatusCodes.Status409Conflict);
+
+        photo.ReviewStatus = PhotoReviewStatus.Rejected;
+        photo.ReviewedAt = clock.GetUtcNow();
+        photo.ReviewNote = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("Admin {AdminId} rejected photo {PhotoId} by {OwnerId}", me, id, photo.OwnerId);
+        await activity.NotifyAsync(photo.OwnerId, me, ActivityTypes.PhotoRejected, photoId: id, snippet: photo.ReviewNote, ct: ct);
+        return NoContent();
     }
 
     [HttpPut(ApiRoutes.Photo)]
@@ -199,6 +271,80 @@ public class PhotosController(
 
         logger.LogInformation("User {UserId} edited photo {PhotoId}", photo.OwnerId, id);
         return (await LoadDetailAsync(id, ct))!;
+    }
+
+    /// <summary>
+    /// Adds or replaces the photo's unedited "before" version, shown with a before/after slider. Processed like an
+    /// upload (metadata stripped, the photo's watermark if it has one). A member's approved photo goes back for approval.
+    /// </summary>
+    [HttpPost(ApiRoutes.PhotoBefore)]
+    [RequestSizeLimit(PhotoUploadLimits.MaxBytes + 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
+    public async Task<ActionResult<PhotoDetailDto>> AddBefore(Guid id, [FromForm] IFormFile? file, CancellationToken ct)
+    {
+        var photo = await db.Photos.SingleOrDefaultAsync(p => p.Id == id, ct);
+        if (photo is null) return NotFound();
+        if (CurrentUserId() is not { } me || photo.OwnerId != me) return Forbid();
+        if (photo.ReviewStatus == PhotoReviewStatus.Rejected)
+            return Problem("This photo wasn't approved, so it can't have a before version.", statusCode: StatusCodes.Status409Conflict);
+        if (file is null || file.Length == 0)
+        {
+            ModelState.AddModelError(nameof(file), "Choose the unedited photo.");
+            return ValidationProblem(ModelState);
+        }
+
+        ProcessedPhoto processed;
+        try
+        {
+            using var buffer = new MemoryStream((int)file.Length);
+            await file.CopyToAsync(buffer, ct);
+            var mark = photo.Watermarked ? $"© {await db.Users.Where(u => u.Id == me).Select(u => u.DisplayName).SingleAsync(ct)}" : null;
+            processed = images.Process(buffer.ToArray(), mark);
+        }
+        catch (ImageValidationException ex)
+        {
+            ModelState.AddModelError(nameof(file), ex.Message);
+            return ValidationProblem(ModelState);
+        }
+
+        // A new name each time, so browsers and the storage CDN never show a replaced image.
+        var old = photo.BeforeDisplayPath;
+        var path = $"{me}/{id}/before-{Guid.NewGuid():N}.jpg";
+        await storage.UploadAsync(path, processed.Display.Bytes, "image/jpeg", ct);
+        photo.BeforeDisplayPath = path;
+        var wasApproved = photo.ReviewStatus == PhotoReviewStatus.Approved;
+        photo.ReviewStatus = PhotoReview.StatusAfterNewImage(photo.ReviewStatus, await admins.IsAdminAsync(me, ct));
+        photo.UpdatedAt = clock.GetUtcNow();
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await TryDeleteAsync([path], id);
+            throw;
+        }
+        if (old is not null) await TryDeleteAsync([old], id);
+
+        logger.LogInformation("User {UserId} added a before version to photo {PhotoId}{Review}", me, id,
+            wasApproved && photo.ReviewStatus == PhotoReviewStatus.Pending ? " (back for approval)" : "");
+        return (await LoadDetailAsync(id, ct))!;
+    }
+
+    [HttpDelete(ApiRoutes.PhotoBefore)]
+    public async Task<IActionResult> RemoveBefore(Guid id, CancellationToken ct)
+    {
+        var photo = await db.Photos.SingleOrDefaultAsync(p => p.Id == id, ct);
+        if (photo is null) return NotFound();
+        if (photo.OwnerId != CurrentUserId()) return Forbid();
+        if (photo.BeforeDisplayPath is not { } path) return NoContent();
+
+        photo.BeforeDisplayPath = null;
+        photo.UpdatedAt = clock.GetUtcNow();
+        await db.SaveChangesAsync(ct);
+        await TryDeleteAsync([path], id);
+        logger.LogInformation("User {UserId} removed the before version of photo {PhotoId}", photo.OwnerId, id);
+        return NoContent();
     }
 
     [HttpDelete(ApiRoutes.Photo)]
@@ -358,8 +504,10 @@ public class PhotosController(
     {
         var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
         var me = CurrentUserId();
+        // Admins can open a pending photo to review it.
+        var isAdmin = await admins.IsAdminAsync(me, ct);
         var commentVisible = Moderation.CommentVisibleTo(me);
-        var row = await VisiblePhotos(me)
+        var row = await db.Photos.AsNoTracking().Where(Moderation.PhotoVisibleTo(me, reviewer: isAdmin))
             .Where(p => p.Id == id)
             .Select(p => new
             {
@@ -392,23 +540,32 @@ public class PhotosController(
             PhotoOfTheDay: row.Featured,
             WantsFeedback: p.WantsFeedback,
             AllowDownload: p.AllowDownload,
-            Watermarked: p.Watermarked);
+            Watermarked: p.Watermarked,
+            ReviewStatus: p.ReviewStatus,
+            ReviewNote: p.OwnerId == me ? p.ReviewNote : null,
+            CanReview: isAdmin && p.OwnerId != me && PhotoReview.CanReview(p.ReviewStatus),
+            BeforeImageUrl: p.BeforeDisplayPath is null ? null : storage.PublicUrl(p.BeforeDisplayPath));
     }
 
     private async Task<LikeStateDto> LikeStateAsync(Guid photoId, Guid userId, CancellationToken ct) => new(
         await db.PhotoLikes.AnyAsync(l => l.PhotoId == photoId && l.UserId == userId, ct),
         await db.PhotoLikes.CountAsync(l => l.PhotoId == photoId, ct));
 
-    private async Task TryDeleteFilesAsync(Photo photo)
+    private Task TryDeleteFilesAsync(Photo photo) =>
+        TryDeleteAsync(photo.BeforeDisplayPath is { } before
+            ? [photo.DisplayPath, photo.ThumbnailPath, before]
+            : [photo.DisplayPath, photo.ThumbnailPath], photo.Id);
+
+    private async Task TryDeleteAsync(IReadOnlyList<string> paths, Guid photoId)
     {
         try
         {
-            await storage.DeleteAsync([photo.DisplayPath, photo.ThumbnailPath], CancellationToken.None);
+            await storage.DeleteAsync(paths, CancellationToken.None);
         }
         catch (HttpRequestException ex)
         {
             // The database is the source of truth; an orphaned file is harmless but worth knowing about.
-            logger.LogWarning(ex, "Could not delete storage files for photo {PhotoId}", photo.Id);
+            logger.LogWarning(ex, "Could not delete storage files for photo {PhotoId}", photoId);
         }
     }
 }

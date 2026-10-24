@@ -22,6 +22,7 @@ public class BlogPostsController(
     SupabaseStorage storage,
     ReportService reports,
     ActivityFeed activity,
+    AdminAccess admins,
     TimeProvider clock,
     ILogger<BlogPostsController> logger) : ControllerBase
 {
@@ -36,11 +37,7 @@ public class BlogPostsController(
     public async Task<PagedResult<BlogPostSummaryDto>> List(int page = 1, Guid? authorId = null, bool following = false,
         CancellationToken ct = default)
     {
-        page = Math.Max(1, page);
         var me = CurrentUserId();
-        var commentVisible = Moderation.BlogCommentVisibleTo(me);
-        var visiblePhotos = db.Photos.Where(Moderation.PhotoVisibleTo(me));
-
         var query = db.BlogPosts.AsNoTracking().Where(Moderation.PostVisibleTo(me));
         query = authorId is null
             ? query.Where(p => p.Status == BlogPostStatus.Published)
@@ -49,9 +46,85 @@ public class BlogPostsController(
             query = query.Where(p => p.Status == BlogPostStatus.Published
                                      && db.Follows.Any(f => f.FollowerId == me && f.FolloweeId == p.AuthorId));
 
+        return await PageAsync(query.OrderByDescending(p => p.PublishedAt ?? p.UpdatedAt), page, me, ct);
+    }
+
+    /// <summary>Admins: posts waiting for approval, longest-waiting first (posts by suspended members aren't listed).</summary>
+    [HttpGet(ApiRoutes.AdminPendingPosts)]
+    public async Task<ActionResult<PagedResult<BlogPostSummaryDto>>> Pending(int page = 1, CancellationToken ct = default)
+    {
+        var me = CurrentUserId();
+        if (!await admins.IsAdminAsync(me, ct)) return Forbid();
+        var query = db.BlogPosts.AsNoTracking()
+            .Where(p => p.Status == BlogPostStatus.Pending && p.Author.SuspendedAt == null)
+            .OrderBy(p => p.UpdatedAt);
+        return await PageAsync(query, page, me, ct);
+    }
+
+    /// <summary>Admins: publishes a pending post. Its author and their followers are told.</summary>
+    [HttpPost(ApiRoutes.AdminPostApproval)]
+    public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
+    {
+        if (CurrentUserId() is not { } me || !await admins.IsAdminAsync(me, ct)) return Forbid();
+        var post = await db.BlogPosts.SingleOrDefaultAsync(p => p.Id == id, ct);
+        if (post is null) return NotFound();
+        if (!BlogReview.CanReview(post.Status))
+            return Problem("This post isn't waiting for approval any more.", statusCode: StatusCodes.Status409Conflict);
+
+        var now = clock.GetUtcNow();
+        post.Status = BlogPostStatus.Published;
+        post.PublishedAt = now;
+        post.ReviewedAt = now;
+        post.ReviewNote = null;
+        // The author's photos in the post were reviewed with it (they aren't in the photo queue while it waits).
+        var photoIds = await db.BlogPostPhotos.Where(x => x.PostId == id).Select(x => x.PhotoId).ToListAsync(ct);
+        if (post.CoverPhotoId is { } coverId) photoIds.Add(coverId);
+        var photos = await db.Photos
+            .Where(p => photoIds.Contains(p.Id) && p.OwnerId == post.AuthorId && p.ReviewStatus == PhotoReviewStatus.Pending)
+            .ToListAsync(ct);
+        foreach (var photo in photos)
+        {
+            photo.ReviewStatus = PhotoReviewStatus.Approved;
+            photo.ReviewedAt = now;
+        }
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("Admin {AdminId} approved blog post {PostId} by {AuthorId}, with {PhotoCount} photos",
+            me, id, post.AuthorId, photos.Count);
+        await activity.NotifyAsync(post.AuthorId, me, ActivityTypes.PostApproved, postId: id, ct: ct);
+        await activity.NotifyFollowersAsync(post.AuthorId, ActivityTypes.NewPost, postId: id, ct: ct);
+        return NoContent();
+    }
+
+    /// <summary>Admins: sends a pending post back to its author with an optional reason. It stays hidden.</summary>
+    [HttpPost(ApiRoutes.AdminPostRejection)]
+    public async Task<IActionResult> Reject(Guid id, RejectPostRequest request, CancellationToken ct)
+    {
+        if (CurrentUserId() is not { } me || !await admins.IsAdminAsync(me, ct)) return Forbid();
+        var post = await db.BlogPosts.SingleOrDefaultAsync(p => p.Id == id, ct);
+        if (post is null) return NotFound();
+        if (!BlogReview.CanReview(post.Status))
+            return Problem("This post isn't waiting for approval any more.", statusCode: StatusCodes.Status409Conflict);
+
+        post.Status = BlogPostStatus.Rejected;
+        post.ReviewedAt = clock.GetUtcNow();
+        post.ReviewNote = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("Admin {AdminId} rejected blog post {PostId} by {AuthorId}", me, id, post.AuthorId);
+        await activity.NotifyAsync(post.AuthorId, me, ActivityTypes.PostRejected, postId: id, snippet: post.ReviewNote, ct: ct);
+        return NoContent();
+    }
+
+    private async Task<PagedResult<BlogPostSummaryDto>> PageAsync(IOrderedQueryable<BlogPost> query, int page, Guid? me,
+        CancellationToken ct)
+    {
+        page = Math.Max(1, page);
+        var commentVisible = Moderation.BlogCommentVisibleTo(me);
+        var visiblePhotos = db.Photos.Where(Moderation.PhotoVisibleTo(me));
+
         var total = await query.CountAsync(ct);
         var rows = await query
-            .OrderByDescending(p => p.PublishedAt ?? p.UpdatedAt)
             .Skip((page - 1) * PageSize).Take(PageSize)
             .Select(p => new
             {
@@ -86,6 +159,7 @@ public class BlogPostsController(
         if (cleaned is null) return ValidationProblem(ModelState);
 
         var now = clock.GetUtcNow();
+        var status = BlogReview.StatusAfterSave(null, request.Publish, request.Publish && await admins.IsAdminAsync(me, ct));
         var post = new BlogPost
         {
             AuthorId = me,
@@ -94,10 +168,10 @@ public class BlogPostsController(
             Excerpt = cleaned.Excerpt,
             CoverPhotoId = CoverFor(request, cleaned),
             CoverChosen = request.CoverPhotoId is not null,
-            Status = request.Publish ? BlogPostStatus.Published : BlogPostStatus.Draft,
+            Status = status,
             CreatedAt = now,
             UpdatedAt = now,
-            PublishedAt = request.Publish ? now : null,
+            PublishedAt = status == BlogPostStatus.Published ? now : null,
             Photos = cleaned.PhotoIds.Select(photoId => new BlogPostPhoto { PhotoId = photoId }).ToList(),
         };
         db.BlogPosts.Add(post);
@@ -127,8 +201,11 @@ public class BlogPostsController(
         post.Excerpt = cleaned.Excerpt;
         post.CoverPhotoId = CoverFor(request, cleaned);
         post.CoverChosen = request.CoverPhotoId is not null;
-        post.Status = request.Publish ? BlogPostStatus.Published : BlogPostStatus.Draft;
-        post.PublishedAt = request.Publish ? post.PublishedAt ?? now : null;
+        post.Status = BlogReview.StatusAfterSave(post.Status, request.Publish,
+            request.Publish && !wasPublished && await admins.IsAdminAsync(me, ct));
+        post.PublishedAt = post.Status == BlogPostStatus.Published ? post.PublishedAt ?? now : null;
+        // A rejected post keeps the admin's note while its author works on it; submitting it again clears it.
+        if (request.Publish) post.ReviewNote = null;
         post.UpdatedAt = now;
         post.Photos.RemoveAll(p => !cleaned.PhotoIds.Contains(p.PhotoId));
         foreach (var photoId in cleaned.PhotoIds.Where(pid => post.Photos.All(p => p.PhotoId != pid)))
@@ -360,9 +437,12 @@ public class BlogPostsController(
     private async Task<BlogPostDto?> LoadAsync(Guid id, CancellationToken ct)
     {
         var me = CurrentUserId();
+        // Admins can open a pending post to review it.
+        var isAdmin = await admins.IsAdminAsync(me, ct);
         var commentVisible = Moderation.BlogCommentVisibleTo(me);
-        var visiblePhotos = db.Photos.Where(Moderation.PhotoVisibleTo(me));
-        var row = await VisiblePosts(me)
+        // A reviewer sees the post as it will be published, its photos waiting for approval included.
+        var visiblePhotos = db.Photos.Where(Moderation.PhotoVisibleTo(me, reviewer: isAdmin));
+        var row = await db.BlogPosts.AsNoTracking().Where(Moderation.PostVisibleTo(me, reviewer: isAdmin))
             .Where(p => p.Id == id)
             .Select(p => new
             {
@@ -388,7 +468,9 @@ public class BlogPostsController(
             CanReport: post.AuthorId != me && !row.ReportedByMe,
             Moderation.State(row.Upheld, row.OpenReports),
             row.Attachments.Select(ToDto).ToList(),
-            ChosenCoverPhotoId: post.AuthorId == me && post.CoverChosen ? post.CoverPhotoId : null);
+            ChosenCoverPhotoId: post.AuthorId == me && post.CoverChosen ? post.CoverPhotoId : null,
+            ReviewNote: post.AuthorId == me ? post.ReviewNote : null,
+            CanReview: isAdmin && post.AuthorId != me && BlogReview.CanReview(post.Status));
     }
 
     private BlogAttachmentDto ToDto(BlogAttachment a) =>

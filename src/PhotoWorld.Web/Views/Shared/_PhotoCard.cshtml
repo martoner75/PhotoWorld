@@ -1,7 +1,16 @@
 @model PhotoSummaryDto
 <figure class="photo-card">
     <a asp-controller="Photos" asp-action="Details" asp-route-id="@Model.Id" class="photo-card-image">
-        @if (Model.Moderation != ModerationState.Visible)
+        @* Only an owner (or an admin, in the review queue) is ever shown a photo that isn't approved. *@
+        @if (Model.ReviewStatus == PhotoReviewStatus.Pending)
+        {
+            <span class="moderation-badge photo-card-badge draft-badge">Waiting for approval</span>
+        }
+        else if (Model.ReviewStatus == PhotoReviewStatus.Rejected)
+        {
+            <span class="moderation-badge photo-card-badge">Not approved</span>
+        }
+        else if (Model.Moderation != ModerationState.Visible)
         {
             <span class="moderation-badge photo-card-badge">@(Model.Moderation == ModerationState.Removed ? "Removed" : "Hidden for review")</span>
         }

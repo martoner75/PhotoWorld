@@ -114,7 +114,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected')");
                         });
                 });
 
@@ -335,6 +335,15 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("published_at");
 
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("review_note");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -367,7 +376,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("blog_posts", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_blog_posts_status", "status in ('draft', 'published')");
+                            t.HasCheckConstraint("ck_blog_posts_status", "status in ('draft', 'pending', 'published', 'rejected')");
                         });
                 });
 
@@ -848,6 +857,11 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("numeric(4,1)")
                         .HasColumnName("aperture");
 
+                    b.Property<string>("BeforeDisplayPath")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("before_display_path");
+
                     b.Property<string>("CameraMake")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -904,6 +918,23 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("place_id");
 
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("review_note");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("approved")
+                        .HasColumnName("review_status");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
                     b.Property<bool>("ShowOnHome")
                         .HasColumnType("boolean")
                         .HasColumnName("show_on_home");
@@ -958,11 +989,17 @@ namespace PhotoWorld.Api.Data.Migrations
                         .IsDescending(false, true)
                         .HasDatabaseName("ix_photos_owner_id_created_at");
 
+                    b.HasIndex("ReviewStatus", "CreatedAt")
+                        .HasDatabaseName("ix_photos_review_status_created_at");
+
                     b.HasIndex("ShowOnHome", "CreatedAt")
                         .IsDescending(false, true)
                         .HasDatabaseName("ix_photos_show_on_home_created_at");
 
-                    b.ToTable("photos", "photoworld");
+                    b.ToTable("photos", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_photos_review_status", "review_status in ('pending', 'approved', 'rejected')");
+                        });
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoComment", b =>
@@ -1217,6 +1254,79 @@ namespace PhotoWorld.Api.Data.Migrations
 
                             t.HasCheckConstraint("ck_places_longitude", "longitude between -180 and 180");
                         });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Portfolio", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("bio");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("contact_email");
+
+                    b.Property<string>("Instagram")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("instagram");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_public");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("slug");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(220)
+                        .HasColumnType("character varying(220)")
+                        .HasColumnName("website");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_portfolios");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_portfolios_slug");
+
+                    b.ToTable("portfolios", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PortfolioPhoto", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.HasKey("UserId", "PhotoId")
+                        .HasName("pk_portfolio_photos");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_portfolio_photos_photo_id");
+
+                    b.ToTable("portfolio_photos", "photoworld");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Report", b =>
@@ -1894,6 +2004,39 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Portfolio", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithOne()
+                        .HasForeignKey("PhotoWorld.Api.Data.Portfolio", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_portfolios_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PortfolioPhoto", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_portfolio_photos_photos_photo_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Portfolio", "Portfolio")
+                        .WithMany("Photos")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_portfolio_photos_portfolios_user_id");
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("Portfolio");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Report", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.BlogComment", "BlogComment")
@@ -2013,6 +2156,11 @@ namespace PhotoWorld.Api.Data.Migrations
             modelBuilder.Entity("PhotoWorld.Api.Data.PhotoComment", b =>
                 {
                     b.Navigation("Reports");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Portfolio", b =>
+                {
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.User", b =>

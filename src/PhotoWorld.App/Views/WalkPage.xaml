@@ -30,6 +30,9 @@
                     <Label Text="{Binding Reason}" Style="{StaticResource MutedText}" IsVisible="{Binding Reason, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding Walk.Description}" FontSize="16" IsVisible="{Binding Walk.Description, Converter={StaticResource HasValue}}" />
                     <Label Text="{Binding TagHint}" Style="{StaticResource MutedText}" />
+
+                    <Label Text="Light on the day" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <Label Text="{Binding Light}" FontSize="14" LineHeight="1.3" />
                     <Button Text="Cancel walk" Style="{StaticResource DangerButton}" Command="{Binding CancelWalkCommand}" IsVisible="{Binding CanCancel}" />
 
                     <Label Text="Going" Style="{StaticResource Subheading}" Margin="0,8,0,0" />

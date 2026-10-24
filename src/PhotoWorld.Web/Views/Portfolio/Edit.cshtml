@@ -1,0 +1,110 @@
+@model PortfolioEditViewModel
+@{
+    ViewData["Title"] = "My portfolio";
+    var link = $"{Context.Request.Scheme}://{Context.Request.Host}/p/{Model.Slug}";
+    var chosen = Model.PhotoIds.ToHashSet();
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>My portfolio</h1>
+            <p class="text-muted">A page of your best photos that anyone can open, even without a PhotoWorld account:
+                share it with clients, editors and friends.</p>
+        </div>
+        @if (Model.IsPublic)
+        {
+            <a class="btn btn-ghost" href="/p/@Model.Slug" target="_blank" rel="noopener">View my portfolio</a>
+        }
+    </header>
+
+    <form asp-action="Edit" method="post" class="form-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <label class="check-row">
+            <input type="checkbox" name="IsPublic" value="true" @(Model.IsPublic ? "checked" : "") />
+            <span>
+                <strong>Show my portfolio publicly</strong>
+                <span class="text-muted small d-block">Anyone with the link can see the photos you choose below, with your
+                    name, picture and the details you fill in. Turn it off at any time.</span>
+            </span>
+        </label>
+        <input type="hidden" name="IsPublic" value="false" />
+
+        <div class="field">
+            <label asp-for="Slug"></label>
+            <div class="portfolio-address">
+                <span class="text-muted">@Context.Request.Host/p/</span>
+                <input asp-for="Slug" maxlength="@PortfolioLimits.SlugMax" autocapitalize="none" spellcheck="false" />
+            </div>
+            <span asp-validation-for="Slug" class="field-error"></span>
+            @if (Model.IsPublic)
+            {
+                <p class="text-muted small">Your link: <a href="/p/@Model.Slug" target="_blank" rel="noopener">@link</a>
+                    <button type="button" class="link-button" data-copy="@link">Copy</button></p>
+            }
+        </div>
+
+        <div class="field">
+            <label asp-for="Bio">About you <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Bio" rows="3" maxlength="@PortfolioLimits.BioMax"
+                      placeholder="Landscape and street photographer based in Lisbon. Available for commissions."></textarea>
+            <span asp-validation-for="Bio" class="field-error"></span>
+        </div>
+
+        <div class="portfolio-links">
+            <div class="field">
+                <label asp-for="Website">Website <span class="text-muted">(optional)</span></label>
+                <input asp-for="Website" maxlength="@PortfolioLimits.LinkMax" placeholder="https://example.com" />
+                <span asp-validation-for="Website" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Instagram">Instagram <span class="text-muted">(optional)</span></label>
+                <input asp-for="Instagram" maxlength="@PortfolioLimits.LinkMax" placeholder="@@yourname" />
+                <span asp-validation-for="Instagram" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="ContactEmail">Contact email <span class="text-muted">(optional, shown publicly)</span></label>
+                <input asp-for="ContactEmail" type="email" maxlength="@PortfolioLimits.LinkMax" />
+                <span asp-validation-for="ContactEmail" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Photos <span class="text-muted">(up to @PortfolioLimits.PhotosMax)</span></label>
+            <p class="text-muted small">Tick the photos to show. The numbers set their order (1 comes first). Only your
+                approved photos that everyone can see are listed.</p>
+            <span asp-validation-for="PhotoIds" class="field-error"></span>
+            @if (Model.Candidates.Count == 0)
+            {
+                <div class="empty-state"><p>No photos to choose from yet. Once your uploads are approved, they appear here.</p></div>
+            }
+            else
+            {
+                <div class="portfolio-picker">
+                    @foreach (var p in Model.Candidates)
+                    {
+                        var isChosen = chosen.Contains(p.Id);
+                        <label class="portfolio-pick @(isChosen ? "is-chosen" : "")">
+                            <img src="@p.ThumbnailUrl" alt="" loading="lazy" />
+                            <span class="portfolio-pick-row">
+                                <input type="checkbox" name="PhotoIds" value="@p.Id" @(isChosen ? "checked" : "") data-portfolio-pick />
+                                <span class="portfolio-pick-title">@p.Title</span>
+                                <input type="number" name="Order[@p.Id]" min="1" max="999" class="portfolio-order"
+                                       value="@(Model.Order.TryGetValue(p.Id, out var n) ? n : null)" aria-label="Position of @p.Title" />
+                            </span>
+                        </label>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-accent">Save portfolio</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

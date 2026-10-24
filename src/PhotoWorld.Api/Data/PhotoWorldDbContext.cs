@@ -8,6 +8,7 @@ using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Places;
+using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Walks;
 
 namespace PhotoWorld.Api.Data;
@@ -43,6 +44,8 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<DeviceRegistration> Devices => Set<DeviceRegistration>();
     public DbSet<Challenge> Challenges => Set<Challenge>();
     public DbSet<ChallengeEntry> ChallengeEntries => Set<ChallengeEntry>();
+    public DbSet<Portfolio> Portfolios => Set<Portfolio>();
+    public DbSet<PortfolioPhoto> PortfolioPhotos => Set<PortfolioPhoto>();
 
     /// <summary>
     /// PhotoWorld's own schema in the Supabase database. Keeping it out of <c>public</c> means
@@ -73,10 +76,17 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
 
         modelBuilder.Entity<Photo>(e =>
         {
+            e.ToTable(t => t.HasCheckConstraint("ck_photos_review_status",
+                $"review_status in ({string.Join(", ", PhotoReviewStatus.All.Select(s => $"'{s}'"))})"));
+            // Photos uploaded before approval existed count as approved.
+            e.Property(p => p.ReviewStatus).HasMaxLength(16).HasDefaultValue(PhotoReviewStatus.Approved);
+            e.Property(p => p.ReviewNote).HasMaxLength(PhotoReviewStatus.NoteMax);
+            e.HasIndex(p => new { p.ReviewStatus, p.CreatedAt });
             e.Property(p => p.Title).HasMaxLength(PhotoUploadLimits.MaxTitleLength);
             e.Property(p => p.Description).HasMaxLength(PhotoUploadLimits.MaxDescriptionLength);
             e.Property(p => p.DisplayPath).HasMaxLength(256);
             e.Property(p => p.ThumbnailPath).HasMaxLength(256);
+            e.Property(p => p.BeforeDisplayPath).HasMaxLength(256);
             e.Property(p => p.CameraMake).HasMaxLength(100);
             e.Property(p => p.CameraModel).HasMaxLength(100);
             e.Property(p => p.Lens).HasMaxLength(150);
@@ -172,6 +182,25 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(r => new { r.BlogCommentId, r.Status });
         });
 
+        modelBuilder.Entity<Portfolio>(e =>
+        {
+            e.HasKey(p => p.UserId);
+            e.HasOne(p => p.User).WithOne().HasForeignKey<Portfolio>(p => p.UserId);
+            e.Property(p => p.Slug).HasMaxLength(PortfolioLimits.SlugMax);
+            e.HasIndex(p => p.Slug).IsUnique();
+            e.Property(p => p.Bio).HasMaxLength(PortfolioLimits.BioMax);
+            e.Property(p => p.Website).HasMaxLength(PortfolioLimits.LinkMax + 20);
+            e.Property(p => p.Instagram).HasMaxLength(PortfolioLimits.LinkMax);
+            e.Property(p => p.ContactEmail).HasMaxLength(PortfolioLimits.LinkMax);
+        });
+
+        modelBuilder.Entity<PortfolioPhoto>(e =>
+        {
+            e.HasKey(p => new { p.UserId, p.PhotoId });
+            e.HasOne(p => p.Portfolio).WithMany(p => p.Photos).HasForeignKey(p => p.UserId);
+            e.HasOne(p => p.Photo).WithMany().HasForeignKey(p => p.PhotoId);
+        });
+
         modelBuilder.Entity<Blog>(e =>
         {
             e.HasKey(b => b.UserId);
@@ -183,8 +212,9 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
         modelBuilder.Entity<BlogPost>(e =>
         {
             e.ToTable(t => t.HasCheckConstraint("ck_blog_posts_status",
-                $"status in ('{BlogPostStatus.Draft}', '{BlogPostStatus.Published}')"));
+                $"status in ({string.Join(", ", BlogPostStatus.All.Select(s => $"'{s}'"))})"));
             e.Property(p => p.Title).HasMaxLength(BlogLimits.PostTitleMax);
+            e.Property(p => p.ReviewNote).HasMaxLength(BlogLimits.ReviewNoteMax);
             e.Property(p => p.BodyHtml).HasMaxLength(BlogLimits.BodyMax);
             e.Property(p => p.Excerpt).HasMaxLength(BlogLimits.ExcerptLength + 10);
             e.Property(p => p.Status).HasMaxLength(16);

@@ -75,7 +75,15 @@ public partial class PostViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     internal static string RenderPage(BlogPostDto post)
     {
         var date = (post.PublishedAt ?? post.UpdatedAt).LocalDateTime.ToString("d MMMM yyyy");
-        var draft = post.Status == BlogPostStatus.Draft ? "<p class=\"draft\">Draft: only you can see this post.</p>" : "";
+        // Only the author sees a post that isn't published yet; tell them where it stands.
+        var draft = post.Status switch
+        {
+            BlogPostStatus.Draft => "<p class=\"draft\">Draft: only you can see this post.</p>",
+            BlogPostStatus.Pending => "<p class=\"draft\">Waiting for approval: an admin will review it soon. Only you can see it until then.</p>",
+            BlogPostStatus.Rejected => "<p class=\"draft\">Not approved" + (post.ReviewNote is { Length: > 0 } note
+                ? $": “{WebUtility.HtmlEncode(note)}”" : "") + ". Edit it on the website and submit it again.</p>",
+            _ => "",
+        };
         // PDF links open in the browser (PostPage.OnNavigating), which downloads or previews them.
         var attachments = post.Attachments.Count == 0 ? "" :
             "<h2>Attachments</h2><ul class=\"attachments\">" + string.Concat(post.Attachments.Select(a =>

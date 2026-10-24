@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared.Admin;
+using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Web.Models;
 using PhotoWorld.Web.Services;
@@ -45,6 +46,63 @@ public class AdminController(IPhotoWorldApiClient api) : Controller
         return BackTo(returnUrl);
     }
 
+    /// <summary>Blog posts waiting for approval, longest-waiting first.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Posts(int page = 1, CancellationToken ct = default)
+    {
+        var posts = await api.GetPendingPostsAsync(page, ct);
+        return posts is null ? Forbid() : View(posts);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApprovePost(Guid id, string? returnUrl, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.ApprovePostAsync(id, ct)
+            ?? "Post approved. It's published, and its author and their followers have been told.";
+        return BackTo(returnUrl, nameof(Posts));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectPost(Guid id, string? reason, string? returnUrl, CancellationToken ct)
+    {
+        if (reason?.Length > BlogLimits.ReviewNoteMax) reason = reason[..BlogLimits.ReviewNoteMax];
+        TempData["Flash"] = await api.RejectPostAsync(id, reason, ct)
+            ?? "Post sent back to its author. It stays hidden until they submit it again.";
+        return BackTo(returnUrl, nameof(Posts));
+    }
+
+    /// <summary>Uploaded photos waiting for approval, longest-waiting first.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Photos(int page = 1, CancellationToken ct = default)
+    {
+        var photos = await api.GetPendingPhotosAsync(page, ct);
+        return photos is null ? Forbid() : View(photos);
+    }
+
+    /// <summary>Approves one photo, or every photo on a page of the queue.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApprovePhotos(List<Guid> ids, string? returnUrl, CancellationToken ct)
+    {
+        var approved = ids.Count == 0 ? 0 : await api.ApprovePhotosAsync(ids, ct);
+        TempData["Flash"] = approved switch
+        {
+            null => "Those photos couldn't be approved. Are you still an admin?",
+            0 => "Nothing to approve: they were already reviewed.",
+            1 => "Photo approved. It's in the gallery, and its owner and their followers have been told.",
+            var n => $"{n} photos approved. They're in the gallery, and their owners and followers have been told.",
+        };
+        return BackTo(returnUrl, nameof(Photos));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectPhoto(Guid id, string? reason, string? returnUrl, CancellationToken ct)
+    {
+        if (reason?.Length > PhotoReviewStatus.NoteMax) reason = reason[..PhotoReviewStatus.NoteMax];
+        TempData["Flash"] = await api.RejectPhotoAsync(id, reason, ct)
+            ?? "Photo not approved. Only its owner can see it, with your reason.";
+        return BackTo(returnUrl, nameof(Photos));
+    }
+
     [HttpGet]
     public async Task<IActionResult> PhotoOfTheDay(CancellationToken ct)
     {
@@ -67,6 +125,6 @@ public class AdminController(IPhotoWorldApiClient api) : Controller
         return RedirectToAction(nameof(PhotoOfTheDay));
     }
 
-    private IActionResult BackTo(string? returnUrl) =>
-        Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Users));
+    private IActionResult BackTo(string? returnUrl, string fallbackAction = nameof(Users)) =>
+        Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(fallbackAction);
 }

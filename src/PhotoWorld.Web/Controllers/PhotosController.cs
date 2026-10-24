@@ -61,7 +61,9 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             return View(model);
         }
 
-        TempData["Flash"] = "Your photo is live. Thanks for sharing!";
+        TempData["Flash"] = result.Value!.ReviewStatus == PhotoReviewStatus.Approved
+            ? "Your photo is live. Thanks for sharing!"
+            : "Thanks for sharing! Your photo is waiting for approval. We'll let you know as soon as it's in the gallery.";
         return RedirectToAction(nameof(Details), new { id = result.Value!.Id });
     }
 
@@ -101,7 +103,39 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
             ShowOnHome = photo.ShowOnHome, PlaceId = photo.Place?.Id, Places = await api.GetPlacesAsync(ct),
             Tags = PhotoTags.Join(photo.Tags), WantsFeedback = photo.WantsFeedback,
             AllowDownload = photo.AllowDownload, Watermarked = photo.Watermarked,
+            BeforeImageUrl = photo.BeforeImageUrl, ReviewStatus = photo.ReviewStatus,
         });
+    }
+
+    /// <summary>Adds or replaces the photo's unedited version, for the before/after slider.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    [RequestSizeLimit(PhotoUploadLimits.MaxBytes + 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = PhotoUploadLimits.MaxBytes + 1024 * 1024)]
+    public async Task<IActionResult> AddBefore(Guid id, IFormFile? before, CancellationToken ct)
+    {
+        if (before is null || before.Length == 0)
+        {
+            TempData["Flash"] = "Choose the unedited photo first.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+        var wasApproved = (await api.GetPhotoAsync(id, ct))?.ReviewStatus == PhotoReviewStatus.Approved;
+        var result = await api.AddBeforeAsync(id, before, ct);
+        if (!result.Succeeded)
+        {
+            TempData["Flash"] = result.Errors.Values.SelectMany(m => m).FirstOrDefault() ?? "That photo couldn't be added.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+        TempData["Flash"] = wasApproved && result.Value!.ReviewStatus == PhotoReviewStatus.Pending
+            ? "Before version added. As it's a new image, the photo is waiting for approval again; we'll let you know."
+            : "Before version added. Drag the slider on your photo to compare.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveBefore(Guid id, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.RemoveBeforeAsync(id, ct) ? "Before version removed." : "That photo no longer exists.";
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     [HttpPost, ValidateAntiForgeryToken]

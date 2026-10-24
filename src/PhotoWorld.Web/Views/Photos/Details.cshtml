@@ -11,10 +11,55 @@
         <partial name="_ModerationBanner" model='new ModerationBannerModel(p.Moderation, "photo")' />
     </div>
 }
+@if (p.CanReview)
+{
+    <div class="container">
+        <div class="alert moderation-banner draft-banner review-banner" role="status">
+            <strong>Waiting for approval.</strong> <span>Only its owner and admins can see this photo until it's approved.</span>
+            <div class="manage-actions">
+                <partial name="_PhotoReviewActions" model="new PhotoReviewActionsModel(p.Id, Context.Request.Path)" />
+            </div>
+        </div>
+    </div>
+}
+else if (p.CanEdit && p.ReviewStatus == PhotoReviewStatus.Pending)
+{
+    <div class="container">
+        <div class="alert moderation-banner draft-banner" role="status">
+            <strong>Waiting for approval.</strong> <span>An admin will look at your photo soon. Until it's approved, only you
+                can see it; we'll let you know when it's in the gallery.</span>
+        </div>
+    </div>
+}
+else if (p.CanEdit && p.ReviewStatus == PhotoReviewStatus.Rejected)
+{
+    <div class="container">
+        <div class="alert moderation-banner" role="status">
+            <strong>Not approved.</strong>
+            <span>@(p.ReviewNote is { Length: > 0 } note ? $"An admin's note: “{note}”." : "An admin didn't approve this photo.")
+                Only you can see it. You can delete it.</span>
+        </div>
+    </div>
+}
 
 <section class="container page photo-page">
     <div class="photo-stage">
-        @if (p.AllowDownload || p.CanEdit)
+        @if (p.BeforeImageUrl is not null)
+        {
+            var protect = !(p.AllowDownload || p.CanEdit);
+            @* Before/after: the unedited shot is laid over the photo and clipped at the slider's position. *@
+            <div class="compare" data-compare>
+                <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" class="compare-after @(protect ? "no-save" : "")"
+                     draggable="false" data-no-save="@(protect ? "" : null)" />
+                <img src="@p.BeforeImageUrl" alt="@p.Title, before editing" class="compare-before @(protect ? "no-save" : "")"
+                     draggable="false" data-no-save="@(protect ? "" : null)" />
+                <span class="compare-label compare-label-before" aria-hidden="true">Before</span>
+                <span class="compare-label compare-label-after" aria-hidden="true">After</span>
+                <input type="range" min="0" max="100" value="50" class="compare-range" data-compare-range
+                       aria-label="Compare before and after: slide right to show more of the unedited photo" />
+            </div>
+        }
+        else if (p.AllowDownload || p.CanEdit)
         {
             <a href="@p.ImageUrl" target="_blank" rel="noopener" title="Open full size">
                 <img src="@p.ImageUrl" alt="@p.Title" width="@p.Width" height="@p.Height" />
@@ -54,6 +99,12 @@
             <p class="photo-place">
                 <a asp-controller="Spots" asp-action="Index" asp-route-photo="@p.Id">📍 @place.Name</a>
             </p>
+            @* Planning a visit: today's light at this spot. *@
+            <details class="light-details">
+                <summary>🌅 Golden hour here today</summary>
+                <partial name="_LightPlanner" model='new LightPlannerModel("photo", "Light at this spot today",
+                    SunTimes.For(SunTimes.LocalDate(DateTimeOffset.UtcNow, place.Longitude), place.Latitude, place.Longitude))' />
+            </details>
         }
 
         @if (p.Tags is { Count: > 0 } tags)

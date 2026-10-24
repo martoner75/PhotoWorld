@@ -22,6 +22,9 @@
   --pw-danger-line: #e9b8b4;
   --pw-danger-bg: #fbeceb;
   --pw-radius: 14px;
+  --pw-photo-radius: 12px;    /* photos themselves; inside a card they sit inset, so card and photo corners line up */
+  --pw-photo-inset: 6px;      /* gap between a photo card's edge and its photo */
+  --pw-photo-card-radius: calc(var(--pw-photo-radius) + var(--pw-photo-inset));
   --pw-serif: "Fraunces", Georgia, serif;
   --pw-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -207,7 +210,7 @@ a:hover { color: var(--pw-accent-hover); }
 .field input:focus, .field textarea:focus, .comment-form textarea:focus { outline: none; border-color: var(--pw-accent); }
 .field-error, .field-validation-error { color: var(--pw-danger); font-size: .85rem; }
 .form-actions { display: flex; justify-content: flex-end; gap: .75rem; }
-.edit-thumb { max-height: 220px; width: auto; max-width: 100%; border-radius: 10px; justify-self: start; }
+.edit-thumb { max-height: 220px; width: auto; max-width: 100%; border-radius: var(--pw-photo-radius); justify-self: start; }
 
 .dropzone {
   position: relative; display: grid; place-items: center; min-height: 260px; cursor: pointer; overflow: hidden;
@@ -224,11 +227,11 @@ a:hover { color: var(--pw-accent-hover); }
 
 /* ---------- Gallery ---------- */
 .photo-grid { columns: 3 300px; column-gap: 1.25rem; }
-.photo-card { break-inside: avoid; margin: 0 0 1.25rem; background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: var(--pw-radius); overflow: hidden; }
-.photo-card-image { display: block; overflow: hidden; }
+.photo-card { break-inside: avoid; margin: 0 0 1.25rem; padding: var(--pw-photo-inset); background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: var(--pw-photo-card-radius); overflow: hidden; }
+.photo-card-image { display: block; overflow: hidden; border-radius: var(--pw-photo-radius); }
 .photo-card img { display: block; width: 100%; height: auto; transition: transform .35s ease; }
 .photo-card-image:hover img { transform: scale(1.03); }
-.photo-card figcaption { padding: .75rem .9rem .85rem; }
+.photo-card figcaption { padding: .65rem .55rem .45rem; }
 .photo-card-title { display: block; color: var(--pw-text); font-weight: 600; text-decoration: none; margin-bottom: .4rem; }
 .photo-card-title:hover { color: var(--pw-accent); }
 .photo-card-meta { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .85rem; }
@@ -242,7 +245,7 @@ a:hover { color: var(--pw-accent-hover); }
 .photo-page { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 2rem; align-items: start; }
 @media (max-width: 991px) { .photo-page { grid-template-columns: 1fr; } }
 .photo-stage { background: var(--pw-photo-bg); border-radius: var(--pw-radius); display: grid; place-items: center; overflow: hidden; }
-.photo-stage img { display: block; max-width: 100%; max-height: 82vh; width: auto; height: auto; }
+.photo-stage img { display: block; max-width: 100%; max-height: 82vh; width: auto; height: auto; border-radius: var(--pw-photo-radius); }
 .photo-panel h1 { font-size: 2rem; margin-bottom: .75rem; }
 .photo-owner { display: inline-flex; align-items: center; gap: .55rem; color: var(--pw-text); text-decoration: none; font-weight: 500; }
 .photo-owner .avatar { width: 34px; height: 34px; }
@@ -325,7 +328,7 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 /* Tall enough on desktop, but sized to the width on phones so landscape photos don't float in black bands. */
 .showcase-carousel .carousel-item { height: clamp(240px, min(60vh, 66vw), 640px); }
 .showcase-carousel .carousel-item a { display: grid; place-items: center; height: 100%; }
-.showcase-carousel img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.showcase-carousel img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: var(--pw-photo-radius); }
 .showcase-caption {
   color: #fff;
   position: absolute; left: 0; right: 0; bottom: 0; padding: 2.5rem 1.5rem 2.75rem;
@@ -342,8 +345,9 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 
 /* ---------- Blogs ---------- */
 .post-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-.post-card { display: flex; flex-direction: column; background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: var(--pw-radius); overflow: hidden; }
-.post-card-cover { position: relative; display: block; aspect-ratio: 3 / 2; background: var(--pw-photo-bg); overflow: hidden; }
+.post-card { display: flex; flex-direction: column; background: var(--pw-ink-2); border: 1px solid var(--pw-line); border-radius: var(--pw-photo-card-radius); overflow: hidden; }
+.post-card-cover { position: relative; display: block; aspect-ratio: 3 / 2; margin: var(--pw-photo-inset) var(--pw-photo-inset) 0;
+  border-radius: var(--pw-photo-radius); background: var(--pw-photo-bg); overflow: hidden; }
 .post-card-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
 .post-card:hover .post-card-cover img { transform: scale(1.03); }
 .post-card-cover-empty { display: block; width: 100%; height: 100%;
@@ -364,7 +368,7 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .post-body h2, .post-body h3 { font-family: var(--pw-serif); color: var(--pw-text); margin: 2rem 0 .75rem; }
 .post-body blockquote { border-left: 3px solid var(--pw-accent); padding-left: 1rem; color: var(--pw-text-soft); font-style: italic; }
 .post-body figure.pw-photo { margin: 2rem 0; }
-.post-body figure.pw-photo img { display: block; max-width: 100%; height: auto; border-radius: 10px; margin: 0 auto; }
+.post-body figure.pw-photo img { display: block; max-width: 100%; height: auto; border-radius: var(--pw-photo-radius); margin: 0 auto; }
 .post-body figcaption { color: var(--pw-muted); font-size: .88rem; text-align: center; margin-top: .5rem; }
 .attachments { margin: 2rem 0; }
 .attachments h2 { font-family: var(--pw-serif); font-size: 1.4rem; margin-bottom: .75rem; }
@@ -393,7 +397,7 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .ql-snow .ql-tooltip { background: var(--pw-raised); color: var(--pw-text); border-color: var(--pw-line); box-shadow: none; z-index: 2; }
 .ql-editor.ql-blank::before { color: var(--pw-muted); }
 .ql-editor figure.pw-photo { margin: 1rem 0; }
-.ql-editor figure.pw-photo img { max-width: 100%; max-height: 360px; border-radius: 8px; display: block; }
+.ql-editor figure.pw-photo img { max-width: 100%; max-height: 360px; border-radius: var(--pw-photo-radius); display: block; }
 .ql-editor figcaption { color: var(--pw-muted); font-size: .85rem; }
 
 /* Photo picker */
@@ -413,7 +417,7 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 
 /* Cover photo choice in the editor; the preview matches the 3:2 post-card cover */
 .cover-choice { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.cover-preview { width: 180px; aspect-ratio: 3 / 2; border-radius: 10px; overflow: hidden; background: var(--pw-photo-bg);
+.cover-preview { width: 180px; aspect-ratio: 3 / 2; border-radius: var(--pw-photo-radius); overflow: hidden; background: var(--pw-photo-bg);
     border: 1px solid var(--pw-line); display: grid; place-items: center; }
 .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
 .cover-preview img[hidden] { display: none; }
@@ -556,6 +560,64 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .admin-search input { background: var(--pw-ink); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 10px; padding: .45rem .75rem; min-width: 220px; }
 .admin-users tr.is-suspended td { color: var(--pw-muted); }
 .admin-users td .moderation-badge + .moderation-badge { margin-left: .25rem; }
+.review-post { display: flex; gap: .75rem; align-items: flex-start; min-width: 260px; }
+.review-excerpt { margin: .2rem 0 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.review-banner .manage-actions { justify-content: flex-start; margin-top: .6rem; }
+/* Before/after slider on a photo page: the "before" image is clipped at --split from the left. */
+.compare { --split: 50%; position: relative; display: inline-block; max-width: 100%; line-height: 0; touch-action: pan-y; }
+.photo-stage .compare img { border-radius: var(--pw-photo-radius); }
+.photo-stage .compare-after { display: block; max-width: 100%; max-height: 82vh; width: auto; height: auto; }
+.photo-stage .compare-before { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; object-fit: cover;
+  clip-path: inset(0 calc(100% - var(--split)) 0 0); }
+.compare::after { content: ""; position: absolute; top: 0; bottom: 0; left: var(--split); width: 2px; margin-left: -1px;
+  background: #fff; box-shadow: 0 0 6px rgba(0, 0, 0, .5); pointer-events: none; }
+.compare-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.compare:has(.compare-range:focus-visible) { outline: 3px solid var(--pw-accent); outline-offset: 3px; border-radius: var(--pw-photo-radius); }
+.compare-label { position: absolute; top: .7rem; padding: .15rem .55rem; border-radius: 99px; font-size: .78rem; line-height: 1.4;
+  background: rgba(20, 20, 24, .7); color: #fff; pointer-events: none; }
+.compare-label-before { left: .7rem; }
+.compare-label-after { right: .7rem; }
+.before-form { display: grid; gap: .6rem; }
+
+/* Golden-hour planner (walks and photos with a place). */
+.light-planner { margin: 1rem 0; }
+.light-planner .section-heading { margin-bottom: .5rem; }
+.light-times { display: grid; grid-template-columns: auto 1fr; gap: .25rem 1rem; margin: 0 0 .5rem; font-size: .95rem; }
+.light-times dt { font-weight: 500; display: flex; align-items: center; gap: .45rem; }
+.light-times dd { margin: 0; font-variant-numeric: tabular-nums; }
+.light-dot { width: .7rem; height: .7rem; border-radius: 50%; flex: none; }
+.light-golden { background: #f2a541; }
+.light-blue { background: #4a78c2; }
+.light-note { color: var(--pw-accent); font-weight: 500; margin: .25rem 0; }
+.light-details { margin: -.25rem 0 1rem; }
+.light-details summary { cursor: pointer; color: var(--pw-text-soft); }
+.light-details .light-planner { margin-top: .5rem; }
+.light-details .section-heading { display: none; }
+
+/* Public portfolio (/p/{slug}) and its settings page. */
+.portfolio-header { display: flex; gap: 1.5rem; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; }
+.portfolio-header h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); margin: .2rem 0 .6rem; }
+.portfolio-avatar { width: 112px; height: 112px; border-radius: 50%; object-fit: cover; flex: none; }
+.portfolio-bio { color: var(--pw-text-soft); max-width: 42rem; white-space: pre-line; margin-bottom: .6rem; }
+.portfolio-contact { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; list-style: none; padding: 0; margin: 0; }
+.portfolio-caption { margin: .2rem 0 0; }
+.portfolio-footer { margin-top: 2rem; text-align: center; }
+.portfolio-address { display: flex; align-items: center; gap: .25rem; }
+.portfolio-address input { flex: 1; min-width: 0; }
+.portfolio-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.portfolio-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+.portfolio-pick { display: block; border: 2px solid var(--pw-line); border-radius: var(--pw-photo-card-radius); padding: var(--pw-photo-inset);
+  background: var(--pw-ink-2); cursor: pointer; }
+.portfolio-pick:has(input[type=checkbox]:checked), .portfolio-pick.is-chosen { border-color: var(--pw-accent); }
+.portfolio-pick img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--pw-photo-radius); }
+.portfolio-pick-row { display: flex; align-items: center; gap: .4rem; margin-top: .4rem; font-size: .85rem; }
+.portfolio-pick-row input[type=checkbox] { accent-color: var(--pw-accent); flex: none; }
+.portfolio-pick-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.portfolio-order { width: 3.4rem; flex: none; padding: .1rem .3rem; }
+
+.review-photo { break-inside: avoid; margin-bottom: 1.25rem; }
+.review-photo .photo-card { margin-bottom: .4rem; }
+.review-photo .manage-actions { align-items: center; }
 .suspend-menu { position: relative; }
 .suspend-menu summary { list-style: none; cursor: pointer; }
 .suspend-menu summary::-webkit-details-marker { display: none; }
@@ -617,7 +679,7 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .potd { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; padding: .7rem; border-radius: var(--pw-radius);
   background: color-mix(in srgb, var(--pw-accent) 8%, var(--pw-ink-2)); border: 1px solid var(--pw-accent-line); color: var(--pw-text); text-decoration: none; }
 .potd:hover { border-color: var(--pw-accent); color: var(--pw-text); }
-.potd img { width: 150px; height: 100px; object-fit: cover; border-radius: 10px; flex: none; background: var(--pw-photo-bg); }
+.potd img { width: 150px; height: 100px; object-fit: cover; border-radius: var(--pw-photo-radius); flex: none; background: var(--pw-photo-bg); }
 .potd-body { display: grid; gap: .1rem; min-width: 0; }
 .potd-body strong { font-family: var(--pw-serif); font-size: 1.3rem; }
 .potd-label { color: var(--pw-accent); font-weight: 600; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; }

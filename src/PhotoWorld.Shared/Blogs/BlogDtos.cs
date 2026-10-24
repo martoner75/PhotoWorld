@@ -17,12 +17,21 @@ public static class BlogLimits
     public const int AttachmentFileNameMax = 200;
     public const string AttachmentContentType = "application/pdf";
     public const string AttachmentAccept = "application/pdf,.pdf";
+    public const int ReviewNoteMax = 500;
 }
 
+/// <summary>
+/// A post's life: a draft; then, when its author publishes it, pending until an admin approves it (published) or
+/// sends it back (rejected, with a note). Admins' own posts, and edits to a post already approved, skip the queue.
+/// </summary>
 public static class BlogPostStatus
 {
     public const string Draft = "draft";
+    public const string Pending = "pending";
     public const string Published = "published";
+    public const string Rejected = "rejected";
+
+    public static readonly IReadOnlyList<string> All = [Draft, Pending, Published, Rejected];
 }
 
 /// <summary>A member's blog. Exists for everyone; <see cref="Title"/> falls back to "{name}'s blog".</summary>
@@ -55,7 +64,12 @@ public sealed record BlogPostDto(
     bool CanReport,
     ModerationState Moderation,
     IReadOnlyList<BlogAttachmentDto> Attachments,
-    Guid? ChosenCoverPhotoId);
+    Guid? ChosenCoverPhotoId,
+    string? ReviewNote = null,
+    bool CanReview = false);
+
+/// <summary>Sending a pending post back to its author; <see cref="Reason"/> is shown to them.</summary>
+public sealed record RejectPostRequest([StringLength(BlogLimits.ReviewNoteMax)] string? Reason);
 
 /// <summary>A PDF attached to a post. <see cref="Url"/> downloads it under <see cref="FileName"/>.</summary>
 public sealed record BlogAttachmentDto(Guid Id, string FileName, long SizeBytes, string Url);

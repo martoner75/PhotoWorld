@@ -292,6 +292,9 @@ erDiagram
     users ||--o{ photo_likes : gives
     users ||--o{ photo_comments : writes
     users ||--o| blogs : "has settings"
+    users ||--o| portfolios : "may share"
+    portfolios ||--o{ portfolio_photos : shows
+    photos ||--o{ portfolio_photos : "chosen in"
     users ||--o{ blog_posts : writes
     users ||--o{ blog_comments : writes
     users ||--o{ places : "has been to"
@@ -357,9 +360,27 @@ erDiagram
         text exposure_time
         int iso
         timestamptz taken_at
+        text review_status
+        timestamptz reviewed_at
+        text review_note
         bool show_on_home
         bool allow_download
         bool watermarked
+        text before_display_path
+    }
+    portfolios {
+        uuid user_id PK
+        text slug UK
+        bool is_public
+        text bio
+        text website
+        text instagram
+        text contact_email
+    }
+    portfolio_photos {
+        uuid user_id PK
+        uuid photo_id PK
+        int position
     }
     photo_view_days {
         uuid photo_id PK
@@ -407,6 +428,8 @@ erDiagram
         uuid cover_photo_id FK
         text status
         timestamptz published_at
+        timestamptz reviewed_at
+        text review_note
     }
     blog_post_photos {
         uuid post_id PK
@@ -505,6 +528,38 @@ stateDiagram-v2
 - **Blocking** lives in the same expressions: content whose author the viewer blocked (`blocks`, via
   `users.BlockedBy`) is hidden from that viewer only. Blocking also removes follows both ways, and the API refuses
   follows and comments from a blocked member on the blocker's content. Blocks are private to the blocker.
+- **Blog post approval** happens before publication, on top of the report-based rules above:
+
+```mermaid
+stateDiagram-v2
+    [*] --> draft
+    draft --> pending: author publishes
+    draft --> published: admin author publishes
+    pending --> published: admin approves
+    pending --> rejected: admin rejects (optional note)
+    rejected --> pending: author resubmits
+    pending --> draft: author withdraws
+    published --> published: author edits
+    published --> draft: author unpublishes
+```
+
+  `BlogReview.StatusAfterSave` (pure, tested) decides the status when an author saves. Only `published` posts are
+  visible to others; `Moderation.PostVisibleTo(userId, reviewer: true)` also shows `pending` posts to admins, so
+  they can read one on the normal post page. `POST api/admin/blog-posts/{id}/approve` and `…/reject` (admins only,
+  `409` unless the post is pending) set `reviewed_at` (and `review_note` on rejection, shown to the author only),
+  and notify the author (`post_approved` / `post_rejected`, always sent). Approval also stamps `published_at`, so
+  followers' `new_post` activity and the email digests go out at approval, not at submission.
+  `GET api/admin/blog-posts/pending` lists the queue, oldest first, without suspended members' posts.
+- **Photo approval** works the same way with `photos.review_status` (`pending` → `approved` or `rejected`;
+  `PhotoReview` holds the rules). Uploads by members start `pending`, admins' uploads `approved`; existing rows
+  defaulted to `approved` in the migration. `Moderation.PhotoVisibleTo` requires `approved` for everyone but the
+  owner (and, with `reviewer: true`, admins for `pending`), so every list, map, search, challenge standing, showcase
+  and blog embed leaves unapproved photos out with no change of its own. `GET api/admin/photos/pending` (oldest
+  first) skips photos in a pending blog post or used as its cover; approving that post approves them, with no
+  separate notification. `POST api/admin/photos/approve` takes a list of ids (a page of the queue) and notifies each
+  owner (`photo_approved`) and their followers (`new_photo`, which an upload by a member no longer sends);
+  `POST api/admin/photos/{id}/reject` stores the note and sends `photo_rejected`. The image files are in the public
+  bucket from upload, as before: approval decides where PhotoWorld shows a photo, not who can fetch its URL.
 
 ## 8. Places and maps
 
@@ -540,8 +595,8 @@ account is sent. The privacy policy names each provider.
   `ChallengeStandings` ranks entries by votes, then the earlier entry; the leader of a closed challenge is its
   winner. Standings are computed when read, not stored: entries hidden by moderation drop out (shown only to their
   owner, unranked), and deleting a photo removes its entry. Wins show as trophies on the member page.
-- **Activity.** Controllers call `ActivityFeed` after likes, comments, feedback, follows, uploads and first
-  publication; `ScheduledActivitySender` adds challenge news and the photo-of-the-day notice. Rows in `activities` cascade with their recipient, actor, photo,
+- **Activity.** Controllers call `ActivityFeed` after likes, comments, feedback, follows, first publication and
+  an admin's review of a photo or post; `ScheduledActivitySender` adds challenge news and the photo-of-the-day notice. Rows in `activities` cascade with their recipient, actor, photo,
   post or challenge; reading filters them through the same visibility rule, so hidden or blocked content never shows.
 - **Collections** (`collections`, `collection_photos`) hold any visible photos; `Moderation.CollectionVisibleTo`
   shows a member their own and others' public ones (not suspended or blocked owners), and photos inside go through
@@ -562,6 +617,22 @@ account is sent. The privacy policy names each provider.
   `WalksController.Visible` applies suspension and blocks both ways. Followers get `walk_new`, attendees
   `walk_changed`/`walk_cancelled`, and `ScheduledActivitySender` sends `walk_reminder` within 24 h of the start.
   Photos join a walk through its tag, `walk-` plus the first 8 hex characters of its id.
+- **Public portfolio.** `portfolios` (one per member, unique `slug`) and `portfolio_photos` (ordered by `position`;
+  cascade with the photo or the member). `GET api/portfolios/{slug}` is `[AllowAnonymous]` like the showcase: it
+  answers 404 unless `is_public` and the owner isn't suspended, and lists only chosen photos that pass
+  `PhotoVisibleTo(null)`, so hidden or unapproved photos drop out by themselves. `GET`/`PUT api/users/me/portfolio`
+  read and save the settings; the API checks the address (`PortfolioRules`, Shared: 3–40 of `a-z 0-9 -`, unique,
+  suggested from the name), cleans the website (http(s) only) and Instagram handle, and accepts only the owner's
+  publicly visible photos (≤ 24). The website serves it at `/p/{slug}` (`[AllowAnonymous]`, Open Graph tags).
+- **Golden hour.** `SunTimes` (Shared) computes sunrise, sunset and golden/blue hours with the NOAA sunrise equation
+  (crossings of 6°, −0.833°, −4° and −6° altitude), and which of them a walk overlaps. Pure and tested against
+  published times; the website renders it on walk and photo pages (`_LightPlanner`, times as `<time>` converted in
+  the browser) and the app on the walk page. The day comes from `LocalDate` (UTC plus longitude / 15).
+- **Before & after.** `photos.before_display_path` holds an optional unedited version, uploaded through
+  `POST api/photos/{id}/before` (same `ImageProcessor`, the photo's watermark) under a random name, and removed with
+  `DELETE`, the photo or the account. `PhotoReview.StatusAfterNewImage` sends a member's approved photo back to
+  `pending` when one is added. The website shows a `[data-compare]` slider (the before image clipped with `clip-path`,
+  driven by an invisible range input so it works by mouse, touch and keyboard); the app swaps the two with a button.
 - **Insights.** `GET api/photos/{id}` adds one to `photo_view_days` (an upsert per photo per UTC day) when the
   caller isn't the owner; the viewer is not recorded and a failure never blocks the photo. `GET api/users/me/insights`
   returns the last 30 days and the 30 before (views, likes, new followers, comments), per-day views and likes, the
@@ -716,6 +787,11 @@ production, a git-ignored `Local.props` for the app.
 | Dedicated `photoworld` schema | Supabase's auto-generated Data API exposes `public`; this data is only reachable through the API. |
 | Photos re-encoded, originals discarded | Strips GPS and other metadata before files reach a public bucket. |
 | Moderation as one shared expression | The same visibility rule in every query, translated to SQL. |
+| Public portfolios are opt-in, per photo, and read through `PhotoVisibleTo(null)` | The only member content open to the internet is what its owner picked and what any signed-out visitor could already see on the home page. |
+| Golden hour computed locally, not from a weather or astronomy API | No key, no cost, works offline in the app, and no place a member plans to visit is sent to anyone. |
+| A before image sends an approved photo back for approval | It's a new image: approving the photo shouldn't approve whatever is added later. |
+| Members' photos approved before they're shown, through the visibility rule | One condition in `PhotoVisibleTo` covers every place a photo appears, so nothing can leak a pending photo by forgetting a check. |
+| Members' blog posts approved before publication; edits to approved posts aren't | A first look at every new post without making regular authors wait for each correction; reports still cover later edits. |
 | Challenge votes are likes, standings computed on read | No second voting system to build or abuse, no background job, and moderation or deletions are reflected straight away. |
 | Admins in the database (`users.is_admin`) | Managed from the Users page without redeploying; nobody can demote or suspend themselves, so there's always an admin. |
 | Push from the activity table, not from each action | One sender with one rule set (settings, blocks, suspension) and a single place to retry; actions stay fast. |

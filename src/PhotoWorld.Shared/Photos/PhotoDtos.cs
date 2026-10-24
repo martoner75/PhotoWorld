@@ -14,7 +14,29 @@ public sealed record PhotoSummaryDto(
     int LikeCount,
     int CommentCount,
     DateTimeOffset CreatedAt,
-    ModerationState Moderation = ModerationState.Visible);
+    ModerationState Moderation = ModerationState.Visible,
+    string ReviewStatus = PhotoReviewStatus.Approved);
+
+/// <summary>
+/// A photo's approval: members' uploads wait (pending) until an admin approves them; a rejected one stays visible
+/// to its owner only, with the admin's note. Admins' own uploads, and photos in a blog post an admin approves, are
+/// approved with no separate step. Editing an approved photo's details doesn't send it back.
+/// </summary>
+public static class PhotoReviewStatus
+{
+    public const string Pending = "pending";
+    public const string Approved = "approved";
+    public const string Rejected = "rejected";
+
+    public static readonly IReadOnlyList<string> All = [Pending, Approved, Rejected];
+    public const int NoteMax = 500;
+}
+
+/// <summary>Admins approving several pending photos at once (one page of the queue).</summary>
+public sealed record ApprovePhotosRequest([System.ComponentModel.DataAnnotations.Required] IReadOnlyList<Guid> PhotoIds);
+
+/// <summary>Sending a pending photo back to its owner; <see cref="Reason"/> is shown to them.</summary>
+public sealed record RejectPhotoRequest([System.ComponentModel.DataAnnotations.StringLength(PhotoReviewStatus.NoteMax)] string? Reason);
 
 /// <summary>Settings read from the photo's EXIF data when it was uploaded. Any of them may be missing.</summary>
 public sealed record CameraDetailsDto(
@@ -55,7 +77,11 @@ public sealed record PhotoDetailDto(
     DateOnly? PhotoOfTheDay = null,
     bool WantsFeedback = false,
     bool AllowDownload = true,
-    bool Watermarked = false);
+    bool Watermarked = false,
+    string ReviewStatus = PhotoReviewStatus.Approved,
+    string? ReviewNote = null,
+    bool CanReview = false,
+    string? BeforeImageUrl = null);
 
 /// <summary>Where a photo was taken: one of its owner's places, which they chose to show with it.</summary>
 public sealed record PhotoPlaceDto(Guid Id, string Name, double Latitude, double Longitude);

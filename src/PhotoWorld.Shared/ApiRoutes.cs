@@ -12,6 +12,10 @@ public static class ApiRoutes
     public const string MyBlocks = "api/users/me/blocks";
 
     public const string Showcase = "api/showcase";
+    /// <summary>A public portfolio, readable without signing in.</summary>
+    public const string PublicPortfolio = "api/portfolios/{slug}";
+    /// <summary>GET / PUT the signed-in member's own portfolio settings.</summary>
+    public const string MyPortfolio = "api/users/me/portfolio";
     public const string Photos = "api/photos";
     public const string PhotoCameraOptions = "api/photos/camera-options";
     public const string PhotoOfTheDay = "api/photo-of-the-day";
@@ -26,6 +30,8 @@ public static class ApiRoutes
     public const string Spots = "api/spots";
     public const string Photo = "api/photos/{id:guid}";
     public const string PhotoLike = "api/photos/{id:guid}/like";
+    /// <summary>POST (multipart "file") adds or replaces the unedited "before" version; DELETE removes it. Owner only.</summary>
+    public const string PhotoBefore = "api/photos/{id:guid}/before";
     public const string PhotoComments = "api/photos/{id:guid}/comments";
     public const string PhotoComment = "api/photos/{id:guid}/comments/{commentId:guid}";
     public const string PhotoReports = "api/photos/{id:guid}/reports";
@@ -57,6 +63,15 @@ public static class ApiRoutes
     public const string AdminUsers = "api/admin/users";
     public const string AdminUserAdmin = "api/admin/users/{id:guid}/admin";
     public const string AdminUserSuspension = "api/admin/users/{id:guid}/suspension";
+    /// <summary>Blog posts waiting for approval, oldest first.</summary>
+    public const string AdminPendingPosts = "api/admin/blog-posts/pending";
+    public const string AdminPostApproval = "api/admin/blog-posts/{id:guid}/approve";
+    public const string AdminPostRejection = "api/admin/blog-posts/{id:guid}/reject";
+    /// <summary>Photos waiting for approval, oldest first (photos in a post waiting for approval are reviewed with it).</summary>
+    public const string AdminPendingPhotos = "api/admin/photos/pending";
+    /// <summary>POST a list of photo ids to approve them all.</summary>
+    public const string AdminPhotoApproval = "api/admin/photos/approve";
+    public const string AdminPhotoRejection = "api/admin/photos/{id:guid}/reject";
 
     // Collections: without ownerId the caller's own (private ones included); with it, that member's public ones.
     public const string Collections = "api/collections";

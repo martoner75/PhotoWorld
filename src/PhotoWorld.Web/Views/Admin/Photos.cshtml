@@ -1,0 +1,55 @@
+@model PagedResult<PhotoSummaryDto>
+@{
+    ViewData["Title"] = "Photos to review";
+    var here = Context.Request.Path + Context.Request.QueryString;
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Admin</h1>
+            <p class="text-muted">
+                @(Model.TotalCount == 0 ? "No photos" : Model.TotalCount == 1 ? "1 photo" : $"{Model.TotalCount} photos") waiting for approval.
+                Members' uploads appear in the gallery only once an admin approves them. Photos in a post waiting for
+                approval are approved with the post.
+            </p>
+        </div>
+        @if (Model.Items.Count > 1)
+        {
+            <form asp-action="ApprovePhotos" method="post"
+                  data-confirm="Approve all @Model.Items.Count photos on this page? Their owners' followers will be told about each one.">
+                @foreach (var p in Model.Items)
+                {
+                    <input type="hidden" name="ids" value="@p.Id" />
+                }
+                <input type="hidden" name="returnUrl" value="@here" />
+                <button type="submit" class="btn btn-accent">Approve all @Model.Items.Count on this page</button>
+            </form>
+        }
+    </header>
+
+    <partial name="_AdminNav" model='"photos"' />
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="empty-state"><p>All caught up: no photos are waiting for approval.</p></div>
+    }
+    else
+    {
+        <div class="photo-grid">
+            @foreach (var p in Model.Items)
+            {
+                <div class="review-photo">
+                    <partial name="_PhotoCard" model="p" />
+                    <div class="manage-actions">
+                        <span class="text-muted small me-auto">
+                            <time datetime="@p.CreatedAt.ToString("o")" data-local-time="full">@p.CreatedAt.ToString("d MMM yyyy")</time>
+                        </span>
+                        <partial name="_PhotoReviewActions" model="new PhotoReviewActionsModel(p.Id, here)" />
+                    </div>
+                </div>
+            }
+        </div>
+        <partial name="_Pager" model="new PagerViewModel(Model.Page, Model.TotalPages)" />
+    }
+</section>

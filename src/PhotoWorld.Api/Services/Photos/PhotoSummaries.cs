@@ -17,7 +17,7 @@ public static class PhotoSummaries
         var rows = await photos
             .Select(p => new
             {
-                p.Id, p.Title, p.ThumbnailPath, p.Width, p.Height, p.CreatedAt,
+                p.Id, p.Title, p.ThumbnailPath, p.Width, p.Height, p.CreatedAt, p.ReviewStatus,
                 Owner = new UserSummaryDto(p.Owner.Id, p.Owner.DisplayName, p.Owner.AvatarUrl),
                 Likes = p.Likes.Count,
                 Comments = p.Comments.AsQueryable().Count(commentVisible),
@@ -28,6 +28,6 @@ public static class PhotoSummaries
 
         return rows.Select(r => new PhotoSummaryDto(r.Id, r.Title, storage.PublicUrl(r.ThumbnailPath),
             r.Width, r.Height, r.Owner, r.Likes, r.Comments, r.CreatedAt,
-            Data.Moderation.State(r.Upheld, r.OpenReports))).ToList();
+            Data.Moderation.State(r.Upheld, r.OpenReports), r.ReviewStatus)).ToList();
     }
 }

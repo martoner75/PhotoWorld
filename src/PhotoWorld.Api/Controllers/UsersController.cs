@@ -48,9 +48,10 @@ public class UsersController(
         if (user is null) return NotFound();
 
         var files = (await db.Photos.Where(p => p.OwnerId == id)
-                .Select(p => new { p.DisplayPath, p.ThumbnailPath })
+                .Select(p => new { p.DisplayPath, p.ThumbnailPath, p.BeforeDisplayPath })
                 .ToListAsync(ct))
-            .SelectMany(p => new[] { p.DisplayPath, p.ThumbnailPath })
+            .SelectMany(p => new[] { p.DisplayPath, p.ThumbnailPath, p.BeforeDisplayPath })
+            .OfType<string>()
             .ToList();
 
         var attachments = await db.BlogAttachments.Where(a => a.Post.AuthorId == id).Select(a => a.StoragePath).ToListAsync(ct);

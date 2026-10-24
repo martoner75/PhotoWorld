@@ -13,6 +13,14 @@
         {
             <span class="moderation-badge photo-card-badge draft-badge">Draft</span>
         }
+        else if (Model.Status == BlogPostStatus.Pending)
+        {
+            <span class="moderation-badge photo-card-badge draft-badge">Waiting for approval</span>
+        }
+        else if (Model.Status == BlogPostStatus.Rejected)
+        {
+            <span class="moderation-badge photo-card-badge">Not approved</span>
+        }
         else if (Model.Moderation != ModerationState.Visible)
         {
             <span class="moderation-badge photo-card-badge">@(Model.Moderation == ModerationState.Removed ? "Removed" : "Hidden for review")</span>

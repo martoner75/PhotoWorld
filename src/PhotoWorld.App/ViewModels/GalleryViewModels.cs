@@ -255,7 +255,8 @@ public partial class PhotoFilterViewModel(PhotoWorldApi api) : ViewModelBase, IQ
 public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAttributable
 {
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(AspectHeight),
+    [NotifyPropertyChangedFor(nameof(Byline), nameof(CameraSummary), nameof(IsUnderReview), nameof(ApprovalNotice), nameof(AspectHeight),
+        nameof(HasBefore), nameof(ShownImageUrl), nameof(BeforeButton),
         nameof(HasCamera), nameof(HasLens), nameof(PlaceLabel), nameof(Tags), nameof(HasTags), nameof(FeaturedLabel),
         nameof(FeedbackButton), nameof(HasFeedbackButton), nameof(CanShare), nameof(DownloadsLabel))]
     public partial PhotoDetailDto? Photo { get; set; }
@@ -313,6 +314,27 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
 
     public bool IsUnderReview => Photo is { Moderation: not ModerationState.Visible };
 
+    /// <summary>The photographer added the unedited version: a button swaps between it and the photo.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShownImageUrl), nameof(BeforeButton))]
+    public partial bool ShowingBefore { get; set; }
+
+    public bool HasBefore => Photo?.BeforeImageUrl is not null;
+    public string? ShownImageUrl => ShowingBefore && Photo?.BeforeImageUrl is { } before ? before : Photo?.ImageUrl;
+    public string BeforeButton => ShowingBefore ? "Showing before · Show after" : "Showing after · Show before";
+
+    [RelayCommand]
+    private void ToggleBefore() => ShowingBefore = !ShowingBefore;
+
+    /// <summary>For the owner of a photo that isn't approved (yet): where it stands. Null otherwise.</summary>
+    public string? ApprovalNotice => Photo is not { CanEdit: true } p ? null : p.ReviewStatus switch
+    {
+        PhotoReviewStatus.Pending => "Waiting for approval: an admin will look at it soon. Until then only you can see it.",
+        PhotoReviewStatus.Rejected => "Not approved" + (p.ReviewNote is { Length: > 0 } note ? $": “{note}”" : "")
+                                      + ". Only you can see it; you can delete it.",
+        _ => null,
+    };
+
     /// <summary>"Canon EOS R6 · 35 mm · f/1.8 · 1/250s · ISO 400", from whatever the photo recorded.</summary>
     public string? CameraSummary
     {
@@ -333,9 +355,12 @@ public partial class PhotoDetailViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         }
     }
 
-    /// <summary>Height that shows the whole photo at the screen's width (capped so tall shots don't fill the page).</summary>
+    /// <summary>
+    /// Height that shows the whole photo at the screen's width, less the 12 margin each side of its rounded frame
+    /// (capped so tall shots don't fill the page).
+    /// </summary>
     public double AspectHeight => Photo is { Width: > 0 } p
-        ? Math.Min(DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density * p.Height / p.Width, 640)
+        ? Math.Min((DeviceDisplay.Current.MainDisplayInfo.Width / DeviceDisplay.Current.MainDisplayInfo.Density - 24) * p.Height / p.Width, 640)
         : 300;
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)

@@ -3,6 +3,9 @@
     var isNew = Model.Id is null;
     ViewData["Title"] = isNew ? "Write a post" : "Edit post";
     var isPublished = Model.Status == BlogPostStatus.Published;
+    var isPending = Model.Status == BlogPostStatus.Pending;
+    // Admins' posts are published straight away; everyone else's wait for an admin's approval (the API decides).
+    var needsApproval = !isPublished && !User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true");
 }
 
 @section Head {
@@ -11,6 +14,20 @@
 
 <section class="container page editor-page">
     <h1>@ViewData["Title"]</h1>
+    @if (Model.Status == BlogPostStatus.Rejected)
+    {
+        <div class="alert moderation-banner" role="status">
+            <strong>Not approved.</strong>
+            <span>@(Model.ReviewNote is { Length: > 0 } note ? $"An admin's note: “{note}”." : "An admin sent this post back.")
+                Make your changes, then submit it again.</span>
+        </div>
+    }
+    else if (isPending)
+    {
+        <div class="alert moderation-banner draft-banner" role="status">
+            <strong>Waiting for approval.</strong> <span>You can still make changes; it stays in the queue.</span>
+        </div>
+    }
 
     <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="form-card" id="post-form">
         <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
@@ -74,10 +91,16 @@
         <div class="form-actions">
             <a class="btn btn-ghost" asp-action="@(isNew ? "Index" : "Post")" asp-route-id="@Model.Id">Cancel</a>
             <button type="submit" name="Publish" value="false" class="btn btn-ghost">
-                @(isPublished ? "Unpublish and save as draft" : "Save draft")
+                @(isPublished ? "Unpublish and save as draft" : isPending ? "Withdraw and save as draft" : "Save draft")
             </button>
-            <button type="submit" name="Publish" value="true" class="btn btn-accent">@(isPublished ? "Update" : "Publish")</button>
+            <button type="submit" name="Publish" value="true" class="btn btn-accent">
+                @(isPublished ? "Update" : isPending ? "Save changes" : needsApproval ? "Submit for approval" : "Publish")
+            </button>
         </div>
+        @if (needsApproval)
+        {
+            <p class="text-muted small">An admin reviews new posts before they're published. We'll let you know when yours is live.</p>
+        }
     </form>
 </section>
 

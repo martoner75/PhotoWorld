@@ -150,6 +150,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         var placeId = PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : (Guid?)null;
         var todo = Batch.Where(i => !i.Done).ToList();
         var failed = 0;
+        var waiting = false;
         for (var n = 0; n < todo.Count; n++)
         {
             var item = todo[n];
@@ -158,8 +159,9 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
             try
             {
                 await using var stream = await item.File.OpenReadAsync();
-                await api.UploadPhotoAsync(stream, item.File.FileName, ContentTypeOf(item.File), item.Title.Trim(),
+                var photo = await api.UploadPhotoAsync(stream, item.File.FileName, ContentTypeOf(item.File), item.Title.Trim(),
                     Description.Trim(), ShowOnHome, placeId, Tags, WantsFeedback, Watermark, AllowDownload);
+                waiting |= photo.ReviewStatus == PhotoReviewStatus.Pending;
                 (item.Status, item.Done) = ("✓ Uploaded", true);
             }
             catch (ApiException ex)
@@ -174,7 +176,9 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         {
             var count = todo.Count;
             Reset();
-            await Ui.AlertAsync($"{count} photos shared. Thanks!");
+            await Ui.AlertAsync(waiting
+                ? $"{count} photos shared. Thanks! They'll be in the gallery once an admin approves them; we'll let you know."
+                : $"{count} photos shared. Thanks!");
             await Shell.Current.GoToAsync(Routes.Gallery);
         }
         else

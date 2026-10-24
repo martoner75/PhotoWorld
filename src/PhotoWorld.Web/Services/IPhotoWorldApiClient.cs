@@ -7,6 +7,7 @@ using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
+using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
 
@@ -57,8 +58,16 @@ public interface IPhotoWorldApiClient
 
     /// <summary>Photos featured on the public home page. Works without signing in.</summary>
     Task<IReadOnlyList<ShowcasePhotoDto>> GetShowcaseAsync(CancellationToken ct = default);
+
+    /// <summary>A public portfolio; works without signing in. Null if it doesn't exist or isn't public.</summary>
+    Task<PublicPortfolioDto?> GetPortfolioAsync(string slug, CancellationToken ct = default);
+    Task<MyPortfolioDto?> GetMyPortfolioAsync(CancellationToken ct = default);
+    Task<ApiResult<MyPortfolioDto>> SavePortfolioAsync(SavePortfolioRequest request, CancellationToken ct = default);
     Task<ApiResult<PhotoDetailDto>> UpdatePhotoAsync(Guid id, UpdatePhotoRequest request, CancellationToken ct = default);
     Task<bool> DeletePhotoAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Adds or replaces the photo's unedited "before" version.</summary>
+    Task<ApiResult<PhotoDetailDto>> AddBeforeAsync(Guid id, IFormFile file, CancellationToken ct = default);
+    Task<bool> RemoveBeforeAsync(Guid id, CancellationToken ct = default);
 
     Task<LikeStateDto?> SetLikeAsync(Guid id, bool liked, CancellationToken ct = default);
     Task<IReadOnlyList<CommentDto>> GetCommentsAsync(Guid id, CancellationToken ct = default);
@@ -127,6 +136,18 @@ public interface IPhotoWorldApiClient
     Task<string?> SetAdminAsync(Guid id, bool isAdmin, CancellationToken ct = default);
     /// <summary>Null on success, otherwise a message for the admin.</summary>
     Task<string?> SetSuspensionAsync(Guid id, SetSuspensionRequest request, CancellationToken ct = default);
+    /// <summary>Blog posts waiting for approval; null if the caller isn't an admin.</summary>
+    Task<PagedResult<BlogPostSummaryDto>?> GetPendingPostsAsync(int page, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the admin.</summary>
+    Task<string?> ApprovePostAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the admin.</summary>
+    Task<string?> RejectPostAsync(Guid id, string? reason, CancellationToken ct = default);
+    /// <summary>Photos waiting for approval; null if the caller isn't an admin.</summary>
+    Task<PagedResult<PhotoSummaryDto>?> GetPendingPhotosAsync(int page, CancellationToken ct = default);
+    /// <summary>How many of <paramref name="ids"/> were approved, or null if the call failed.</summary>
+    Task<int?> ApprovePhotosAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the admin.</summary>
+    Task<string?> RejectPhotoAsync(Guid id, string? reason, CancellationToken ct = default);
     Task<ApiResult<ChallengeSummaryDto>> CreateChallengeAsync(SaveChallengeRequest request, CancellationToken ct = default);
     Task<ApiResult<ChallengeSummaryDto>> UpdateChallengeAsync(Guid id, SaveChallengeRequest request, CancellationToken ct = default);
     Task<bool> DeleteChallengeAsync(Guid id, CancellationToken ct = default);
