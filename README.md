@@ -699,3 +699,13 @@ Privacy answers in App Store Connect to match the privacy policy.
 - The footer's Facebook, Instagram and YouTube icons link to `Site:Social:Facebook`, `Instagram` and `YouTube` in the
   Web's `appsettings.json` (full page URLs); each icon is hidden until its URL is set.
 - Possible next steps: an in-app moderation page, email notifications for new reports.
+
+## Licence
+
+PhotoWorld is released under the [MIT License](LICENSE): anyone may use, change and share the code, including
+commercially, as long as the copyright notice is kept. It comes with no warranty.
+
+Third-party parts keep their own licences: the libraries in `src/PhotoWorld.Web/wwwroot/lib` (Bootstrap, jQuery,
+Quill, Leaflet) and the NuGet packages, the Open Sans font (SIL Open Font License), and map data from OpenStreetMap
+(ODbL). The App Store and Google Play badges are Apple's and Google's trademarks, used under their badge guidelines;
+they aren't covered by the MIT licence.
