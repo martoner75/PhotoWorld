@@ -138,7 +138,7 @@ public class BlogPostsController(
             .ToListAsync(ct);
 
         var items = rows.Select(r => new BlogPostSummaryDto(r.Id, r.Title, r.Excerpt,
-            r.CoverPath is null ? null : storage.PublicUrl(r.CoverPath), r.Author, r.Comments, r.Status,
+            r.CoverPath is null ? null : storage.ThumbnailUrl(r.CoverPath), r.Author, r.Comments, r.Status,
             r.PublishedAt, r.UpdatedAt, Moderation.State(r.Upheld, r.OpenReports))).ToList();
         return new PagedResult<BlogPostSummaryDto>(items, page, PageSize, total);
     }

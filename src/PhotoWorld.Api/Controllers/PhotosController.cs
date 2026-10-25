@@ -152,11 +152,14 @@ public class PhotosController(
             ReviewStatus = PhotoReview.StatusOnUpload(await admins.IsAdminAsync(userId, ct)),
         };
         photo.DisplayPath = $"{userId}/{photo.Id}/display.jpg";
-        photo.ThumbnailPath = $"{userId}/{photo.Id}/thumb.jpg";
+        // With image transforms on, Supabase resizes the display image for thumbnails, so no thumbnail file is stored.
+        // The path still points at a real file, so turning transforms off later shows the display image instead.
+        photo.ThumbnailPath = storage.StoresThumbnails ? $"{userId}/{photo.Id}/thumb.jpg" : photo.DisplayPath;
 
         // Files first, then the row: a row never points at missing files. If saving fails, clean the files up.
         await storage.UploadAsync(photo.DisplayPath, processed.Display.Bytes, "image/jpeg", ct);
-        await storage.UploadAsync(photo.ThumbnailPath, processed.Thumbnail.Bytes, "image/jpeg", ct);
+        if (storage.StoresThumbnails)
+            await storage.UploadAsync(photo.ThumbnailPath, processed.Thumbnail.Bytes, "image/jpeg", ct);
         try
         {
             db.Photos.Add(photo);
@@ -529,7 +532,7 @@ public class PhotosController(
 
         var p = row.Photo;
         return new PhotoDetailDto(p.Id, p.Title, p.Description,
-            storage.PublicUrl(p.DisplayPath), storage.PublicUrl(p.ThumbnailPath), p.Width, p.Height, row.Owner,
+            storage.PublicUrl(p.DisplayPath), storage.ThumbnailUrl(p.ThumbnailPath), p.Width, p.Height, row.Owner,
             new CameraDetailsDto(p.CameraMake, p.CameraModel, p.Lens, p.FocalLengthMm, p.Aperture, p.ExposureTime, p.Iso, p.TakenAt),
             row.Likes, row.Comments, row.LikedByMe, p.OwnerId == me, p.CreatedAt, p.UpdatedAt,
             Moderation.State(row.Upheld, row.OpenReports),
@@ -551,10 +554,10 @@ public class PhotosController(
         await db.PhotoLikes.AnyAsync(l => l.PhotoId == photoId && l.UserId == userId, ct),
         await db.PhotoLikes.CountAsync(l => l.PhotoId == photoId, ct));
 
+    // Distinct: the thumbnail path is the display path for photos uploaded with image transforms on.
     private Task TryDeleteFilesAsync(Photo photo) =>
-        TryDeleteAsync(photo.BeforeDisplayPath is { } before
-            ? [photo.DisplayPath, photo.ThumbnailPath, before]
-            : [photo.DisplayPath, photo.ThumbnailPath], photo.Id);
+        TryDeleteAsync(new[] { photo.DisplayPath, photo.ThumbnailPath, photo.BeforeDisplayPath }
+            .OfType<string>().Distinct().ToList(), photo.Id);
 
     private async Task TryDeleteAsync(IReadOnlyList<string> paths, Guid photoId)
     {

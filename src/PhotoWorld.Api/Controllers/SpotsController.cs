@@ -38,7 +38,7 @@ public class SpotsController(PhotoWorldDbContext db, SupabaseStorage storage) : 
             })
             .ToListAsync(ct);
 
-        return rows.Select(r => new PhotoSpotDto(r.Id, r.Title, storage.PublicUrl(r.ThumbnailPath), r.OwnerId, r.Owner,
+        return rows.Select(r => new PhotoSpotDto(r.Id, r.Title, storage.ThumbnailUrl(r.ThumbnailPath), r.OwnerId, r.Owner,
             r.Place, r.Latitude, r.Longitude)).ToList();
     }
 }

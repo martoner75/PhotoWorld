@@ -17,10 +17,16 @@ public sealed class SupabaseStorageOptions
 
     /// <summary>Public bucket for PDFs attached to blog posts.</summary>
     public string AttachmentBucket { get; set; } = "attachments";
+
+    /// <summary>
+    /// On: thumbnails are resized by Supabase from the display image (Pro plan or higher; on Free every thumbnail
+    /// fails to load), and new uploads store no separate thumbnail file. Off: the thumbnail stored at upload is served.
+    /// </summary>
+    public bool ImageTransforms { get; set; }
 }
 
 /// <summary>
-/// Minimal client for the Supabase Storage REST API: upload, delete and public URLs. Photos by default;
+/// Minimal client for the Supabase Storage REST API: upload, delete, public and thumbnail URLs. Photos by default;
 /// pass <see cref="SupabaseStorageOptions.AttachmentBucket"/> (via <see cref="AttachmentBucket"/>) for blog PDFs.
 /// </summary>
 public sealed class SupabaseStorage(HttpClient http, IOptions<SupabaseStorageOptions> options)
@@ -31,6 +37,19 @@ public sealed class SupabaseStorage(HttpClient http, IOptions<SupabaseStorageOpt
 
     public string PublicUrl(string path, string? bucket = null) =>
         $"{_options.Url.TrimEnd('/')}/storage/v1/object/public/{bucket ?? _options.PhotoBucket}/{path}";
+
+    /// <summary>Whether uploads store their own thumbnail file (not needed when Supabase resizes on request).</summary>
+    public bool StoresThumbnails => !_options.ImageTransforms;
+
+    /// <summary>
+    /// A thumbnail-sized photo image: the stored file as-is, or with <see cref="SupabaseStorageOptions.ImageTransforms"/>
+    /// on, the file resized by Supabase into the same box the upload pipeline uses. Either way works for every photo:
+    /// older ones' thumb.jpg files, and newer ones whose thumbnail path is their display image.
+    /// </summary>
+    public string ThumbnailUrl(string path) => _options.ImageTransforms
+        ? $"{_options.Url.TrimEnd('/')}/storage/v1/render/image/public/{_options.PhotoBucket}/{path}" +
+          $"?width={ImageProcessor.ThumbnailMaxSide}&height={ImageProcessor.ThumbnailMaxSide}&resize=contain&quality=80"
+        : PublicUrl(path);
 
     /// <summary>A public URL that makes browsers save the file as <paramref name="fileName"/> instead of opening it.</summary>
     public string DownloadUrl(string path, string fileName, string? bucket = null) =>

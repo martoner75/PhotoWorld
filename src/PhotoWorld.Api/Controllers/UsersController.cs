@@ -52,6 +52,7 @@ public class UsersController(
                 .ToListAsync(ct))
             .SelectMany(p => new[] { p.DisplayPath, p.ThumbnailPath, p.BeforeDisplayPath })
             .OfType<string>()
+            .Distinct()
             .ToList();
 
         var attachments = await db.BlogAttachments.Where(a => a.Post.AuthorId == id).Select(a => a.StoragePath).ToListAsync(ct);

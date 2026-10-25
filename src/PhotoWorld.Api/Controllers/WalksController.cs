@@ -217,7 +217,7 @@ public class WalksController(PhotoWorldDbContext db, AdminAccess admins, Activit
             var tag = WalkLimits.TagFor(r.Id);
             return new WalkSummaryDto(r.Id, r.Title, r.StartsAt, r.EndsAt, r.MeetingPoint, r.Latitude, r.Longitude, r.Organizer,
                 r.Count + 1, r.MaxPeople, r.Going, r.OrganizerId == me, r.CancelledAt is not null, tag,
-                covers.TryGetValue(tag, out var path) ? storage.PublicUrl(path) : null);
+                covers.TryGetValue(tag, out var path) ? storage.ThumbnailUrl(path) : null);
         }).ToList();
     }
 }

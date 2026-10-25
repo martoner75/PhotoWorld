@@ -205,7 +205,7 @@ public class ChallengesController(
             var photo = l.Leader is null ? null : leaderPhotos.GetValueOrDefault(l.Leader.PhotoId);
             return new ChallengeSummaryDto(c.Id, c.Title, c.Description, c.StartsAt, c.EndsAt, phase,
                 scores.GetValueOrDefault(c.Id, Standing.Empty).Ranked.Count,
-                photo is null ? null : storage.PublicUrl(photo.ThumbnailPath),
+                photo is null ? null : storage.ThumbnailUrl(photo.ThumbnailPath),
                 phase == ChallengePhase.Closed ? photo?.Owner : null);
         }).ToList();
     }

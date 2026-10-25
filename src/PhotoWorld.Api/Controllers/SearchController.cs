@@ -55,7 +55,7 @@ public class SearchController(PhotoWorldDbContext db, SupabaseStorage storage, T
                     Comments = p.Comments.AsQueryable().Count(Moderation.BlogCommentVisibleTo(me)),
                 })
                 .ToListAsync(ct))
-            .Select(p => new BlogPostSummaryDto(p.Id, p.Title, p.Excerpt, p.Cover is null ? null : storage.PublicUrl(p.Cover),
+            .Select(p => new BlogPostSummaryDto(p.Id, p.Title, p.Excerpt, p.Cover is null ? null : storage.ThumbnailUrl(p.Cover),
                 p.Author, p.Comments, p.Status, p.PublishedAt, p.UpdatedAt, ModerationState.Visible)).ToList();
 
         return new SearchResultsDto(query, members, tags, photoItems, photoCount, posts);

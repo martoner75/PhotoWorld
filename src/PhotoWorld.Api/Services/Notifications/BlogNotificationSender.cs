@@ -101,7 +101,7 @@ public sealed class BlogNotificationSender(
                             Cover = p.CoverPhoto == null ? null : p.CoverPhoto.ThumbnailPath,
                         })
                         .ToListAsync(ct))
-                    .Select(p => new PostNotice(p.Id, p.Title, p.Excerpt, p.Author, p.Cover is null ? null : storage.PublicUrl(p.Cover)))
+                    .Select(p => new PostNotice(p.Id, p.Title, p.Excerpt, p.Author, p.Cover is null ? null : storage.ThumbnailUrl(p.Cover)))
                     .ToList();
                 try
                 {

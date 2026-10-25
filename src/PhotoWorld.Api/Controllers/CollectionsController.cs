@@ -151,7 +151,7 @@ public class CollectionsController(PhotoWorldDbContext db, SupabaseStorage stora
             })
             .ToListAsync(ct);
         return rows.Select(r => new CollectionSummaryDto(r.Id, r.Title, r.Description, r.IsPublic, r.Owner, r.Count,
-            r.Cover is null ? null : storage.PublicUrl(r.Cover), r.UpdatedAt, r.OwnerId == me)).ToList();
+            r.Cover is null ? null : storage.ThumbnailUrl(r.Cover), r.UpdatedAt, r.OwnerId == me)).ToList();
     }
 
     private static string? Clean(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();

@@ -215,6 +215,13 @@ dotnet user-secrets set "Supabase:SecretKey" "<sb_secret_…>" --project src/Pho
 `Supabase:Url` is in the API's `appsettings.json`. Image URLs are public: pages need sign-in, but anyone who
 has a direct image link can open it.
 
+**Image transforms (Supabase Pro).** Off by default. With `Supabase:ImageTransforms` set to `true`, thumbnails
+are served through Supabase's resize endpoint (`/storage/v1/render/image/public/…`) and new uploads store only
+the display image. Existing photos keep working either way, and photos uploaded with it on still show (at display
+size) if you turn it off again. Supabase's Free plan has no image transforms, so leave it off there or every
+thumbnail fails to load. Thumbnails made this way are resized from the display image, so a watermarked photo's
+thumbnail shows the watermark too.
+
 Run the tests with `dotnet test`.
 
 **Deleting an account.** Members can delete their account from *Account settings* (linked from their member page).

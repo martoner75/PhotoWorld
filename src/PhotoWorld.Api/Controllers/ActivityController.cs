@@ -43,7 +43,7 @@ public class ActivityController(PhotoWorldDbContext db, ActivityFeed feed, Supab
             .ToListAsync(ct);
 
         var items = rows.Select(r => new ActivityDto(r.Id, r.Type, r.Actor, r.PhotoId, r.PhotoTitle,
-            r.Thumbnail is null ? null : storage.PublicUrl(r.Thumbnail), r.PostId, r.PostTitle, r.ChallengeId, r.ChallengeTitle,
+            r.Thumbnail is null ? null : storage.ThumbnailUrl(r.Thumbnail), r.PostId, r.PostTitle, r.ChallengeId, r.ChallengeTitle,
             r.Place, r.Snippet, r.CreatedAt, r.ReadAt is not null, r.WalkId, r.WalkTitle)).ToList();
         return new PagedResult<ActivityDto>(items, page, PageSize, total);
     }

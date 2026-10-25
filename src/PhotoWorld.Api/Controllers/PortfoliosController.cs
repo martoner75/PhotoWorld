@@ -44,7 +44,7 @@ public class PortfoliosController(
         return new PublicPortfolioDto(portfolio.Slug, portfolio.DisplayName, portfolio.AvatarUrl, portfolio.Bio,
             portfolio.Website, portfolio.Instagram, portfolio.ContactEmail,
             photos.Select(p => new PortfolioPhotoDto(p.Id, p.Title, p.Description, storage.PublicUrl(p.DisplayPath),
-                storage.PublicUrl(p.ThumbnailPath), p.Width, p.Height, p.AllowDownload)).ToList());
+                storage.ThumbnailUrl(p.ThumbnailPath), p.Width, p.Height, p.AllowDownload)).ToList());
     }
 
     [HttpGet(ApiRoutes.MyPortfolio)]

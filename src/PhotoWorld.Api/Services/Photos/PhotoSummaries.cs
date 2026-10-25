@@ -26,7 +26,7 @@ public static class PhotoSummaries
             })
             .ToListAsync(ct);
 
-        return rows.Select(r => new PhotoSummaryDto(r.Id, r.Title, storage.PublicUrl(r.ThumbnailPath),
+        return rows.Select(r => new PhotoSummaryDto(r.Id, r.Title, storage.ThumbnailUrl(r.ThumbnailPath),
             r.Width, r.Height, r.Owner, r.Likes, r.Comments, r.CreatedAt,
             Data.Moderation.State(r.Upheld, r.OpenReports), r.ReviewStatus)).ToList();
     }
