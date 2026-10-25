@@ -78,9 +78,9 @@ public class ActivityController(PhotoWorldDbContext db, ActivityFeed feed, Supab
         var settings = await db.ActivitySettings.FindAsync([me], ct);
         if (settings is null) db.ActivitySettings.Add(settings = new ActivitySettings { UserId = me });
         (settings.Likes, settings.Comments, settings.Follows, settings.FollowedPosts, settings.Challenges, settings.Push, settings.Walks,
-            settings.Forecasts, settings.Clubs) =
+            settings.Forecasts, settings.Clubs, settings.ClubPhotos) =
             (request.Likes, request.Comments, request.Follows, request.FollowedPosts, request.Challenges, request.Push, request.Walks,
-            request.Forecasts, request.Clubs);
+            request.Forecasts, request.Clubs, request.ClubPhotos);
         await db.SaveChangesAsync(ct);
         return await feed.SettingsAsync(me, ct);
     }

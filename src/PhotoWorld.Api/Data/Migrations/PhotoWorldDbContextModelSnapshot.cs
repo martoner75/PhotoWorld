@@ -121,7 +121,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo')");
                         });
                 });
 
@@ -134,6 +134,12 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Property<bool>("Challenges")
                         .HasColumnType("boolean")
                         .HasColumnName("challenges");
+
+                    b.Property<bool>("ClubPhotos")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("club_photos");
 
                     b.Property<bool>("Clubs")
                         .ValueGeneratedOnAdd()
@@ -426,6 +432,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<Guid?>("ClubId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("club_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -465,6 +475,9 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_challenges");
+
+                    b.HasIndex("ClubId")
+                        .HasDatabaseName("ix_challenges_club_id");
 
                     b.HasIndex("EndsAt")
                         .IsDescending()
@@ -627,6 +640,33 @@ namespace PhotoWorld.Api.Data.Migrations
 
                             t.HasCheckConstraint("ck_club_members_status", "status in ('active', 'pending')");
                         });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.ClubPhoto", b =>
+                {
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("club_id");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<DateTimeOffset>("SharedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("shared_at");
+
+                    b.HasKey("ClubId", "PhotoId")
+                        .HasName("pk_club_photos");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_club_photos_photo_id");
+
+                    b.HasIndex("ClubId", "SharedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_club_photos_club_id_shared_at");
+
+                    b.ToTable("club_photos", "photoworld");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Collection", b =>
@@ -1679,6 +1719,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("cancelled_at");
 
+                    b.Property<Guid?>("ClubId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("club_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -1734,6 +1778,9 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_walks");
+
+                    b.HasIndex("ClubId")
+                        .HasDatabaseName("ix_walks_club_id");
 
                     b.HasIndex("OrganizerId")
                         .HasDatabaseName("ix_walks_organizer_id");
@@ -1953,6 +2000,17 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Challenge", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_challenges_clubs_club_id");
+
+                    b.Navigation("Club");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.ChallengeEntry", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.Challenge", "Challenge")
@@ -2005,6 +2063,27 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Club");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.ClubPhoto", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_club_photos_clubs_club_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_club_photos_photos_photo_id");
+
+                    b.Navigation("Club");
+
+                    b.Navigation("Photo");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Collection", b =>
@@ -2335,12 +2414,20 @@ namespace PhotoWorld.Api.Data.Migrations
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Walk", b =>
                 {
+                    b.HasOne("PhotoWorld.Api.Data.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_walks_clubs_club_id");
+
                     b.HasOne("PhotoWorld.Api.Data.User", "Organizer")
                         .WithMany()
                         .HasForeignKey("OrganizerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_walks_users_organizer_id");
+
+                    b.Navigation("Club");
 
                     b.Navigation("Organizer");
                 });

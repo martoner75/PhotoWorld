@@ -100,9 +100,11 @@ public partial class ChallengeViewModel(PhotoWorldApi api) : ViewModelBase, IQue
         _ => "",
     };
 
-    public bool CanEnter => Challenge is { Challenge.Phase: ChallengePhase.Open } c && c.MyEntryCount < ChallengeLimits.EntriesPerMember;
+    public bool CanEnter => Challenge is { Challenge.Phase: ChallengePhase.Open, CanEnter: true } c && c.MyEntryCount < ChallengeLimits.EntriesPerMember;
 
-    public string? EnterHint => Challenge is { Challenge.Phase: ChallengePhase.Open } c
+    public string? EnterHint => Challenge is { Challenge.Phase: ChallengePhase.Open, CanEnter: false } club
+        ? $"This challenge is for members of {club.Challenge.ClubName}. Join the club to enter."
+        : Challenge is { Challenge.Phase: ChallengePhase.Open } c
         ? $"You can enter up to {ChallengeLimits.EntriesPerMember} of your photos ({c.MyEntryCount} entered)."
         : null;
 

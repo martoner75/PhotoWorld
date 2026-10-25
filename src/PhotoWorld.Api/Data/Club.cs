@@ -50,3 +50,16 @@ public class ClubMember
     /// <summary>When they joined, or asked to.</summary>
     public DateTimeOffset JoinedAt { get; set; }
 }
+
+/// <summary>
+/// A member's photo shared to one of their clubs, for the club's feed. The photo stays the member's (and as visible
+/// as any photo); the share goes when they leave the club, or when the photo or club goes.
+/// </summary>
+public class ClubPhoto
+{
+    public Guid ClubId { get; set; }
+    public Club Club { get; set; } = null!;
+    public Guid PhotoId { get; set; }
+    public Photo Photo { get; set; } = null!;
+    public DateTimeOffset SharedAt { get; set; }
+}

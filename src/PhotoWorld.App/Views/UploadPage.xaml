@@ -110,6 +110,20 @@
                     <Switch Grid.Column="1" IsToggled="{Binding ShowOnHome}" VerticalOptions="Center" />
                 </Grid>
 
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding HasClubs}">
+                    <Label Text="Share to your clubs" Style="{StaticResource Strong}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Clubs}" Spacing="2">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ClubShareItem">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding Name}" VerticalOptions="Center" />
+                                    <Switch Grid.Column="1" IsToggled="{Binding Shared}" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
                 <Label Text="{Binding Progress}" Style="{StaticResource Strong}" HorizontalTextAlignment="Center"
                        IsVisible="{Binding Progress, Converter={StaticResource HasValue}}" />
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,8,0,0">

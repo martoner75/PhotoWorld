@@ -73,6 +73,32 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
             await db.SaveChangesAsync(ct);
         });
 
+    /// <summary>
+    /// Tells a club's other active members that <paramref name="actorId"/> shared a photo there. Grouped: nobody hears
+    /// about the same club more than once per <see cref="ActivityRules.ClubPhotoQuietFor"/>. Skips members who switched
+    /// club photos off or blocked the sharer.
+    /// </summary>
+    public Task NotifyClubPhotoAsync(Guid actorId, Guid clubId, Guid photoId, CancellationToken ct = default) =>
+        SafelyAsync(ActivityTypes.ClubPhoto, async () =>
+        {
+            var now = clock.GetUtcNow();
+            var since = now - ActivityRules.ClubPhotoQuietFor;
+            var ids = await db.ClubMembers
+                .Where(m => m.ClubId == clubId && m.Status == Shared.Clubs.ClubMemberStatus.Active && m.UserId != actorId
+                            && m.User.SuspendedAt == null)
+                .Where(m => !db.ActivitySettings.Any(s => s.UserId == m.UserId && !s.ClubPhotos))
+                .Where(m => !db.Blocks.Any(b => b.BlockerId == m.UserId && b.BlockedId == actorId))
+                .Where(m => !db.Activities.Any(a => a.RecipientId == m.UserId && a.Type == ActivityTypes.ClubPhoto
+                                                    && a.ClubId == clubId && a.CreatedAt >= since))
+                .Select(m => m.UserId).ToListAsync(ct);
+            if (ids.Count == 0) return;
+            db.Activities.AddRange(ids.Select(id => new Activity
+            {
+                RecipientId = id, ActorId = actorId, Type = ActivityTypes.ClubPhoto, PhotoId = photoId, ClubId = clubId, CreatedAt = now,
+            }));
+            await db.SaveChangesAsync(ct);
+        });
+
     /// <summary>Takes back an unread like or follow notification (after an unlike or unfollow).</summary>
     public Task RetractAsync(Guid recipientId, Guid actorId, string type, Guid? photoId = null, CancellationToken ct = default) =>
         SafelyAsync(type, () => db.Activities
@@ -81,7 +107,8 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 
     public async Task<ActivitySettingsDto> SettingsAsync(Guid userId, CancellationToken ct) =>
         await db.ActivitySettings.AsNoTracking().Where(s => s.UserId == userId)
-            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks, s.Forecasts, s.Clubs))
+            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks, s.Forecasts, s.Clubs,
+                s.ClubPhotos))
             .SingleOrDefaultAsync(ct) ?? ActivitySettingsDto.AllOn;
 
     private async Task SafelyAsync(string type, Func<Task> work)

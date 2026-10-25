@@ -174,6 +174,12 @@ public sealed class PhotoWorldApi(HttpClient http)
             : ApiRoutes.Format(ApiRoutes.BlogCommentReports, ("id", postId), ("commentId", commentId)), JsonContent.Create(request, options: Json), ct);
 
     // ----- Photo walks -----
+    public Task<List<WalkSummaryDto>> GetClubWalksAsync(Guid clubId, CancellationToken ct = default) =>
+        GetAsync<List<WalkSummaryDto>>($"{ApiRoutes.Walks}?list={WalkLists.Upcoming}&clubId={clubId}", ct);
+
+    public Task<List<ChallengeSummaryDto>> GetClubChallengesAsync(Guid clubId, CancellationToken ct = default) =>
+        GetAsync<List<ChallengeSummaryDto>>($"{ApiRoutes.Challenges}?clubId={clubId}", ct);
+
     public Task<List<WalkSummaryDto>> GetWalksAsync(string list, CancellationToken ct = default) =>
         GetAsync<List<WalkSummaryDto>>($"{ApiRoutes.Walks}?list={list}", ct);
 
@@ -295,6 +301,18 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task SetClubRoleAsync(Guid id, Guid userId, string role, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Put, ApiRoutes.Format(ApiRoutes.ClubMemberRole, ("id", id), ("userId", userId)),
             JsonContent.Create(new SetClubRoleRequest(role), options: Json), ct);
+
+    public Task<PagedResult<PhotoSummaryDto>> GetClubPhotosAsync(Guid id, int page, CancellationToken ct = default) =>
+        GetAsync<PagedResult<PhotoSummaryDto>>($"{WithId(ApiRoutes.ClubPhotos, id)}?page={page}", ct);
+
+    public Task ShareToClubAsync(Guid id, Guid photoId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Put, ApiRoutes.Format(ApiRoutes.ClubPhoto, ("id", id), ("photoId", photoId)), null, ct);
+
+    public Task UnshareFromClubAsync(Guid id, Guid photoId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, ApiRoutes.Format(ApiRoutes.ClubPhoto, ("id", id), ("photoId", photoId)), null, ct);
+
+    public Task<List<ClubShareChoiceDto>> GetPhotoClubsAsync(Guid photoId, CancellationToken ct = default) =>
+        GetAsync<List<ClubShareChoiceDto>>(WithId(ApiRoutes.PhotoClubs, photoId), ct);
 
     public Task ReportClubAsync(Guid id, CreateReportRequest request, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Post, WithId(ApiRoutes.ClubReports, id), JsonContent.Create(request, options: Json), ct);

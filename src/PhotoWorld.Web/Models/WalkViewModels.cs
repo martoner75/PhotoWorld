@@ -50,17 +50,22 @@ public sealed class WalkFormViewModel
 
     public IReadOnlyList<PlaceDto> Places { get; set; } = [];
 
+    /// <summary>For a new walk: public (null) or one of the member's clubs. Fixed once the walk exists.</summary>
+    public Guid? ClubId { get; set; }
+    public string? ClubName { get; set; }
+    public IReadOnlyList<PhotoWorld.Shared.Clubs.ClubSummaryDto> Clubs { get; set; } = [];
+
     public SaveWalkRequest ToRequest()
     {
         var start = new DateTimeOffset(DateTime.SpecifyKind(StartsLocal!.Value, DateTimeKind.Unspecified), TimeSpan.FromMinutes(UtcOffsetMinutes));
         return new SaveWalkRequest(Title, Description, start, start.AddMinutes(DurationMinutes), MeetingPoint, Latitude!.Value,
-            Longitude!.Value, MaxPeople);
+            Longitude!.Value, MaxPeople, ClubId);
     }
 
     public static WalkFormViewModel From(WalkDto w) => new()
     {
         Id = w.Walk.Id, Title = w.Walk.Title, Description = w.Description, MeetingPoint = w.Walk.MeetingPoint,
         Latitude = w.Walk.Latitude, Longitude = w.Walk.Longitude, MaxPeople = w.Walk.MaxPeople, StartsAtUtc = w.Walk.StartsAt,
-        DurationMinutes = (int)(w.Walk.EndsAt - w.Walk.StartsAt).TotalMinutes,
+        DurationMinutes = (int)(w.Walk.EndsAt - w.Walk.StartsAt).TotalMinutes, ClubId = w.Walk.ClubId, ClubName = w.Walk.ClubName,
     };
 }

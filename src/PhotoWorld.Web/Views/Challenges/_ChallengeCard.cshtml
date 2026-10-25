@@ -1,6 +1,6 @@
 @model ChallengeSummaryDto
 <article class="post-card challenge-card">
-    <a asp-action="Details" asp-route-id="@Model.Id" class="post-card-cover" tabindex="-1" aria-hidden="true">
+    <a asp-controller="Challenges" asp-action="Details" asp-route-id="@Model.Id" class="post-card-cover" tabindex="-1" aria-hidden="true">
         @if (Model.CoverUrl is not null)
         {
             <img src="@Model.CoverUrl" alt="" loading="lazy" />
@@ -14,7 +14,7 @@
         </span>
     </a>
     <div class="post-card-body">
-        <h3><a asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></h3>
+        <h3><a asp-controller="Challenges" asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></h3>
         @if (!string.IsNullOrEmpty(Model.Description))
         {
             <p class="post-card-excerpt">@Model.Description</p>
@@ -22,7 +22,7 @@
         <div class="post-card-meta">
             @if (Model.Winner is not null)
             {
-                <a asp-controller="Members" asp-action="Details" asp-route-id="@Model.Winner.Id" class="photo-card-owner">
+                <a asp-controller="Members" asp-controller="Challenges" asp-action="Details" asp-route-id="@Model.Winner.Id" class="photo-card-owner">
                     🏆 <partial name="_Avatar" model="Model.Winner" /> @Model.Winner.DisplayName
                 </a>
             }

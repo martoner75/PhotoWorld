@@ -16,7 +16,16 @@
     }
     <div class="walk-layout">
         <div>
-            <p class="hero-eyebrow">Photo walk</p>
+            <p class="hero-eyebrow">
+                @if (w.ClubId is { } clubId)
+                {
+                    @:Club walk · for members of <a asp-controller="Clubs" asp-action="Details" asp-route-id="@clubId">@w.ClubName</a>
+                }
+                else
+                {
+                    @:Photo walk
+                }
+            </p>
             <h1 class="walk-title">@w.Title</h1>
             <p class="walk-facts">
                 🗓 <time datetime="@w.StartsAt.ToString("O")" data-local-time="full">@w.StartsAt.ToString("dddd d MMMM, HH:mm") UTC</time>

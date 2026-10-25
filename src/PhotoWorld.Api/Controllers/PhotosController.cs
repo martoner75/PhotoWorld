@@ -223,6 +223,9 @@ public class PhotosController(
             logger.LogInformation("Admin {AdminId} approved photo {PhotoId} by {OwnerId}", me, photo.Id, photo.OwnerId);
             await activity.NotifyAsync(photo.OwnerId, me, ActivityTypes.PhotoApproved, photoId: photo.Id, ct: ct);
             await activity.NotifyFollowersAsync(photo.OwnerId, ActivityTypes.NewPhoto, photoId: photo.Id, ct: ct);
+            // Shared to clubs while it waited: their members hear now.
+            foreach (var clubId in await db.ClubPhotos.Where(x => x.PhotoId == photo.Id).Select(x => x.ClubId).ToListAsync(ct))
+                await activity.NotifyClubPhotoAsync(photo.OwnerId, clubId, photo.Id, ct);
         }
         return photos.Count;
     }

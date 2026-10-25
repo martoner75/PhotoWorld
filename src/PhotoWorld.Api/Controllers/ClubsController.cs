@@ -6,6 +6,7 @@ using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Api.Services.Clubs;
 using PhotoWorld.Api.Services.Moderation;
+using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Clubs;
@@ -19,7 +20,7 @@ namespace PhotoWorld.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, AdminAccess admins, ReportService reports,
+public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, AdminAccess admins, ReportService reports, SupabaseStorage storage,
     TimeProvider clock, ILogger<ClubsController> logger) : ControllerBase
 {
     private const int PageSize = 24;
@@ -190,6 +191,7 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
 
         db.ClubMembers.Remove(membership);
         await db.SaveChangesAsync(ct);
+        await RemoveSharesAsync(id, me, ct);
         return NoContent();
     }
 
@@ -247,6 +249,7 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
 
         db.ClubMembers.Remove(target);
         await db.SaveChangesAsync(ct);
+        await RemoveSharesAsync(id, userId, ct);
         logger.LogInformation("User {UserId} removed {MemberId} from club {ClubId}", me, userId, id);
         return NoContent();
     }
@@ -284,6 +287,90 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
             await db.SaveChangesAsync(ct);
         }
         return NoContent();
+    }
+
+    /// <summary>
+    /// The club's feed: photos its members shared, newest first. Only photos the viewer may see anyway, and only from
+    /// people still in the club.
+    /// </summary>
+    [HttpGet(ApiRoutes.ClubPhotos)]
+    public async Task<ActionResult<PagedResult<PhotoSummaryDto>>> Photos(Guid id, int page = 1, CancellationToken ct = default)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        if (!await Visible(me, await admins.IsAdminAsync(me, ct)).AnyAsync(c => c.Id == id, ct)) return NotFound();
+
+        page = Math.Max(1, page);
+        var visible = db.Photos.Where(Moderation.PhotoVisibleTo(me));
+        var shares = db.ClubPhotos.Where(x => x.ClubId == id)
+            .Where(x => visible.Any(p => p.Id == x.PhotoId))
+            .Where(x => db.ClubMembers.Any(m => m.ClubId == id && m.UserId == x.Photo.OwnerId && m.Status == ClubMemberStatus.Active));
+        var total = await shares.CountAsync(ct);
+        var items = await shares.OrderByDescending(x => x.SharedAt)
+            .Skip((page - 1) * PageSize).Take(PageSize)
+            .Select(x => x.Photo)
+            .ToSummariesAsync(me, storage, ct);
+        return new PagedResult<PhotoSummaryDto>(items, page, PageSize, total);
+    }
+
+    /// <summary>Shares one of the caller's photos to a club they're in (sharing twice is fine). Members hear, grouped.</summary>
+    [HttpPut(ApiRoutes.ClubPhoto)]
+    public async Task<IActionResult> SharePhoto(Guid id, Guid photoId, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        var club = await Visible(me, reviewer: false).Where(c => c.Id == id)
+            .Select(c => new
+            {
+                Approved = c.ReviewStatus == ClubReviewStatus.Approved,
+                Member = c.Members.Any(m => m.UserId == me && m.Status == ClubMemberStatus.Active),
+            })
+            .SingleOrDefaultAsync(ct);
+        var photo = await db.Photos.AsNoTracking().Where(p => p.Id == photoId)
+            .Select(p => new { p.OwnerId, p.ReviewStatus }).SingleOrDefaultAsync(ct);
+        if (club is null || photo is null) return NotFound();
+        if (ClubRules.CannotShare(club.Member, club.Approved, photo.OwnerId == me, photo.ReviewStatus) is { } problem)
+            return Problem(problem, statusCode: StatusCodes.Status400BadRequest);
+        if (await db.ClubPhotos.AnyAsync(x => x.ClubId == id && x.PhotoId == photoId, ct)) return NoContent();
+
+        db.ClubPhotos.Add(new ClubPhoto { ClubId = id, PhotoId = photoId, SharedAt = clock.GetUtcNow() });
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            return NoContent(); // Shared twice at the same moment: it's in.
+        }
+
+        // A photo waiting for approval is announced when it's approved (PhotosController.Approve).
+        if (photo.ReviewStatus == PhotoReviewStatus.Approved) await activity.NotifyClubPhotoAsync(me, id, photoId, ct);
+        return NoContent();
+    }
+
+    [HttpDelete(ApiRoutes.ClubPhoto)]
+    public async Task<IActionResult> UnsharePhoto(Guid id, Guid photoId, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        var ownerId = await db.ClubPhotos.Where(x => x.ClubId == id && x.PhotoId == photoId)
+            .Select(x => (Guid?)x.Photo.OwnerId).SingleOrDefaultAsync(ct);
+        if (ownerId is null) return NoContent();
+        if (!ClubRules.CanUnshare(ownerId == me, await RoleAsync(id, me, ct))) return Forbid();
+
+        await db.ClubPhotos.Where(x => x.ClubId == id && x.PhotoId == photoId).ExecuteDeleteAsync(ct);
+        return NoContent();
+    }
+
+    /// <summary>For "Share to clubs" on one of the caller's photos: the approved clubs they're in, marking those it's shared to.</summary>
+    [HttpGet(ApiRoutes.PhotoClubs)]
+    public async Task<ActionResult<IReadOnlyList<ClubShareChoiceDto>>> ForPhoto(Guid id, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        if (!await db.Photos.AnyAsync(p => p.Id == id && p.OwnerId == me, ct)) return NotFound();
+        return await Visible(me, reviewer: false)
+            .Where(c => c.ReviewStatus == ClubReviewStatus.Approved
+                        && c.Members.Any(m => m.UserId == me && m.Status == ClubMemberStatus.Active))
+            .OrderBy(c => c.Name)
+            .Select(c => new ClubShareChoiceDto(c.Id, c.Name, db.ClubPhotos.Any(x => x.ClubId == c.Id && x.PhotoId == id)))
+            .ToListAsync(ct);
     }
 
     [HttpPost(ApiRoutes.ClubReports)]
@@ -342,6 +429,10 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
         await activity.NotifyAsync(club.OwnerId, me, ActivityTypes.ClubRejected, clubId: id, snippet: club.ReviewNote, ct: ct);
         return NoContent();
     }
+
+    /// <summary>Someone who leaves (or is removed) takes their photos out of the club's feed.</summary>
+    private Task RemoveSharesAsync(Guid clubId, Guid userId, CancellationToken ct) =>
+        db.ClubPhotos.Where(x => x.ClubId == clubId && x.Photo.OwnerId == userId).ExecuteDeleteAsync(ct);
 
     private IQueryable<Club> Visible(Guid me, bool reviewer) => db.Clubs.AsNoTracking().Where(Moderation.ClubVisibleTo(me, reviewer));
 

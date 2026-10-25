@@ -39,7 +39,9 @@ public sealed record WalkSummaryDto(
     bool IsOrganizer,
     bool IsCancelled,
     string Tag,
-    string? CoverUrl);
+    string? CoverUrl,
+    Guid? ClubId = null,
+    string? ClubName = null);
 
 /// <summary>A walk's page: the plan, who's going, and the photos tagged with its tag.</summary>
 public sealed record WalkDto(
@@ -60,4 +62,5 @@ public sealed record SaveWalkRequest(
     [Required, StringLength(WalkLimits.MeetingPointMax)] string MeetingPoint,
     [Range(-90.0, 90.0)] double Latitude,
     [Range(-180.0, 180.0)] double Longitude,
-    [Range(2, WalkLimits.MaxPeopleLimit)] int? MaxPeople);
+    [Range(2, WalkLimits.MaxPeopleLimit)] int? MaxPeople,
+    Guid? ClubId = null);

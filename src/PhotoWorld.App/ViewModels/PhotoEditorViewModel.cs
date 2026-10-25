@@ -34,6 +34,11 @@ public partial class PhotoEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQ
     [ObservableProperty] public partial int PlaceIndex { get; set; }
 
     public bool HasPlaces => _places.Count > 0;
+
+    /// <summary>"Share to clubs": the approved clubs the owner is in. Changes are applied when they save.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<ClubShareItem> Clubs { get; } = [];
+    public bool HasClubs => Clubs.Count > 0;
+
     public int TitleMaxLength => PhotoUploadLimits.MaxTitleLength;
     public int DescriptionMaxLength => PhotoUploadLimits.MaxDescriptionLength;
 
@@ -74,6 +79,20 @@ public partial class PhotoEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         PlaceOptions = [NoPlace, .. _places.Select(x => x.Name)];
         PlaceIndex = p.Place is { } place ? _places.FindIndex(x => x.Id == place.Id) + 1 : 0;
         OnPropertyChanged(nameof(HasPlaces));
+
+        Clubs.Clear();
+        if (p.ReviewStatus != PhotoReviewStatus.Rejected)
+        {
+            try
+            {
+                foreach (var c in await api.GetPhotoClubsAsync(_id)) Clubs.Add(new ClubShareItem(c.ClubId, c.Name, c.Shared));
+            }
+            catch (ApiException)
+            {
+                // Without clubs the choice just isn't shown.
+            }
+        }
+        OnPropertyChanged(nameof(HasClubs));
     });
 
     private bool CanSave() => Photo is not null && !string.IsNullOrWhiteSpace(Title);
@@ -84,6 +103,8 @@ public partial class PhotoEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         var placeId = PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : (Guid?)null;
         await api.UpdatePhotoAsync(_id, new UpdatePhotoRequest(Title.Trim(), Description.Trim(), ShowOnHome, placeId,
             Tags, WantsFeedback, AllowDownload));
+        if (await ClubShareItem.ApplyAsync(api, _id, Clubs) > 0)
+            await Ui.AlertAsync("Saved, but the photo couldn't be shared to every club you picked. Try again in a moment.");
         WeakReferenceMessenger.Default.Send(new PhotoChangedMessage(_id));
         await Shell.Current.GoToAsync("..");
     });

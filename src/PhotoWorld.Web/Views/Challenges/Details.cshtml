@@ -8,13 +8,19 @@
 <section class="container page">
     <header class="page-header challenge-header">
         <div>
-            <p class="hero-eyebrow">Photo challenge · @c.When(DateTimeOffset.UtcNow)</p>
+            <p class="hero-eyebrow">@(c.ClubId is null ? "Photo challenge" : "Club challenge") · @c.When(DateTimeOffset.UtcNow)</p>
             <h1>@c.Title</h1>
-            <p class="text-muted">@c.StartsAt.ToString("d MMM") – @c.EndsAt.ToString("d MMM yyyy, HH:mm") UTC</p>
+            <p class="text-muted">
+                @c.StartsAt.ToString("d MMM") – @c.EndsAt.ToString("d MMM yyyy, HH:mm") UTC
+                @if (c.ClubId is { } clubId)
+                {
+                    @:· for members of <a asp-controller="Clubs" asp-action="Details" asp-route-id="@clubId">@c.ClubName</a>
+                }
+            </p>
         </div>
-        @if (c.Phase == ChallengePhase.Open)
-        {
-            <div class="member-actions">
+        <div class="member-actions">
+            @if (c.Phase == ChallengePhase.Open && Model.CanEnter)
+            {
                 @if (entriesLeft > 0)
                 {
                     <a class="btn btn-accent" asp-action="Enter" asp-route-id="@c.Id">Enter a photo</a>
@@ -23,8 +29,21 @@
                 {
                     <span class="text-muted small">You've entered @ChallengeLimits.EntriesPerMember photos, the most allowed.</span>
                 }
-            </div>
-        }
+            }
+            else if (c.Phase == ChallengePhase.Open)
+            {
+                <span class="text-muted small">Join the club to enter.</span>
+            }
+            @if (Model.CanManage && c.ClubId is not null)
+            {
+                <a class="btn btn-ghost" asp-action="Edit" asp-route-id="@c.Id">Edit</a>
+                <form asp-action="Delete" asp-route-id="@c.Id" method="post"
+                      data-confirm="Delete “@c.Title”? Its entries are removed from the challenge (the photos stay in members' galleries).">
+                    <input type="hidden" name="clubId" value="@c.ClubId" />
+                    <button type="submit" class="btn btn-danger-ghost">Delete</button>
+                </form>
+            }
+        </div>
     </header>
 
     @if (!string.IsNullOrEmpty(c.Description))
@@ -60,10 +79,14 @@
             {
                 <p>Nobody entered this challenge.</p>
             }
-            else if (c.Phase == ChallengePhase.Open)
+            else if (c.Phase == ChallengePhase.Open && Model.CanEnter)
             {
                 <p>No entries yet. Be the first!</p>
                 <a class="btn btn-accent" asp-action="Enter" asp-route-id="@c.Id">Enter a photo</a>
+            }
+            else if (c.Phase == ChallengePhase.Open)
+            {
+                <p>No entries yet.</p>
             }
             else
             {

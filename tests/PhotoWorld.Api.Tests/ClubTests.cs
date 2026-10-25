@@ -155,6 +155,65 @@ public class ClubTests
     }
 
     [Fact]
+    public void Members_share_their_own_photos_to_approved_clubs()
+    {
+        Assert.Null(ClubRules.CannotShare(isActiveMember: true, clubApproved: true, ownsPhoto: true, PhotoReviewStatus.Approved));
+        // Waiting for approval is fine: it shows (and members hear) once approved.
+        Assert.Null(ClubRules.CannotShare(true, true, true, PhotoReviewStatus.Pending));
+        Assert.Contains("own photos", ClubRules.CannotShare(true, true, ownsPhoto: false, PhotoReviewStatus.Approved));
+        Assert.Contains("Join", ClubRules.CannotShare(isActiveMember: false, true, true, PhotoReviewStatus.Approved));
+        Assert.Contains("approved", ClubRules.CannotShare(true, clubApproved: false, true, PhotoReviewStatus.Approved));
+        Assert.Contains("wasn't approved", ClubRules.CannotShare(true, true, true, PhotoReviewStatus.Rejected));
+    }
+
+    [Theory]
+    [InlineData(true, null, true)]
+    [InlineData(false, ClubRoles.Owner, true)]
+    [InlineData(false, ClubRoles.Admin, true)]
+    [InlineData(false, ClubRoles.Member, false)]
+    [InlineData(false, null, false)]
+    public void A_shared_photo_comes_out_at_its_owners_wish_or_a_club_admins(bool ownsPhoto, string? role, bool allowed)
+    {
+        Assert.Equal(allowed, ClubRules.CanUnshare(ownsPhoto, role));
+    }
+
+    [Fact]
+    public void Club_photo_alerts_have_their_own_switch_and_are_grouped_by_the_day()
+    {
+        Assert.True(ActivityRules.Wants(ActivitySettingsDto.AllOn, ActivityTypes.ClubPhoto));
+        Assert.False(ActivityRules.Wants(ActivitySettingsDto.AllOn with { ClubPhotos = false }, ActivityTypes.ClubPhoto));
+        Assert.True(ActivityRules.Wants(ActivitySettingsDto.AllOn with { Clubs = false }, ActivityTypes.ClubPhoto));
+        Assert.Equal(TimeSpan.FromDays(1), ActivityRules.ClubPhotoQuietFor);
+        Assert.Contains(ActivityTypes.ClubPhoto, ActivityTypes.All);
+    }
+
+    [Fact]
+    public void Any_active_member_organises_walks_for_an_approved_club()
+    {
+        Assert.Null(ClubRules.CannotOrganizeWalk(isActiveMember: true, clubApproved: true));
+        Assert.Contains("members", ClubRules.CannotOrganizeWalk(isActiveMember: false, clubApproved: true));
+        Assert.Contains("approved", ClubRules.CannotOrganizeWalk(isActiveMember: true, clubApproved: false));
+    }
+
+    [Theory]
+    [InlineData(ClubRoles.Owner, true, true)]
+    [InlineData(ClubRoles.Admin, true, true)]
+    [InlineData(ClubRoles.Member, true, false)]
+    [InlineData(null, true, false)]
+    [InlineData(ClubRoles.Owner, false, false)]
+    public void The_clubs_owner_and_admins_run_its_challenges(string? role, bool approved, bool allowed)
+    {
+        Assert.Equal(allowed, ClubRules.CannotRunChallenge(role, approved) is null);
+    }
+
+    [Fact]
+    public void Only_active_members_enter_a_club_challenge()
+    {
+        Assert.Null(ClubRules.CannotEnterClubChallenge(isActiveMember: true));
+        Assert.Contains("Join the club", ClubRules.CannotEnterClubChallenge(isActiveMember: false));
+    }
+
+    [Fact]
     public void Club_activity_names_the_club()
     {
         var request = new ActivityDto(Guid.NewGuid(), ActivityTypes.ClubRequest, new UserSummaryDto(Viewer, "Anna", null), null, null, null,

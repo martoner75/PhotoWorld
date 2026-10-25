@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Activities;
+using PhotoWorld.Api.Services.Clubs;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Activities;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Walks;
 
@@ -24,11 +26,13 @@ public class WalksController(PhotoWorldDbContext db, AdminAccess admins, Activit
     private const int MaxListed = 100;
 
     [HttpGet(ApiRoutes.Walks)]
-    public async Task<ActionResult<IReadOnlyList<WalkSummaryDto>>> List(string? list = null, CancellationToken ct = default)
+    public async Task<ActionResult<IReadOnlyList<WalkSummaryDto>>> List(string? list = null, Guid? clubId = null, CancellationToken ct = default)
     {
         if (User.GetUserId() is not { } me) return Unauthorized();
         var now = clock.GetUtcNow();
         var query = Visible(me);
+        // One club's walks (for its page). Visible already keeps them to its members.
+        if (clubId is not null) query = query.Where(w => w.ClubId == clubId);
         query = list switch
         {
             WalkLists.Past => query.Where(w => w.EndsAt <= now).OrderByDescending(w => w.StartsAt),
@@ -72,16 +76,32 @@ public class WalksController(PhotoWorldDbContext db, AdminAccess admins, Activit
     {
         if (User.GetUserId() is not { } me) return Unauthorized();
         if (!IsValid(request, isNew: true, attendees: 0)) return ValidationProblem(ModelState);
+        if (request.ClubId is { } clubId)
+        {
+            var club = await db.Clubs.AsNoTracking().Where(Moderation.ClubVisibleTo(me)).Where(c => c.Id == clubId)
+                .Select(c => new
+                {
+                    Approved = c.ReviewStatus == ClubReviewStatus.Approved,
+                    Member = c.Members.Any(m => m.UserId == me && m.Status == ClubMemberStatus.Active),
+                })
+                .SingleOrDefaultAsync(ct);
+            if (club is null) return NotFound();
+            if (ClubRules.CannotOrganizeWalk(club.Member, club.Approved) is { } problem)
+                return Problem(problem, statusCode: StatusCodes.Status400BadRequest);
+        }
 
         var now = clock.GetUtcNow();
-        var walk = new Walk { OrganizerId = me, Title = "", MeetingPoint = "", CreatedAt = now };
+        var walk = new Walk { OrganizerId = me, Title = "", MeetingPoint = "", CreatedAt = now, ClubId = request.ClubId };
         Apply(walk, request, now);
         db.Walks.Add(walk);
         await db.SaveChangesAsync(ct);
 
         logger.LogInformation("User {UserId} organised walk {WalkId}", me, walk.Id);
-        var followers = await db.Follows.Where(f => f.FolloweeId == me).Select(f => f.FollowerId).ToListAsync(ct);
-        await activity.NotifyWalkAsync(followers, me, me, walk.Id, ActivityTypes.WalkNew, ct);
+        // A club walk goes to the club's members; a public one to the organiser's followers.
+        var recipients = walk.ClubId is { } forClub
+            ? await db.ClubMembers.Where(m => m.ClubId == forClub && m.Status == ClubMemberStatus.Active).Select(m => m.UserId).ToListAsync(ct)
+            : await db.Follows.Where(f => f.FolloweeId == me).Select(f => f.FollowerId).ToListAsync(ct);
+        await activity.NotifyWalkAsync(recipients, me, me, walk.Id, ActivityTypes.WalkNew, ct);
         return CreatedAtAction(nameof(Get), new { id = walk.Id }, (await SummariesAsync(db.Walks.Where(w => w.Id == walk.Id), me, ct)).Single());
     }
 
@@ -187,11 +207,16 @@ public class WalksController(PhotoWorldDbContext db, AdminAccess admins, Activit
         (walk.Latitude, walk.Longitude, walk.MaxPeople, walk.UpdatedAt) = (r.Latitude, r.Longitude, r.MaxPeople, now);
     }
 
-    /// <summary>Walks the viewer may see: not by suspended organisers, nor between members where either blocked the other.</summary>
+    /// <summary>
+    /// Walks the viewer may see: not by suspended organisers, nor between members where either blocked the other. A club
+    /// walk is for the club's active members only (and its organiser), since its meeting point is.
+    /// </summary>
     private IQueryable<Walk> Visible(Guid me) => db.Walks.AsNoTracking()
         .Where(w => w.Organizer.SuspendedAt == null
                     && !w.Organizer.BlockedBy.Any(b => b.BlockerId == me)
-                    && !db.Blocks.Any(b => b.BlockerId == w.OrganizerId && b.BlockedId == me));
+                    && !db.Blocks.Any(b => b.BlockerId == w.OrganizerId && b.BlockedId == me))
+        .Where(w => w.ClubId == null || w.OrganizerId == me
+                    || db.ClubMembers.Any(m => m.ClubId == w.ClubId && m.UserId == me && m.Status == ClubMemberStatus.Active));
 
     private async Task<List<WalkSummaryDto>> SummariesAsync(IQueryable<Walk> walks, Guid me, CancellationToken ct)
     {
@@ -203,6 +228,7 @@ public class WalksController(PhotoWorldDbContext db, AdminAccess admins, Activit
                 Organizer = new UserSummaryDto(w.Organizer.Id, w.Organizer.DisplayName, w.Organizer.AvatarUrl),
                 Count = w.Attendees.Count,
                 Going = w.Attendees.Any(a => a.UserId == me),
+                w.ClubId, ClubName = w.Club == null ? null : w.Club.Name,
             })
             .ToListAsync(ct);
 
@@ -217,7 +243,7 @@ public class WalksController(PhotoWorldDbContext db, AdminAccess admins, Activit
             var tag = WalkLimits.TagFor(r.Id);
             return new WalkSummaryDto(r.Id, r.Title, r.StartsAt, r.EndsAt, r.MeetingPoint, r.Latitude, r.Longitude, r.Organizer,
                 r.Count + 1, r.MaxPeople, r.Going, r.OrganizerId == me, r.CancelledAt is not null, tag,
-                covers.TryGetValue(tag, out var path) ? storage.ThumbnailUrl(path) : null);
+                covers.TryGetValue(tag, out var path) ? storage.ThumbnailUrl(path) : null, r.ClubId, r.ClubName);
         }).ToList();
     }
 }

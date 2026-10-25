@@ -117,3 +117,6 @@ public sealed record SaveClubRequest(
 public sealed record SetClubRoleRequest([Required] string Role);
 
 public sealed record RejectClubRequest([StringLength(ClubLimits.ReviewNoteMax)] string? Reason);
+
+/// <summary>One of the caller's clubs, and whether a photo of theirs is shared to it (for the "Share to clubs" choice).</summary>
+public sealed record ClubShareChoiceDto(Guid ClubId, string Name, bool Shared);

@@ -36,11 +36,13 @@ public static class ActivityTypes
     /// <summary>A site admin approved the recipient's new club, or turned it down (the snippet is their reason).</summary>
     public const string ClubApproved = "club_approved";
     public const string ClubRejected = "club_rejected";
+    /// <summary>A member shared a photo to a club the recipient is in (at most one a day per club, see ActivityRules).</summary>
+    public const string ClubPhoto = "club_photo";
 
     public static readonly IReadOnlyList<string> All =
         [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback,
          WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected, LightForecast,
-         ClubRequest, ClubAccepted, ClubApproved, ClubRejected];
+         ClubRequest, ClubAccepted, ClubApproved, ClubRejected, ClubPhoto];
 }
 
 /// <summary>
@@ -70,9 +72,9 @@ public sealed record ActivityDto(
 /// <summary>Which kinds of activity a member wants. Everything is on until they change it.</summary>
 /// <param name="Push">Also send them to the member's phones (where the app is allowed to show notifications).</param>
 public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows, bool FollowedPosts, bool Challenges, bool Push = true,
-    bool Walks = true, bool Forecasts = true, bool Clubs = true)
+    bool Walks = true, bool Forecasts = true, bool Clubs = true, bool ClubPhotos = true)
 {
-    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true);
+    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true, true);
 }
 
 public static class DevicePlatforms

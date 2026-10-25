@@ -11,7 +11,8 @@ namespace PhotoWorld.App.ViewModels;
 public sealed record WalkItem(WalkSummaryDto Walk)
 {
     public string When => Walk.StartsAt.ToLocalTime().ToString("ddd d MMM, HH:mm");
-    public string Facts => $"📍 {Walk.MeetingPoint} · {Walk.AttendeeCount}{(Walk.MaxPeople is { } m ? $"/{m}" : "")} going";
+    public string Facts => $"📍 {Walk.MeetingPoint} · {Walk.AttendeeCount}{(Walk.MaxPeople is { } m ? $"/{m}" : "")} going"
+                           + (Walk.ClubName is { } club ? $"\n👥 {club} members only" : "");
     public string? Badge => Walk.IsCancelled ? "Cancelled" : Walk.IsOrganizer ? "Organising" : Walk.IsGoing ? "Going" : null;
 }
 
@@ -184,6 +185,15 @@ public partial class WalkEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQu
     public bool HasPlaces => PlaceOptions.Count > 0;
     [ObservableProperty] public partial int PlaceIndex { get; set; } = -1;
 
+    /// <summary>New walks only: "Everyone", then the approved clubs the member is in. Index 0 is a public walk.</summary>
+    private List<Shared.Clubs.ClubSummaryDto> _clubs = [];
+    private Guid? _presetClub;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasClubs))]
+    public partial IReadOnlyList<string> ClubOptions { get; set; } = [];
+    [ObservableProperty] public partial int ClubIndex { get; set; }
+    public bool HasClubs => _id is null && ClubOptions.Count > 1;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PinText))]
     public partial Location? Pin { get; set; }
@@ -209,7 +219,12 @@ public partial class WalkEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQu
             MaxPeople = s.MaxPeople?.ToString() ?? "";
             SetPin(new Location(s.Latitude, s.Longitude));
         }
+        else if (query.TryGetValue("clubId", out var c) && c is Guid clubId)
+        {
+            _presetClub = clubId;
+        }
         _ = LoadPlacesAsync();
+        if (_id is null) _ = LoadClubsAsync();
     }
 
     private async Task LoadPlacesAsync()
@@ -220,6 +235,19 @@ public partial class WalkEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQu
             PlaceOptions = _places.Select(p => p.Name).ToList();
         }
         catch (ApiException) { /* the map works without them */ }
+    }
+
+    private async Task LoadClubsAsync()
+    {
+        try
+        {
+            _clubs = (await api.GetMyClubsAsync())
+                .Where(c => c.ReviewStatus == Shared.Clubs.ClubReviewStatus.Approved && c.MyStatus == Shared.Clubs.ClubMemberStatus.Active)
+                .ToList();
+            ClubOptions = ["Everyone (public walk)", .. _clubs.Select(c => $"Members of {c.Name}")];
+            ClubIndex = _presetClub is { } preset ? _clubs.FindIndex(c => c.Id == preset) + 1 : 0;
+        }
+        catch (ApiException) { /* a public walk, then */ }
     }
 
     partial void OnPlaceIndexChanged(int value)
@@ -257,7 +285,7 @@ public partial class WalkEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQu
         var start = new DateTimeOffset(Date.Date + Time, TimeZoneInfo.Local.GetUtcOffset(Date.Date + Time));
         var request = new SaveWalkRequest(Title.Trim(), Description.Trim(), start,
             start.AddMinutes(DurationMinutes[Math.Clamp(DurationIndex, 0, DurationMinutes.Count - 1)]), MeetingPoint.Trim(),
-            Pin.Latitude, Pin.Longitude, max);
+            Pin.Latitude, Pin.Longitude, max, ClubIndex > 0 && ClubIndex <= _clubs.Count ? _clubs[ClubIndex - 1].Id : null);
         var saved = _id is { } id ? await api.UpdateWalkAsync(id, request) : await api.CreateWalkAsync(request);
         await Shell.Current.GoToAsync("..");
         if (_id is null) await Routes.OpenWalkAsync(saved.Id);

@@ -41,6 +41,10 @@ public sealed class UploadPhotoViewModel
 
     /// <summary>The member's places for the picker (filled in by the controller).</summary>
     public IReadOnlyList<PhotoWorld.Shared.Places.PlaceDto> Places { get; set; } = [];
+
+    /// <summary>Clubs to share the photo to once it's uploaded; <see cref="Clubs"/> are the ones the member can choose.</summary>
+    public List<Guid> ClubIds { get; set; } = [];
+    public IReadOnlyList<PhotoWorld.Shared.Clubs.ClubSummaryDto> Clubs { get; set; } = [];
 }
 
 public sealed class EditPhotoViewModel

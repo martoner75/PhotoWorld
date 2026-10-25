@@ -30,9 +30,10 @@ public class WalksController(IPhotoWorldApiClient api) : Controller
         return walk is null ? NotFound() : View(walk);
     }
 
+    /// <summary>A new walk; with <paramref name="clubId"/> (from a club's page) it starts as that club's walk.</summary>
     [HttpGet]
-    public async Task<IActionResult> New(CancellationToken ct) =>
-        View("Form", new WalkFormViewModel { Places = await api.GetPlacesAsync(ct) });
+    public async Task<IActionResult> New(Guid? clubId, CancellationToken ct) =>
+        await FormAsync(new WalkFormViewModel { ClubId = clubId }, ct);
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> New(WalkFormViewModel model, CancellationToken ct)
@@ -44,7 +45,9 @@ public class WalksController(IPhotoWorldApiClient api) : Controller
             ModelState.AddApiErrors(result.Errors, FormFields);
             return await FormAsync(model, ct);
         }
-        TempData["Flash"] = "Your walk is on. Members who follow you will hear about it.";
+        TempData["Flash"] = model.ClubId is null
+            ? "Your walk is on. Members who follow you will hear about it."
+            : "Your club walk is on. The club's members will hear about it; only they can see it.";
         return RedirectToAction(nameof(Details), new { id = result.Value!.Id });
     }
 
@@ -97,6 +100,10 @@ public class WalksController(IPhotoWorldApiClient api) : Controller
     private async Task<IActionResult> FormAsync(WalkFormViewModel model, CancellationToken ct)
     {
         model.Places = await api.GetPlacesAsync(ct);
+        if (model.Id is null)
+            model.Clubs = (await api.GetMyClubsAsync(ct))
+                .Where(c => c.ReviewStatus == Shared.Clubs.ClubReviewStatus.Approved && c.MyStatus == Shared.Clubs.ClubMemberStatus.Active)
+                .ToList();
         return View("Form", model);
     }
 }

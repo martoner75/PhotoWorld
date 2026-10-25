@@ -14,8 +14,14 @@ public sealed record ClubsPageViewModel(
     IReadOnlyList<PlaceDto> Places,
     PagedResult<ClubSummaryDto> Clubs);
 
-/// <summary>A club's page with its members, and the requests waiting when the viewer runs the club.</summary>
-public sealed record ClubPageViewModel(ClubDto Club, IReadOnlyList<ClubMemberDto> Members, IReadOnlyList<ClubMemberDto> Requests);
+/// <summary>A club's page: its feed of shared photos, its members, and the requests waiting when the viewer runs the club.</summary>
+public sealed record ClubPageViewModel(ClubDto Club, IReadOnlyList<ClubMemberDto> Members, IReadOnlyList<ClubMemberDto> Requests,
+    PagedResult<PhotoSummaryDto> Photos,
+    IReadOnlyList<PhotoWorld.Shared.Walks.WalkSummaryDto> Walks,
+    IReadOnlyList<PhotoWorld.Shared.Challenges.ChallengeSummaryDto> Challenges);
+
+/// <summary>"Share to clubs" for one of the member's photos: the approved clubs they're in.</summary>
+public sealed record ShareToClubsViewModel(PhotoDetailDto Photo, IReadOnlyList<ClubShareChoiceDto> Choices);
 
 public sealed class ClubFormViewModel
 {

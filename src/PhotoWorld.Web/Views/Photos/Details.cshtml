@@ -131,7 +131,13 @@ else if (p.CanEdit && p.ReviewStatus == PhotoReviewStatus.Rejected)
             </button>
         </form>
 
-        <p class="photo-save"><a class="btn btn-ghost btn-sm" asp-controller="Collections" asp-action="Save" asp-route-photoId="@p.Id">＋ Save to a collection</a></p>
+        <p class="photo-save">
+            <a class="btn btn-ghost btn-sm" asp-controller="Collections" asp-action="Save" asp-route-photoId="@p.Id">＋ Save to a collection</a>
+            @if (p.CanEdit && p.ReviewStatus != PhotoReviewStatus.Rejected)
+            {
+                <a class="btn btn-ghost btn-sm" asp-controller="Clubs" asp-action="Share" asp-route-photoId="@p.Id">👥 Share to clubs</a>
+            }
+        </p>
 
         @if (camera.Count > 0)
         {

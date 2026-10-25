@@ -469,6 +469,8 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .club-cover-empty { display: grid; place-items: center; font-size: 2.5rem; font-weight: 700; color: var(--pw-accent); }
 .club-review { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-bottom: 1.25rem; }
 .club-section { margin-top: 2rem; }
+.club-section-header { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; }
+.club-section-header h2 { margin: 0; }
 .club-members { list-style: none; margin: .75rem 0 0; padding: 0; display: grid; gap: .5rem; }
 .club-members > li { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; padding: .5rem .75rem; border: 1px solid var(--pw-line); border-radius: 12px; }
 .club-member-actions { margin-left: auto; display: flex; gap: .35rem; flex-wrap: wrap; }

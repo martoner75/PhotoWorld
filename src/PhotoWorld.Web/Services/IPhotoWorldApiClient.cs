@@ -105,6 +105,8 @@ public interface IPhotoWorldApiClient
 
     // Photo walks
     Task<IReadOnlyList<WalkSummaryDto>> GetWalksAsync(string list, CancellationToken ct = default);
+    Task<IReadOnlyList<WalkSummaryDto>> GetClubWalksAsync(Guid clubId, CancellationToken ct = default);
+    Task<IReadOnlyList<ChallengeSummaryDto>> GetClubChallengesAsync(Guid clubId, CancellationToken ct = default);
     Task<WalkDto?> GetWalkAsync(Guid id, CancellationToken ct = default);
     Task<ApiResult<WalkSummaryDto>> CreateWalkAsync(SaveWalkRequest request, CancellationToken ct = default);
     Task<ApiResult<WalkSummaryDto>> UpdateWalkAsync(Guid id, SaveWalkRequest request, CancellationToken ct = default);
@@ -178,6 +180,11 @@ public interface IPhotoWorldApiClient
     Task<PagedResult<ClubSummaryDto>?> GetPendingClubsAsync(int page, CancellationToken ct = default);
     Task<string?> ApproveClubAsync(Guid id, CancellationToken ct = default);
     Task<string?> RejectClubAsync(Guid id, string? reason, CancellationToken ct = default);
+    Task<PagedResult<PhotoSummaryDto>> GetClubPhotosAsync(Guid id, int page, CancellationToken ct = default);
+    Task<string?> ShareToClubAsync(Guid id, Guid photoId, CancellationToken ct = default);
+    Task<string?> UnshareFromClubAsync(Guid id, Guid photoId, CancellationToken ct = default);
+    /// <summary>Null when the photo isn't the caller's.</summary>
+    Task<IReadOnlyList<ClubShareChoiceDto>?> GetPhotoClubsAsync(Guid photoId, CancellationToken ct = default);
 
     // Email notifications about new blog posts
     Task<EmailNotificationsDto?> GetNotificationsAsync(CancellationToken ct = default);

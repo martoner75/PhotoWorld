@@ -1,0 +1,43 @@
+@model ShareToClubsViewModel
+@{
+    var p = Model.Photo;
+    ViewData["Title"] = "Share to clubs";
+}
+
+<section class="container page narrow">
+    <h1>Share to clubs</h1>
+    <p class="text-muted">Shared photos appear on the club's page. Members hear about new ones at most once a day per club.</p>
+
+    <div class="form-card">
+        <div class="report-target">
+            <img src="@p.ThumbnailUrl" alt="" />
+            <div>
+                <strong>@p.Title</strong>
+                <p class="small mb-0"><a asp-controller="Photos" asp-action="Details" asp-route-id="@p.Id">Back to the photo</a></p>
+            </div>
+        </div>
+
+        @if (Model.Choices.Count == 0)
+        {
+            <p class="mb-0">You're not in any clubs yet. <a asp-action="Index">Find one</a> or start your own.</p>
+        }
+        else
+        {
+            <ul class="blocked-list">
+                @foreach (var c in Model.Choices)
+                {
+                    <li>
+                        <a asp-action="Details" asp-route-id="@c.ClubId">@c.Name</a>
+                        <form asp-action="Toggle" asp-route-id="@c.ClubId" method="post">
+                            <input type="hidden" name="photoId" value="@p.Id" />
+                            <input type="hidden" name="share" value="@(c.Shared ? "false" : "true")" />
+                            <button type="submit" class="btn @(c.Shared ? "btn-ghost" : "btn-accent") btn-sm">
+                                @(c.Shared ? "✓ Shared · Remove" : "Share here")
+                            </button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</section>

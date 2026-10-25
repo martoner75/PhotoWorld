@@ -1,7 +1,7 @@
 @model ChallengeFormViewModel
 @{
     var isNew = Model.Id is null;
-    ViewData["Title"] = isNew ? "New challenge" : "Edit challenge";
+    ViewData["Title"] = (isNew ? "New challenge" : "Edit challenge") + (Model.ClubName is { } club ? $" for {club}" : "");
 }
 
 <section class="container page narrow">
@@ -46,9 +46,18 @@
         </p>
 
         <input asp-for="EntryCount" type="hidden" />
+        <input asp-for="ClubId" type="hidden" />
+        <input asp-for="ClubName" type="hidden" />
 
         <div class="form-actions">
-            <a class="btn btn-ghost" asp-action="Manage">Cancel</a>
+            @if (Model.ClubId is { } clubId)
+            {
+                <a class="btn btn-ghost" asp-controller="Clubs" asp-action="Details" asp-route-id="@clubId">Cancel</a>
+            }
+            else
+            {
+                <a class="btn btn-ghost" asp-action="Manage">Cancel</a>
+            }
             <button type="submit" class="btn btn-accent">@(isNew ? "Create challenge" : "Save changes")</button>
         </div>
     </form>

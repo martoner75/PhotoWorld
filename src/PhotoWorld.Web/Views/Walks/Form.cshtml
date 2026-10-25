@@ -71,11 +71,30 @@
             <span asp-validation-for="MaxPeople" class="field-error"></span>
         </div>
 
+        @if (isNew && Model.Clubs.Count > 0)
+        {
+            <div class="field">
+                <label asp-for="ClubId">Who it's for</label>
+                <select asp-for="ClubId" class="field-select">
+                    <option value="">Everyone (public walk)</option>
+                    @foreach (var club in Model.Clubs)
+                    {
+                        <option value="@club.Id" selected="@(club.Id == Model.ClubId)">Members of @club.Name</option>
+                    }
+                </select>
+                <span class="text-muted small">A club walk, its meeting point included, is shown only to the club's members.</span>
+            </div>
+        }
+        else if (!isNew && Model.ClubName is not null)
+        {
+            <p class="text-muted small">A walk for members of <strong>@Model.ClubName</strong>.</p>
+        }
+
         <div class="form-actions">
             <a class="btn btn-ghost" asp-action="@(isNew ? "Index" : "Details")" asp-route-id="@Model.Id">Cancel</a>
             <button type="submit" class="btn btn-accent">@(isNew ? "Organise walk" : "Save changes")</button>
         </div>
-        <p class="text-muted small mb-0">Followers hear about new walks; people going hear when you change the time or place, and get a reminder the day before.</p>
+        <p class="text-muted small mb-0">Followers hear about new public walks, and club members about club walks; people going hear when you change the time or place, and get a reminder the day before.</p>
     </form>
 </section>
 

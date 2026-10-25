@@ -35,6 +35,7 @@ public static class ActivityText
             ActivityTypes.ClubRequest => $"{who} asked to join {club}",
             ActivityTypes.ClubAccepted => $"You're in! Your request to join {club} was accepted",
             ActivityTypes.ClubApproved => $"Your club {club} was approved and is now in the directory",
+            ActivityTypes.ClubPhoto => $"{who} shared a new photo in {club}",
             ActivityTypes.ClubRejected => $"Your club {club} wasn't approved, so only you can see it",
             ActivityTypes.LightForecast => "Good light is forecast tomorrow at one of your places",
             ActivityTypes.ChallengeOpen => $"New photo challenge: {challenge} is open for entries",
@@ -60,6 +61,7 @@ public static class ActivityText
         [nameof(ActivitySettingsDto.Walks)] = "Photo walks: new ones by members you follow, people joining yours, changes and reminders",
         [nameof(ActivitySettingsDto.Forecasts)] = "Light forecasts: good golden hours at places you asked about",
         [nameof(ActivitySettingsDto.Clubs)] = "Clubs: requests to join clubs you run, and your requests being accepted",
+        [nameof(ActivitySettingsDto.ClubPhotos)] = "New photos shared in your clubs (at most one alert per club a day)",
         [nameof(ActivitySettingsDto.Push)] = "Also send them to my phone (in the PhotoWorld app)",
     };
 

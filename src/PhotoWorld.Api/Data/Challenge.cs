@@ -18,6 +18,13 @@ public class Challenge
     public DateTimeOffset? EndingNotifiedAt { get; set; }
     public DateTimeOffset? ResultsNotifiedAt { get; set; }
 
+    /// <summary>
+    /// A club challenge, run by the club's owner and admins: only its active members can enter, and only they hear
+    /// about it. Null for a site-wide challenge, run by site admins.
+    /// </summary>
+    public Guid? ClubId { get; set; }
+    public Club? Club { get; set; }
+
     public List<ChallengeEntry> Entries { get; set; } = [];
 }
 

@@ -44,6 +44,21 @@
 
         <partial name="_ShowOnHomeField" model="Model.ShowOnHome" />
 
+        @if (Model.Clubs.Count > 0)
+        {
+            <fieldset class="field">
+                <legend>Share to your clubs <span class="text-muted">(optional)</span></legend>
+                @foreach (var club in Model.Clubs)
+                {
+                    <label class="check-row">
+                        <input type="checkbox" name="ClubIds" value="@club.Id" checked="@Model.ClubIds.Contains(club.Id)" />
+                        <span>@club.Name</span>
+                    </label>
+                }
+                <span class="text-muted small">It appears on the club's page. If your photo waits for approval, members hear once it's approved.</span>
+            </fieldset>
+        }
+
         <p class="text-muted small">
             We keep your camera settings (camera, lens, exposure) to show on the photo page, then save a copy without
             any hidden metadata, so your location is never shared.

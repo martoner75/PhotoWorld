@@ -42,6 +42,14 @@
 
                 <Label Text="Group size limit (optional, including you)" Style="{StaticResource Strong}" />
                 <Border Style="{StaticResource Field}"><Entry Text="{Binding MaxPeople}" Placeholder="No limit" Keyboard="Numeric" /></Border>
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding HasClubs}">
+                    <Label Text="Who it's for" Style="{StaticResource Strong}" />
+                    <Border Style="{StaticResource Field}">
+                        <Picker ItemsSource="{Binding ClubOptions}" SelectedIndex="{Binding ClubIndex}" Title="Who it's for" TextColor="{DynamicResource Text}" />
+                    </Border>
+                    <Label Text="A club walk, its meeting point included, is shown only to the club's members."
+                           Style="{StaticResource MutedText}" FontSize="13" />
+                </VerticalStackLayout>
 
                 <Button Text="Save walk" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
                 <Label Text="Followers hear about new walks; people going hear about changes and get a reminder the day before."

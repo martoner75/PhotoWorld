@@ -334,7 +334,7 @@ longitude. Near the poles, days without sunrise say so.
 ## Camera clubs
 
 **Clubs** (in the website's menu, and **👥 Clubs** on the app's Explore tab) are local camera clubs run by members.
-This is phase 1: clubs and membership. Club photo feeds, walks and challenges come next.
+Clubs have members, a photo feed, and (below) their own walks and challenges.
 
 - **Starting one.** Any member can start up to 3 clubs: a name, where they meet (a city), an optional area taken
   from one of their places (rounded to about 1 km, an area rather than an address), a description, and how people
@@ -350,6 +350,23 @@ This is phase 1: clubs and membership. Club photo feeds, walks and challenges co
   members. Only the owner makes or removes admins, hands the club over (the old owner stays on as an admin) or
   deletes it. The owner can't leave without handing over first. Members can be in up to 25 clubs, and a club holds
   up to 500 members including requests.
+- **Photo feed.** Members share their own photos to clubs they're in: **Share to clubs** on a photo's page (or
+  its Edit screen in the app), or ticked when uploading. A shared photo is still an ordinary photo, as visible as
+  any other (photos stay public; clubs group them). The club's page lists them newest first, but only photos the
+  viewer could see anyway and only from people still in the club. Leaving or being removed takes a member's photos
+  out of the feed. The photo's owner or a club admin can take one out. Members hear about new photos in a club at
+  most **once a day per club** ("Anna shared a new photo in “Bristol Street”"), with their own **club photos**
+  switch. A photo waiting for approval is announced when it's approved.
+- **Club walks.** When organising a walk, members choose *Everyone* or one of their clubs (**Organise a club
+  walk** on the club page starts with the club picked). A club walk, meeting point included, is shown only to the
+  club's active members and its organiser. Members, rather than the organiser's followers, hear about it, and only
+  they can join. Members who leave the club stop seeing its walks. The weekly summary counts public walks by
+  people you follow and walks of your clubs. Which club a walk is for can't change once it exists.
+- **Club challenges.** The club's owner and admins start challenges for it (**New club challenge** on the club
+  page, on the website) and can edit or delete them from the challenge's page; site admins can too. They work like
+  site-wide challenges (entries, likes as votes, results) but only the club's active members can enter or hear
+  when one opens. Anyone who can see the club can look at them. They're listed on the club page, not on
+  Challenges, which keeps to site-wide ones.
 - **Activity.** Owners and admins hear when someone asks to join, and people hear when they're let in. Both can
   be switched off with the **Clubs** setting. Owners always hear when a site admin approves or rejects their club.
 - **Moderation.** Clubs follow the same rules as other content: members can report a club (not their own), 3

@@ -108,8 +108,14 @@ public sealed class WeeklySummarySender(
         var followers = await db.Follows.CountAsync(f => f.FolloweeId == me && f.CreatedAt > from && f.CreatedAt <= to, ct);
         var weekAhead = to + NotificationRules.WeeklySummaryPeriod;
         var walks = await db.Walks.CountAsync(w => w.CancelledAt == null && w.StartsAt > to && w.StartsAt <= weekAhead
-            && w.Organizer.SuspendedAt == null && db.Follows.Any(f => f.FollowerId == me && f.FolloweeId == w.OrganizerId), ct);
-        var challenges = await db.Challenges.CountAsync(c => c.StartsAt <= to && c.EndsAt > to, ct);
+            && w.Organizer.SuspendedAt == null
+            // Public walks by people they follow, and walks of clubs they belong to.
+            && (w.ClubId == null
+                ? db.Follows.Any(f => f.FollowerId == me && f.FolloweeId == w.OrganizerId)
+                : db.ClubMembers.Any(m => m.ClubId == w.ClubId && m.UserId == me && m.Status == Shared.Clubs.ClubMemberStatus.Active)), ct);
+        var challenges = await db.Challenges.CountAsync(c => c.StartsAt <= to && c.EndsAt > to
+            && (c.ClubId == null
+                || db.ClubMembers.Any(m => m.ClubId == c.ClubId && m.UserId == me && m.Status == Shared.Clubs.ClubMemberStatus.Active)), ct);
         return new WeeklyStats(views, likes, comments, feedback, followers, walks, challenges);
     }
 

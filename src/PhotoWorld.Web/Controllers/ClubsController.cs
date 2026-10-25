@@ -31,13 +31,34 @@ public class ClubsController(IPhotoWorldApiClient api) : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Details(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Details(Guid id, int page = 1, CancellationToken ct = default)
     {
         var club = await api.GetClubAsync(id, ct);
         if (club is null) return NotFound();
         var members = await api.GetClubMembersAsync(id, pending: false, ct);
         var requests = club.CanManageMembers ? await api.GetClubMembersAsync(id, pending: true, ct) : [];
-        return View(new ClubPageViewModel(club, members, requests));
+        // Walks are for members only, so the API returns none to anyone else.
+        var walks = club.Summary.MyStatus == ClubMemberStatus.Active ? await api.GetClubWalksAsync(id, ct) : [];
+        return View(new ClubPageViewModel(club, members, requests, await api.GetClubPhotosAsync(id, Math.Max(1, page), ct), walks,
+            await api.GetClubChallengesAsync(id, ct)));
+    }
+
+    /// <summary>Choose which of your clubs one of your photos is shared to.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Share(Guid photoId, CancellationToken ct)
+    {
+        var photo = await api.GetPhotoAsync(photoId, ct);
+        var choices = photo is null ? null : await api.GetPhotoClubsAsync(photoId, ct);
+        return photo is null || choices is null ? NotFound() : View(new ShareToClubsViewModel(photo, choices));
+    }
+
+    /// <summary>Shares a photo to a club or takes it out (from the Share page, or "Remove" in a club's feed).</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Toggle(Guid id, Guid photoId, bool share, string? returnUrl, CancellationToken ct)
+    {
+        TempData["Flash"] = (share ? await api.ShareToClubAsync(id, photoId, ct) : await api.UnshareFromClubAsync(id, photoId, ct))
+                            ?? (share ? "Shared with the club." : "Taken out of the club's photos.");
+        return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Share), new { photoId });
     }
 
     [HttpGet]

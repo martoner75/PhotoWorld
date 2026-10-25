@@ -108,6 +108,89 @@
         </section>
     }
 
+    @{ var isMember = s.MyStatus == ClubMemberStatus.Active && s.ReviewStatus == ClubReviewStatus.Approved; }
+    @if (isMember)
+    {
+        <section class="club-section" id="walks">
+            <header class="club-section-header">
+                <h2>Walks <span class="text-muted">@Model.Walks.Count</span></h2>
+                <a class="btn btn-ghost btn-sm" asp-controller="Walks" asp-action="New" asp-route-clubId="@s.Id">Organise a club walk</a>
+            </header>
+            @if (Model.Walks.Count == 0)
+            {
+                <p class="text-muted">No club walks coming up. Club walks are shown to members only.</p>
+            }
+            else
+            {
+                <div class="post-grid">
+                    @foreach (var w in Model.Walks)
+                    {
+                        <partial name="~/Views/Walks/_WalkCard.cshtml" model="w" />
+                    }
+                </div>
+            }
+        </section>
+    }
+
+    <section class="club-section" id="challenges">
+        <header class="club-section-header">
+            <h2>Challenges <span class="text-muted">@Model.Challenges.Count</span></h2>
+            @if (c.CanManageMembers && s.ReviewStatus == ClubReviewStatus.Approved)
+            {
+                <a class="btn btn-ghost btn-sm" asp-controller="Challenges" asp-action="New" asp-route-clubId="@s.Id">New club challenge</a>
+            }
+        </header>
+        @if (Model.Challenges.Count == 0)
+        {
+            <p class="text-muted">No club challenges yet.@(c.CanManageMembers ? " Start one: members enter their photos and likes are the votes." : "")</p>
+        }
+        else
+        {
+            <div class="post-grid">
+                @foreach (var ch in Model.Challenges)
+                {
+                    <partial name="~/Views/Challenges/_ChallengeCard.cshtml" model="ch" />
+                }
+            </div>
+        }
+    </section>
+
+    <section class="club-section" id="photos">
+        <h2>Photos <span class="text-muted">@Model.Photos.TotalCount</span></h2>
+        @if (s.MyStatus == ClubMemberStatus.Active && s.ReviewStatus == ClubReviewStatus.Approved)
+        {
+            <p class="text-muted small">Share one of your photos here with <strong>Share to clubs</strong> on its page, or when you upload it.</p>
+        }
+        @if (Model.Photos.TotalCount == 0)
+        {
+            <div class="empty-state"><p>No photos shared yet.</p></div>
+        }
+        else
+        {
+            var me = User.GetUserId();
+            var here = Context.Request.Path + Context.Request.QueryString;
+            <div class="photo-grid">
+                @foreach (var photo in Model.Photos.Items)
+                {
+                    <div class="collection-photo">
+                        <partial name="_PhotoCard" model="photo" />
+                        @if (c.CanManageMembers || photo.Owner.Id == me)
+                        {
+                            <form asp-action="Toggle" asp-route-id="@s.Id" method="post" class="collection-remove"
+                                  data-confirm="Take “@photo.Title” out of the club's photos? The photo itself isn't touched.">
+                                <input type="hidden" name="photoId" value="@photo.Id" />
+                                <input type="hidden" name="share" value="false" />
+                                <input type="hidden" name="returnUrl" value="@here" />
+                                <button type="submit" class="btn-link-muted">Remove</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+            <partial name="_Pager" model="new PagerViewModel(Model.Photos.Page, Model.Photos.TotalPages)" />
+        }
+    </section>
+
     <section class="club-section" id="members">
         <h2>Members <span class="text-muted">@Model.Members.Count</span></h2>
         <ul class="club-members">

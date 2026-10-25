@@ -51,9 +51,11 @@ public sealed class ScheduledActivitySender(IServiceScopeFactory scopes, TimePro
 
             if (due.Open && await ClaimAsync(db, c.Id, x => x.OpenNotifiedAt, now, ct))
             {
-                // Everyone active who wants challenge news.
+                // Everyone active who wants challenge news; for a club challenge, the club's active members.
                 var everyone = await db.Users.Where(u => u.SuspendedAt == null)
                     .Where(u => !db.ActivitySettings.Any(s => s.UserId == u.Id && !s.Challenges))
+                    .Where(u => c.ClubId == null || db.ClubMembers.Any(m => m.ClubId == c.ClubId && m.UserId == u.Id
+                        && m.Status == Shared.Clubs.ClubMemberStatus.Active))
                     .Select(u => u.Id).ToListAsync(ct);
                 await AddAsync(db, everyone.Select(id => News(id, c.Id, ActivityTypes.ChallengeOpen, null, now)), ct);
             }

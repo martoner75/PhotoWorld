@@ -129,6 +129,19 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     public ObservableCollection<ClubMemberItem> Members { get; } = [];
     public ObservableCollection<ClubMemberItem> Requests { get; } = [];
 
+    /// <summary>Upcoming club walks (members only, so empty for anyone else) and the club's challenges.</summary>
+    public ObservableCollection<WalkItem> Walks { get; } = [];
+    public ObservableCollection<Shared.Challenges.ChallengeSummaryDto> Challenges { get; } = [];
+    public bool IsActiveMember => Club?.Summary is { MyStatus: ClubMemberStatus.Active, ReviewStatus: ClubReviewStatus.Approved };
+    public bool CanRunChallenges => Club is { CanManageMembers: true, Summary.ReviewStatus: ClubReviewStatus.Approved };
+
+    /// <summary>The newest page of the club's feed. The website pages through older ones.</summary>
+    public ObservableCollection<PhotoSummaryDto> Photos { get; } = [];
+    [ObservableProperty] public partial string PhotosTitle { get; set; } = "Photos";
+    public string ShareHint => Club?.Summary is { MyStatus: ClubMemberStatus.Active, ReviewStatus: ClubReviewStatus.Approved }
+        ? "Share your photos here from the photo's Edit screen, or when you upload."
+        : "";
+
     public string Title => Club?.Summary.Name ?? "Club";
     public string Facts => Club is { } c ? new ClubItem(c.Summary).Facts + $"\nRun by {c.Owner.DisplayName}" : "";
     public string JoinText => Club?.Summary.JoinPolicy == ClubJoinPolicy.Open ? "Join the club" : "Ask to join";
@@ -163,8 +176,34 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
         foreach (var m in members) Members.Add(new ClubMemberItem(m));
         Requests.Clear();
         foreach (var r in requests) Requests.Add(new ClubMemberItem(r));
+        var photos = await api.GetClubPhotosAsync(_id, 1);
+        Photos.Clear();
+        foreach (var p in photos.Items) Photos.Add(p);
+        PhotosTitle = photos.TotalCount == 0 ? "Photos" : $"Photos ({photos.TotalCount})";
+        var walks = club.Summary.MyStatus == ClubMemberStatus.Active ? await api.GetClubWalksAsync(_id) : [];
+        Walks.Clear();
+        foreach (var w in walks) Walks.Add(new WalkItem(w));
+        Challenges.Clear();
+        foreach (var c in await api.GetClubChallengesAsync(_id)) Challenges.Add(c);
         Club = club;
+        OnPropertyChanged(nameof(ShareHint));
+        OnPropertyChanged(nameof(IsActiveMember));
+        OnPropertyChanged(nameof(CanRunChallenges));
     });
+
+    [RelayCommand]
+    private Task OpenWalkAsync(WalkItem item) => Routes.OpenWalkAsync(item.Walk.Id);
+
+    [RelayCommand]
+    private Task OrganiseWalkAsync() =>
+        Shell.Current.GoToAsync(Routes.WalkEditor, new ShellNavigationQueryParameters { ["clubId"] = _id });
+
+    [RelayCommand]
+    private Task OpenChallengeAsync(Shared.Challenges.ChallengeSummaryDto challenge) => Routes.OpenChallengeAsync(challenge.Id);
+
+    [RelayCommand]
+    private Task OpenPhotoAsync(PhotoSummaryDto photo) =>
+        Shell.Current.GoToAsync(Routes.Photo, new ShellNavigationQueryParameters { ["id"] = photo.Id });
 
     [RelayCommand]
     private async Task JoinAsync()
@@ -344,4 +383,34 @@ public partial class ClubEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQu
         await Shell.Current.GoToAsync("..");
         await Routes.OpenClubAsync(club.Summary.Id);
     });
+}
+
+/// <summary>One of the member's clubs in a "Share to clubs" choice, remembering whether the photo was shared when it loaded.</summary>
+public partial class ClubShareItem(Guid clubId, string name, bool shared) : ObservableObject
+{
+    public Guid ClubId { get; } = clubId;
+    public string Name { get; } = name;
+    public bool WasShared { get; set; } = shared;
+
+    [ObservableProperty] public partial bool Shared { get; set; } = shared;
+
+    /// <summary>Shares or takes out the photo for each changed choice; how many failed (a club gone meanwhile, say).</summary>
+    public static async Task<int> ApplyAsync(PhotoWorldApi api, Guid photoId, IEnumerable<ClubShareItem> items)
+    {
+        var failed = 0;
+        foreach (var item in items.Where(i => i.Shared != i.WasShared))
+        {
+            try
+            {
+                if (item.Shared) await api.ShareToClubAsync(item.ClubId, photoId);
+                else await api.UnshareFromClubAsync(item.ClubId, photoId);
+                item.WasShared = item.Shared;
+            }
+            catch (ApiException)
+            {
+                failed++;
+            }
+        }
+        return failed;
+    }
 }

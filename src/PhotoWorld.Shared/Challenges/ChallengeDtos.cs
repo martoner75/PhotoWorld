@@ -26,7 +26,9 @@ public sealed record ChallengeSummaryDto(
     ChallengePhase Phase,
     int EntryCount,
     string? CoverUrl,
-    UserSummaryDto? Winner);
+    UserSummaryDto? Winner,
+    Guid? ClubId = null,
+    string? ClubName = null);
 
 /// <summary>
 /// One entry: the photo, and its votes (likes from other members between the moment it was entered and the
@@ -37,13 +39,19 @@ public sealed record ChallengeEntryDto(PhotoSummaryDto Photo, int Votes, int Ran
 public sealed record ChallengeDto(
     ChallengeSummaryDto Challenge,
     IReadOnlyList<ChallengeEntryDto> Entries,
-    int MyEntryCount);
+    int MyEntryCount,
+    bool CanManage = false,
+    bool CanEnter = true);
 
 public sealed record EnterChallengeRequest([Required] Guid PhotoId);
 
-/// <summary>Creates or changes a challenge (admins only). Times are absolute; the website enters them in UTC.</summary>
+/// <summary>
+/// Creates or changes a challenge: site-wide (site admins), or for a club (<paramref name="ClubId"/>, its owner and
+/// admins; fixed once created). Times are absolute; the website enters them in UTC.
+/// </summary>
 public sealed record SaveChallengeRequest(
     [Required, StringLength(ChallengeLimits.TitleMax)] string Title,
     [StringLength(ChallengeLimits.DescriptionMax)] string? Description,
     DateTimeOffset StartsAt,
-    DateTimeOffset EndsAt);
+    DateTimeOffset EndsAt,
+    Guid? ClubId = null);

@@ -38,7 +38,7 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
 
     [HttpGet]
     public async Task<IActionResult> Upload(CancellationToken ct) =>
-        View(new UploadPhotoViewModel { Places = await api.GetPlacesAsync(ct) });
+        View(await WithChoicesAsync(new UploadPhotoViewModel(), ct));
 
     [HttpPost, ValidateAntiForgeryToken]
     [RequestSizeLimit(PhotoUploadLimits.MaxBytes + 1024 * 1024)]
@@ -47,24 +47,35 @@ public class PhotosController(IPhotoWorldApiClient api) : Controller
     {
         if (model.Photo is { Length: > PhotoUploadLimits.MaxBytes })
             ModelState.AddModelError(nameof(model.Photo), $"Photos can be up to {PhotoUploadLimits.MaxBytes / (1024 * 1024)} MB.");
-        if (!ModelState.IsValid)
-        {
-            model.Places = await api.GetPlacesAsync(ct);
-            return View(model);
-        }
+        if (!ModelState.IsValid) return View(await WithChoicesAsync(model, ct));
 
         var result = await api.UploadPhotoAsync(model.Photo!, model.Title, model.Description, model.ShowOnHome, model.PlaceId, model.Tags, model.WantsFeedback, model.Watermark, model.AllowDownload, ct);
         if (!result.Succeeded)
         {
             ModelState.AddApiErrors(result.Errors, UploadFields);
-            model.Places = await api.GetPlacesAsync(ct);
-            return View(model);
+            return View(await WithChoicesAsync(model, ct));
         }
 
-        TempData["Flash"] = result.Value!.ReviewStatus == PhotoReviewStatus.Approved
+        // Sharing is a nicety on top of the upload: a club that's gone meanwhile doesn't spoil it.
+        var shareErrors = 0;
+        foreach (var clubId in model.ClubIds.Distinct())
+            if (await api.ShareToClubAsync(clubId, result.Value!.Id, ct) is not null) shareErrors++;
+
+        TempData["Flash"] = (result.Value!.ReviewStatus == PhotoReviewStatus.Approved
             ? "Your photo is live. Thanks for sharing!"
-            : "Thanks for sharing! Your photo is waiting for approval. We'll let you know as soon as it's in the gallery.";
+            : "Thanks for sharing! Your photo is waiting for approval. We'll let you know as soon as it's in the gallery.")
+            + (shareErrors > 0 ? " It couldn't be shared to every club you picked: use Share to clubs to try again." : "");
         return RedirectToAction(nameof(Details), new { id = result.Value!.Id });
+    }
+
+    /// <summary>The member's places and the approved clubs they're in, for the upload form.</summary>
+    private async Task<UploadPhotoViewModel> WithChoicesAsync(UploadPhotoViewModel model, CancellationToken ct)
+    {
+        model.Places = await api.GetPlacesAsync(ct);
+        model.Clubs = (await api.GetMyClubsAsync(ct))
+            .Where(c => c.ReviewStatus == Shared.Clubs.ClubReviewStatus.Approved && c.MyStatus == Shared.Clubs.ClubMemberStatus.Active)
+            .ToList();
+        return model;
     }
 
     /// <summary>Several photos at once: titles each, the rest shared. photos.js sends them one by one to <see cref="UploadOne"/>.</summary>

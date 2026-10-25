@@ -1,4 +1,5 @@
 using PhotoWorld.Shared.Clubs;
+using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Api.Services.Clubs;
 
@@ -64,6 +65,38 @@ public static class ClubRules
         if (isSelf) return "Hand the club to another member to change your own role.";
         return targetStatus != ClubMemberStatus.Active ? "Approve their request first." : null;
     }
+
+    /// <summary>
+    /// Why a photo can't be shared to a club, or null if it can: members share their own photos (not refused ones) to
+    /// approved clubs they're active in.
+    /// </summary>
+    public static string? CannotShare(bool isActiveMember, bool clubApproved, bool ownsPhoto, string photoReviewStatus)
+    {
+        if (!ownsPhoto) return "You can only share your own photos.";
+        if (!isActiveMember) return "Join the club to share photos there.";
+        if (!clubApproved) return "The club has to be approved before photos can be shared to it.";
+        if (photoReviewStatus == PhotoReviewStatus.Rejected) return "That photo wasn't approved, so it can't be shared.";
+        return null;
+    }
+
+    /// <summary>Any active member can organise a walk for an approved club.</summary>
+    public static string? CannotOrganizeWalk(bool isActiveMember, bool clubApproved) =>
+        !isActiveMember ? "Only the club's members can organise a walk for it."
+        : !clubApproved ? "The club has to be approved first."
+        : null;
+
+    /// <summary>The club's owner and admins run its challenges (create, change, delete) once the club is approved.</summary>
+    public static string? CannotRunChallenge(string? role, bool clubApproved) =>
+        !CanManage(role) ? "Only the club's owner and admins can run its challenges."
+        : !clubApproved ? "The club has to be approved first."
+        : null;
+
+    /// <summary>A club challenge is for the club's active members only.</summary>
+    public static string? CannotEnterClubChallenge(bool isActiveMember) =>
+        isActiveMember ? null : "This challenge is for the club's members. Join the club to enter.";
+
+    /// <summary>A shared photo comes out of the club's feed at its owner's wish, or a club admin's.</summary>
+    public static bool CanUnshare(bool ownsPhoto, string? role) => ownsPhoto || CanManage(role);
 
     /// <summary>Great-circle distance in kilometres.</summary>
     public static double DistanceKm(double lat1, double lon1, double lat2, double lon2)

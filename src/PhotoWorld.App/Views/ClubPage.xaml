@@ -2,6 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             xmlns:ch="clr-namespace:PhotoWorld.Shared.Challenges"
              x:Class="PhotoWorld.App.Views.ClubPage"
              x:DataType="vm:ClubViewModel"
              Title="{Binding Title}">
@@ -45,6 +47,71 @@
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsActiveMember}">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                        <Label Text="Club walks" Style="{StaticResource Subheading}" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Organise" Style="{StaticResource GhostButton}" Padding="12,4" Command="{Binding OrganiseWalkCommand}" />
+                    </Grid>
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Walks}" Spacing="6">
+                        <BindableLayout.EmptyView>
+                            <Label Text="No club walks coming up. Only members see them." Style="{StaticResource MutedText}" FontSize="14" />
+                        </BindableLayout.EmptyView>
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WalkItem">
+                                <Border Padding="12,8">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                            Command="{Binding OpenWalkCommand, Source={RelativeSource AncestorType={x:Type vm:ClubViewModel}}, x:DataType=vm:ClubViewModel}" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="1">
+                                        <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="13" />
+                                        <Label Text="{Binding Walk.Title}" Style="{StaticResource Strong}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <Label Text="Club challenges" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Challenges}" Spacing="6">
+                    <BindableLayout.EmptyView>
+                        <Label Text="No club challenges yet. The club's admins start them on the website." Style="{StaticResource MutedText}" FontSize="14" />
+                    </BindableLayout.EmptyView>
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="ch:ChallengeSummaryDto">
+                            <Border Padding="12,8">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding OpenChallengeCommand, Source={RelativeSource AncestorType={x:Type vm:ClubViewModel}}, x:DataType=vm:ClubViewModel}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="1">
+                                    <Label Text="{Binding Title}" Style="{StaticResource Strong}" />
+                                    <Label Text="{Binding EntryCount, StringFormat='{0} entries'}" Style="{StaticResource MutedText}" FontSize="13" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="{Binding PhotosTitle}" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                <Label Text="{Binding ShareHint}" Style="{StaticResource MutedText}" FontSize="14"
+                       IsVisible="{Binding ShareHint, Converter={StaticResource HasValue}}" />
+                <FlexLayout BindableLayout.ItemsSource="{Binding Photos}" Wrap="Wrap" JustifyContent="Start">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="dto:PhotoSummaryDto">
+                            <Border Padding="0" StrokeThickness="0" WidthRequest="104" HeightRequest="104" Margin="0,0,6,6"
+                                    StrokeShape="RoundRectangle 8" BackgroundColor="{DynamicResource PhotoBackground}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding OpenPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:ClubViewModel}}, x:DataType=vm:ClubViewModel}" />
+                                </Border.GestureRecognizers>
+                                <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill" SemanticProperties.Description="{Binding Title}" />
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
 
                 <Label Text="{Binding MembersTitle}" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Members}" Spacing="6">

@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Challenges;
+using PhotoWorld.Api.Services.Clubs;
 using PhotoWorld.Api.Services.Photos;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Api.Controllers;
@@ -25,11 +27,16 @@ public class ChallengesController(
     /// <summary>Most past challenges listed; older ones drop off the page.</summary>
     private const int MaxListed = 60;
 
-    /// <summary>Open and upcoming challenges, then past ones, each group ordered by end date.</summary>
+    /// <summary>
+    /// Open and upcoming challenges, then past ones, each group ordered by end date. Site-wide ones, or with
+    /// <paramref name="clubId"/> that club's (for anyone who can see the club).
+    /// </summary>
     [HttpGet(ApiRoutes.Challenges)]
-    public async Task<IReadOnlyList<ChallengeSummaryDto>> List(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<ChallengeSummaryDto>>> List(Guid? clubId = null, CancellationToken ct = default)
     {
-        var challenges = await db.Challenges.AsNoTracking()
+        if (clubId is { } club && !await ClubVisibleAsync(club, User.GetUserId(), ct)) return NotFound();
+        var challenges = await db.Challenges.AsNoTracking().Include(c => c.Club)
+            .Where(c => c.ClubId == clubId)
             .OrderByDescending(c => c.EndsAt).Take(MaxListed).ToListAsync(ct);
         var scores = await standings.ForAsync(challenges.Select(c => c.Id).ToList(), ct);
         var summaries = await SummariesAsync(challenges, scores, ct);
@@ -43,9 +50,10 @@ public class ChallengesController(
     [HttpGet(ApiRoutes.Challenge)]
     public async Task<ActionResult<ChallengeDto>> Get(Guid id, CancellationToken ct)
     {
-        var challenge = await db.Challenges.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id, ct);
+        var challenge = await db.Challenges.AsNoTracking().Include(c => c.Club).SingleOrDefaultAsync(c => c.Id == id, ct);
         if (challenge is null) return NotFound();
         var me = User.GetUserId();
+        if (challenge.ClubId is { } clubId && !await ClubVisibleAsync(clubId, me, ct)) return NotFound();
 
         var standing = (await standings.ForAsync([id], ct)).GetValueOrDefault(id, Standing.Empty);
         // Hidden entries only show to their owner, after the ranked ones and without a place.
@@ -64,15 +72,28 @@ public class ChallengesController(
 
         var summary = (await SummariesAsync([challenge], new() { [id] = standing }, ct)).Single();
         var mine = standing.Ranked.Concat(standing.Hidden).Count(s => s.OwnerId == me);
-        return new ChallengeDto(summary, entries, mine);
+        var canEnter = challenge.ClubId is not { } club || ClubRules.CannotEnterClubChallenge(await IsActiveMemberAsync(club, me, ct)) is null;
+        return new ChallengeDto(summary, entries, mine, await CanManageAsync(challenge.ClubId, me, ct), canEnter);
     }
 
-    // ----- Admin: create, change and delete challenges -----
+    // ----- Running challenges: site admins for site-wide ones, a club's owner and admins for the club's -----
 
     [HttpPost(ApiRoutes.Challenges)]
     public async Task<ActionResult<ChallengeSummaryDto>> Create(SaveChallengeRequest request, CancellationToken ct)
     {
-        if (!await admins.IsAdminAsync(User.GetUserId(), ct)) return Forbid();
+        var me = User.GetUserId();
+        if (request.ClubId is { } clubId)
+        {
+            var club = await db.Clubs.AsNoTracking().Where(Moderation.ClubVisibleTo(me)).Where(c => c.Id == clubId)
+                .Select(c => new { Approved = c.ReviewStatus == ClubReviewStatus.Approved }).SingleOrDefaultAsync(ct);
+            if (club is null) return NotFound();
+            if (ClubRules.CannotRunChallenge(await ClubRoleAsync(clubId, me, ct), club.Approved) is { } problem)
+                return Problem(problem, statusCode: StatusCodes.Status403Forbidden);
+        }
+        else if (!await admins.IsAdminAsync(me, ct))
+        {
+            return Forbid();
+        }
         if (!IsValid(request, isNew: true)) return ValidationProblem(ModelState);
 
         var challenge = new Challenge
@@ -82,11 +103,12 @@ public class ChallengesController(
             StartsAt = request.StartsAt.ToUniversalTime(),
             EndsAt = request.EndsAt.ToUniversalTime(),
             CreatedAt = clock.GetUtcNow(),
+            ClubId = request.ClubId,
         };
         db.Challenges.Add(challenge);
         await db.SaveChangesAsync(ct);
 
-        logger.LogInformation("Admin {UserId} created challenge {ChallengeId} \"{Title}\"", User.GetUserId(), challenge.Id, challenge.Title);
+        logger.LogInformation("User {UserId} created challenge {ChallengeId} \"{Title}\"", User.GetUserId(), challenge.Id, challenge.Title);
         return CreatedAtAction(nameof(Get), new { id = challenge.Id },
             (await SummariesAsync([challenge], [], ct)).Single());
     }
@@ -95,9 +117,9 @@ public class ChallengesController(
     [HttpPut(ApiRoutes.Challenge)]
     public async Task<ActionResult<ChallengeSummaryDto>> Update(Guid id, SaveChallengeRequest request, CancellationToken ct)
     {
-        if (!await admins.IsAdminAsync(User.GetUserId(), ct)) return Forbid();
-        var challenge = await db.Challenges.FindAsync([id], ct);
+        var challenge = await db.Challenges.Include(c => c.Club).SingleOrDefaultAsync(c => c.Id == id, ct);
         if (challenge is null) return NotFound();
+        if (!await CanManageAsync(challenge.ClubId, User.GetUserId(), ct)) return Forbid();
         if (!IsValid(request, isNew: false)) return ValidationProblem(ModelState);
 
         challenge.Title = request.Title.Trim();
@@ -106,7 +128,7 @@ public class ChallengesController(
         challenge.EndsAt = request.EndsAt.ToUniversalTime();
         await db.SaveChangesAsync(ct);
 
-        logger.LogInformation("Admin {UserId} changed challenge {ChallengeId}", User.GetUserId(), id);
+        logger.LogInformation("User {UserId} changed challenge {ChallengeId}", User.GetUserId(), id);
         var scores = await standings.ForAsync([id], ct);
         return (await SummariesAsync([challenge], scores, ct)).Single();
     }
@@ -115,11 +137,12 @@ public class ChallengesController(
     [HttpDelete(ApiRoutes.Challenge)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        if (!await admins.IsAdminAsync(User.GetUserId(), ct)) return Forbid();
-        var deleted = await db.Challenges.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
-        if (deleted == 0) return NotFound();
+        var clubId = await db.Challenges.Where(c => c.Id == id).Select(c => new { c.ClubId }).SingleOrDefaultAsync(ct);
+        if (clubId is null) return NotFound();
+        if (!await CanManageAsync(clubId.ClubId, User.GetUserId(), ct)) return Forbid();
+        await db.Challenges.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
 
-        logger.LogInformation("Admin {UserId} deleted challenge {ChallengeId}", User.GetUserId(), id);
+        logger.LogInformation("User {UserId} deleted challenge {ChallengeId}", User.GetUserId(), id);
         return NoContent();
     }
 
@@ -132,12 +155,31 @@ public class ChallengesController(
 
     private static string? Clean(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 
+    private Task<bool> ClubVisibleAsync(Guid clubId, Guid? me, CancellationToken ct) =>
+        db.Clubs.Where(Moderation.ClubVisibleTo(me)).AnyAsync(c => c.Id == clubId, ct);
+
+    private async Task<string?> ClubRoleAsync(Guid clubId, Guid? me, CancellationToken ct) => me is null ? null
+        : await db.ClubMembers.Where(m => m.ClubId == clubId && m.UserId == me && m.Status == ClubMemberStatus.Active)
+            .Select(m => m.Role).SingleOrDefaultAsync(ct);
+
+    private async Task<bool> IsActiveMemberAsync(Guid clubId, Guid? me, CancellationToken ct) => await ClubRoleAsync(clubId, me, ct) is not null;
+
+    /// <summary>Site admins run every challenge; a club's owner and admins also run the club's.</summary>
+    private async Task<bool> CanManageAsync(Guid? clubId, Guid? me, CancellationToken ct) =>
+        await admins.IsAdminAsync(me, ct) || (clubId is { } club && ClubRules.CanManage(await ClubRoleAsync(club, me, ct)));
+
     [HttpPost(ApiRoutes.ChallengeEntries)]
     public async Task<IActionResult> Enter(Guid id, EnterChallengeRequest request, CancellationToken ct)
     {
         if (User.GetUserId() is not { } me) return Unauthorized();
         var challenge = await db.Challenges.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id, ct);
         if (challenge is null) return NotFound();
+        if (challenge.ClubId is { } clubId)
+        {
+            if (!await ClubVisibleAsync(clubId, me, ct)) return NotFound();
+            if (ClubRules.CannotEnterClubChallenge(await IsActiveMemberAsync(clubId, me, ct)) is { } notMember)
+                return Problem(notMember, statusCode: StatusCodes.Status400BadRequest);
+        }
 
         var ownsVisiblePhoto = await db.Photos
             .Where(p => p.Id == request.PhotoId && p.OwnerId == me)
@@ -206,7 +248,7 @@ public class ChallengesController(
             return new ChallengeSummaryDto(c.Id, c.Title, c.Description, c.StartsAt, c.EndsAt, phase,
                 scores.GetValueOrDefault(c.Id, Standing.Empty).Ranked.Count,
                 photo is null ? null : storage.ThumbnailUrl(photo.ThumbnailPath),
-                phase == ChallengePhase.Closed ? photo?.Owner : null);
+                phase == ChallengePhase.Closed ? photo?.Owner : null, c.ClubId, c.Club?.Name);
         }).ToList();
     }
 }

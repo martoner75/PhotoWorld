@@ -20,6 +20,10 @@ public class Walk
     /// <summary>Including the organiser; null = no limit.</summary>
     public int? MaxPeople { get; set; }
 
+    /// <summary>A club walk: only the club's active members see it, hear about it and can join. Null for a public walk.</summary>
+    public Guid? ClubId { get; set; }
+    public Club? Club { get; set; }
+
     public DateTimeOffset? CancelledAt { get; set; }
     /// <summary>When attendees were reminded (the day before), so it happens once.</summary>
     public DateTimeOffset? ReminderSentAt { get; set; }

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using PhotoWorld.App.Services;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Places;
 
@@ -78,6 +79,10 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
 
     public bool HasPlaces => _places.Count > 0;
 
+    /// <summary>Clubs to share the upload to: the approved clubs the member is in.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<ClubShareItem> Clubs { get; } = [];
+    public bool HasClubs => Clubs.Count > 0;
+
     private const string NoPlace = "Don't show it on the map";
 
     /// <summary>Called when the tab shows: places may have been added on the Places tab.</summary>
@@ -95,7 +100,30 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         {
             // Without places the picker just isn't shown.
         }
+        await LoadClubsAsync();
     }
+
+    /// <summary>The member may have joined or left clubs since the tab last showed. Keeps what they ticked.</summary>
+    private async Task LoadClubsAsync()
+    {
+        try
+        {
+            var ticked = Clubs.Where(c => c.Shared).Select(c => c.ClubId).ToHashSet();
+            var clubs = (await api.GetMyClubsAsync())
+                .Where(c => c.ReviewStatus == ClubReviewStatus.Approved && c.MyStatus == ClubMemberStatus.Active);
+            Clubs.Clear();
+            foreach (var c in clubs) Clubs.Add(new ClubShareItem(c.Id, c.Name, false) { Shared = ticked.Contains(c.Id) });
+            OnPropertyChanged(nameof(HasClubs));
+        }
+        catch (ApiException)
+        {
+            // Without clubs the choice just isn't shown.
+        }
+    }
+
+    /// <summary>Shares a new upload to the ticked clubs (each upload starts unshared).</summary>
+    private Task ShareToClubsAsync(Guid photoId) =>
+        ClubShareItem.ApplyAsync(api, photoId, Clubs.Select(c => new ClubShareItem(c.ClubId, c.Name, false) { Shared = c.Shared }));
 
     public bool HasPhoto => Preview is not null;
 
@@ -162,6 +190,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
                 var photo = await api.UploadPhotoAsync(stream, item.File.FileName, ContentTypeOf(item.File), item.Title.Trim(),
                     Description.Trim(), ShowOnHome, placeId, Tags, WantsFeedback, Watermark, AllowDownload);
                 waiting |= photo.ReviewStatus == PhotoReviewStatus.Pending;
+                await ShareToClubsAsync(photo.Id);
                 (item.Status, item.Done) = ("✓ Uploaded", true);
             }
             catch (ApiException ex)
@@ -199,6 +228,7 @@ public partial class UploadViewModel(PhotoWorldApi api) : ViewModelBase
         var photo = await api.UploadPhotoAsync(stream, _file.FileName, ContentTypeOf(_file), Title.Trim(),
             Description.Trim(), ShowOnHome, PlaceIndex > 0 && PlaceIndex <= _places.Count ? _places[PlaceIndex - 1].Id : null, Tags, WantsFeedback,
             Watermark, AllowDownload);
+        await ShareToClubsAsync(photo.Id);
         Reset();
         WeakReferenceMessenger.Default.Send(new PhotoUploadedMessage(photo.Id));
         await Shell.Current.GoToAsync($"{Routes.Gallery}/{Routes.Photo}", new ShellNavigationQueryParameters { ["id"] = photo.Id });

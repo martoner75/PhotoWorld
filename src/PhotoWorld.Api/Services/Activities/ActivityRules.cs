@@ -13,6 +13,9 @@ public static class ActivityRules
     /// <summary>Challenge news isn't sent for challenges that ended longer ago than this (e.g. when the feature launches).</summary>
     public static readonly TimeSpan ChallengeNewsWindow = TimeSpan.FromDays(3);
 
+    /// <summary>A member hears about new photos in a club at most once in this long, however busy it is.</summary>
+    public static readonly TimeSpan ClubPhotoQuietFor = TimeSpan.FromDays(1);
+
     /// <summary>Whether a member with <paramref name="settings"/> wants this type of activity.</summary>
     public static bool Wants(ActivitySettingsDto settings, string type) => type switch
     {
@@ -27,6 +30,7 @@ public static class ActivityRules
             or ActivityTypes.WalkReminder => settings.Walks,
         ActivityTypes.LightForecast => settings.Forecasts,
         ActivityTypes.ClubRequest or ActivityTypes.ClubAccepted => settings.Clubs,
+        ActivityTypes.ClubPhoto => settings.ClubPhotos,
         ActivityTypes.ClubApproved or ActivityTypes.ClubRejected => true, // the answer the owner is waiting for
         _ => settings.Challenges,
     };

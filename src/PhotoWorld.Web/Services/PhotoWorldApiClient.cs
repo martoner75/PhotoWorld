@@ -328,6 +328,12 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res) ? null : "That entry no longer exists.";
     }
 
+    public async Task<IReadOnlyList<WalkSummaryDto>> GetClubWalksAsync(Guid clubId, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<WalkSummaryDto>>($"{ApiRoutes.Walks}?list={WalkLists.Upcoming}&clubId={clubId}", ct) ?? [];
+
+    public async Task<IReadOnlyList<ChallengeSummaryDto>> GetClubChallengesAsync(Guid clubId, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<ChallengeSummaryDto>>($"{ApiRoutes.Challenges}?clubId={clubId}", ct) ?? [];
+
     public async Task<IReadOnlyList<WalkSummaryDto>> GetWalksAsync(string list, CancellationToken ct = default) =>
         await GetOrNullAsync<List<WalkSummaryDto>>($"{ApiRoutes.Walks}?list={Uri.EscapeDataString(list)}", ct) ?? [];
 
@@ -602,6 +608,26 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         if (res.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
         return IsSuccess(res) ? null : "That club no longer exists, or you're not an admin.";
     }
+
+    public async Task<PagedResult<PhotoSummaryDto>> GetClubPhotosAsync(Guid id, int page, CancellationToken ct = default) =>
+        await GetOrNullAsync<PagedResult<PhotoSummaryDto>>($"{ApiRoutes.Format(ApiRoutes.ClubPhotos, ("id", id))}?page={page}", ct)
+        ?? new PagedResult<PhotoSummaryDto>([], page, 24, 0);
+
+    public async Task<string?> ShareToClubAsync(Guid id, Guid photoId, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsync(ApiRoutes.Format(ApiRoutes.ClubPhoto, ("id", id), ("photoId", photoId)), null, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That club or photo is no longer available.";
+    }
+
+    public async Task<string?> UnshareFromClubAsync(Guid id, Guid photoId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.ClubPhoto, ("id", id), ("photoId", photoId)), ct);
+        return IsSuccess(res) ? null : "Only the photo's owner or the club's admins can take it out.";
+    }
+
+    public async Task<IReadOnlyList<ClubShareChoiceDto>?> GetPhotoClubsAsync(Guid photoId, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<ClubShareChoiceDto>>(ApiRoutes.Format(ApiRoutes.PhotoClubs, ("id", photoId)), ct);
 
     public async Task<PlaceForecastDto?> GetPlaceForecastAsync(Guid id, CancellationToken ct = default)
     {

@@ -1,7 +1,7 @@
 # PhotoWorld architecture
 
 How the pieces of PhotoWorld fit together: the website, the API, the iPhone/iPad/Android app, the Supabase
-database and storage, Google sign-in, and the map services. For setup and day-to-day commands see the
+database and storage, Google sign-in, the map services and the weather forecast. For setup and day-to-day commands see the
 [README](../README.md), which also has [screenshots](../README.md#what-it-looks-like) of the website and the app.
 
 - [1. System overview](#1-system-overview)
@@ -47,6 +47,7 @@ flowchart LR
 
     Smtp["SMTP email provider"]
     Push["Apple APNs · Google FCM<br/>(push, when configured)"]
+    Meteo["Open-Meteo<br/>(hourly cloud and rain)"]
 
     Browser -- "HTML pages + cookie" --> Web
     Mobile -- "sign-in only" --> Web
@@ -62,6 +63,7 @@ flowchart LR
     Api -- "notification emails" --> Smtp
     Api -. "push notifications" .-> Push
     Push -. "lock-screen alerts" .-> Mobile
+    Api -- "rounded coordinates only" --> Meteo
 ```
 
 Map tiles and place search go straight from each client to its map provider (OpenStreetMap, Apple Maps or Google
@@ -70,7 +72,7 @@ Maps); see [Places and maps](#8-places-and-maps).
 | Component | Role | Talks to |
 |---|---|---|
 | **PhotoWorld.Web** | Server-rendered MVC site. Owns the browser session (cookie) and the Google sign-in flow, for the website and for the app. Holds no database credentials except an insert-only logging role. | API (with the member's JWT), Google OAuth, `app_logs` |
-| **PhotoWorld.Api** | The only component with database and storage write access. Verifies Google tokens (tokeninfo + userinfo), registers members, issues PhotoWorld JWTs, and enforces all rules (ownership, moderation, privacy, validation, HTML sanitizing, image processing). | Supabase Postgres + Storage, Google tokeninfo, `app_logs` |
+| **PhotoWorld.Api** | The only component with database and storage write access. Verifies Google tokens (tokeninfo + userinfo), registers members, issues PhotoWorld JWTs, and enforces all rules (ownership, moderation, privacy, validation, HTML sanitizing, image processing). Fetches weather forecasts for light forecasts. | Supabase Postgres + Storage, Google tokeninfo, Open-Meteo, `app_logs` |
 | **PhotoWorld.App** | .NET MAUI app for iPhone, iPad and Android. Calls the API directly; uses the website only to sign in. | API, Web (sign-in), Supabase Storage (images), Apple/Google maps |
 | **PhotoWorld.Shared** | Class library: DTOs, API routes, limits, provider names, claim types, the app sign-in hand-off, and the Supabase logger. | Used by Api and Web; its DTO/route sources are compiled into the App |
 | **Supabase** | Managed Postgres (all data, in a dedicated `photoworld` schema), Storage (photo files, public bucket), `pg_cron` (log retention). | — |
@@ -105,7 +107,7 @@ flowchart TB
 
 | Project | Key folders |
 |---|---|
-| Api | `Controllers/` (Auth, Users, Photos, Feedback, Search, PhotoOfTheDay, Spots, Collections, Showcase, Blogs, BlogPosts, Places, Challenges, Activity, Devices, AdminUsers), `Data/` (EF entities, `PhotoWorldDbContext`, migrations), `Services/` (Identity, Photos, Blogs, Challenges, Activities, Push, Moderation, Notifications, JWT) |
+| Api | `Controllers/` (Auth, Users, Photos, Feedback, Search, PhotoOfTheDay, Spots, Collections, Showcase, Blogs, BlogPosts, Places, Clubs, Challenges, Walks, Activity, Devices, AdminUsers), `Data/` (EF entities, `PhotoWorldDbContext`, migrations), `Services/` (Identity, Photos, Blogs, Challenges, Clubs, Places, Activities, Push, Moderation, Notifications, JWT) |
 | Web | `Controllers/`, `Views/`, `Services/PhotoWorldApiClient` (typed API client), `Authentication/`, `wwwroot/` (Bootstrap, Quill, Leaflet) |
 | App | `Views/` (XAML pages), `ViewModels/` (CommunityToolkit.Mvvm), `Services/` (`AuthService`, `PhotoWorldApi`), `Platforms/iOS`, `Platforms/Android` |
 
@@ -272,6 +274,13 @@ sequenceDiagram
 - **Originals are never stored.** Only the two re-encoded JPEGs exist, without EXIF, so locations can't leak
   through the public bucket.
 - The **API is the only writer** to Storage (with the Supabase service key). Clients receive public URLs.
+- **Thumbnail URLs** come from `SupabaseStorage.ThumbnailUrl`. By default it's the stored `thumb.jpg`. With
+  `Supabase:ImageTransforms` on (Supabase Pro or higher; Free has no transforms), it's Supabase's resize endpoint
+  (`/storage/v1/render/image/public/…`, 640 px box) and new uploads store only the display image, with
+  `thumbnail_path` pointing at it. Every photo works either way, so the setting can be switched back. Display
+  images and blog covers are never transformed.
+- **Sharing to clubs** happens after the upload: the website's form and the app send `PUT
+  api/clubs/{id}/photos/{photoId}` for each club ticked (see [Community features](#9-community-features)).
 - Deleting a photo deletes its row (likes, comments and reports cascade) and then its files. Deleting an account
   does the same for all of a member's photos.
 - **Blog posts** embed photos as references (`data-photo-id`), not as uploads. The API's `BlogHtml` sanitizer keeps
@@ -328,6 +337,15 @@ erDiagram
     photo_comments ||--o{ reports : "reported in"
     blog_posts ||--o{ reports : "reported in"
     blog_comments ||--o{ reports : "reported in"
+    places ||--o{ place_forecast_notices : "alerted for"
+    users ||--o{ clubs : owns
+    clubs ||--o{ club_members : has
+    users ||--o{ club_members : "belongs to"
+    clubs ||--o{ club_photos : "feed of"
+    photos ||--o{ club_photos : "shared to"
+    clubs |o--o{ walks : "members-only"
+    clubs |o--o{ challenges : runs
+    clubs ||--o{ reports : "reported in"
 
     users {
         uuid id PK
@@ -398,6 +416,36 @@ erDiagram
         float longitude
         int max_people
         timestamptz cancelled_at
+        uuid club_id FK
+    }
+    clubs {
+        uuid id PK
+        uuid owner_id FK
+        text name
+        text description
+        text city
+        float latitude
+        float longitude
+        text join_policy
+        text review_status
+        text review_note
+    }
+    club_members {
+        uuid club_id PK
+        uuid user_id PK
+        text role
+        text status
+        timestamptz joined_at
+    }
+    club_photos {
+        uuid club_id PK
+        uuid photo_id PK
+        timestamptz shared_at
+    }
+    place_forecast_notices {
+        uuid place_id PK
+        date date PK
+        timestamptz sent_at
     }
     walk_attendees {
         uuid walk_id PK
@@ -456,6 +504,7 @@ erDiagram
         float latitude
         float longitude
         date visited_on
+        bool forecast_alerts
     }
     email_subscriptions {
         uuid user_id PK
@@ -484,6 +533,7 @@ erDiagram
         text description
         timestamptz starts_at
         timestamptz ends_at
+        uuid club_id FK
     }
     challenge_entries {
         uuid challenge_id PK
@@ -497,13 +547,17 @@ erDiagram
         uuid comment_id FK
         uuid blog_post_id FK
         uuid blog_comment_id FK
+        uuid club_id FK
         text reason
         text status
     }
 ```
 
-Not shown: `app_logs` (see [Logging](#12-logging)), `__ef_migrations_history`, and the `open_reports` view. Every
-member-owned row cascades on account deletion. A report targets exactly one item (`ck_reports_one_target`).
+Not shown: `app_logs` (see [Logging](#12-logging)), `__ef_migrations_history`, `activities`, `activity_settings`,
+and the `open_reports` view. Every member-owned row cascades on account deletion; a club goes with its owner's
+account (unless handed over first), and its members, photo shares, walks and challenges go with it. A report
+targets exactly one item (`ck_reports_one_target`). `club_members` allows one owner per club (a filtered unique
+index), and `activities.club_id` links club activity to its club.
 
 ## 7. Moderation
 
@@ -517,7 +571,8 @@ stateDiagram-v2
     Removed --> [*]: owner deletes it
 ```
 
-- Members report photos, comments, blog posts and blog comments (one report per member per item; not their own).
+- Members report photos, comments, blog posts, blog comments and clubs (one report per member per item; not their
+  own).
 - At three open reports an item is hidden from everyone but its owner, who sees a "being reviewed" notice. One
   upheld report removes it for others. Dismissed reports don't count.
 - The rule is a single expression (`Moderation.*VisibleTo`) that EF translates to SQL, applied to every query that
@@ -560,6 +615,12 @@ stateDiagram-v2
   owner (`photo_approved`) and their followers (`new_photo`, which an upload by a member no longer sends);
   `POST api/admin/photos/{id}/reject` stores the note and sends `photo_rejected`. The image files are in the public
   bucket from upload, as before: approval decides where PhotoWorld shows a photo, not who can fetch its URL.
+- **Club approval** follows the photo pattern with `clubs.review_status`: members' new clubs start `pending`, site
+  admins' `approved`. `Moderation.ClubVisibleTo(userId, reviewer)` shows a club to its owner always, to site admins
+  while pending, and to everyone else only when approved and not hidden by reports, a suspended owner or a block.
+  `GET api/admin/clubs/pending`, `POST api/admin/clubs/{id}/approve` and `…/reject` (which also takes down a live
+  club) notify the owner (`club_approved` / `club_rejected`, always sent). Reported clubs appear in `open_reports`
+  with `content_type = 'club'`.
 
 ## 8. Places and maps
 
@@ -576,6 +637,19 @@ through the photo's visibility rule. Locations are entered by the member (search
 
 The map providers receive tiles requests and search text from the member's device; nothing about the member's
 account is sent. The privacy policy names each provider.
+
+**Light forecasts.** `GET api/places/{id}/forecast` (owner only) rates the next three days of morning and evening
+golden hours. `OpenMeteoClient` fetches hourly low, mid and high cloud and rain chance from Open-Meteo, sending only
+the coordinates rounded to two decimals (about 1 km) and caching each rounded location for an hour.
+`LightForecast` (Shared, pure) averages the hours each golden hour overlaps and rates it Clear, Dramatic or Poor.
+Members turn on alerts for up to 10 places (`places.forecast_alerts`). Every hour `ForecastSender` takes the places
+where it's 18:00 by longitude and, when tomorrow rates Clear or Dramatic, inserts a `place_forecast_notices` row
+(the claim, so it goes out once) and a `light_forecast` activity, which `PushDispatcher` sends. Open-Meteo is free
+for non-commercial use (CC BY 4.0, credited on the website and in the app).
+
+**Club areas.** A club can have an area copied from one of its owner's places, rounded to about 1 km
+(`ClubRules.Area`). The directory sorts by distance from one of the caller's places (website) or the phone's
+approximate location, rounded the same way (app), and lists clubs within 150 km.
 
 ## 9. Community features
 
@@ -595,9 +669,15 @@ account is sent. The privacy policy names each provider.
   `ChallengeStandings` ranks entries by votes, then the earlier entry; the leader of a closed challenge is its
   winner. Standings are computed when read, not stored: entries hidden by moderation drop out (shown only to their
   owner, unranked), and deleting a photo removes its entry. Wins show as trophies on the member page.
+  `challenges.club_id` makes a **club challenge**: run by the club's owner and admins (and site admins), entered only
+  by its active members, announced (`challenge_open`) only to them, and listed with `GET api/challenges?clubId=`
+  rather than in the site-wide list.
 - **Activity.** Controllers call `ActivityFeed` after likes, comments, feedback, follows, first publication and
-  an admin's review of a photo or post; `ScheduledActivitySender` adds challenge news and the photo-of-the-day notice. Rows in `activities` cascade with their recipient, actor, photo,
-  post or challenge; reading filters them through the same visibility rule, so hidden or blocked content never shows.
+  an admin's review of a photo, post or club, and club events; `ScheduledActivitySender` adds challenge news and the
+  photo-of-the-day notice, and `ForecastSender` light forecasts. Rows in `activities` cascade with their recipient,
+  actor, photo, post, challenge, walk or club; reading filters them through the same visibility rule, so hidden or
+  blocked content never shows. `activity_settings` has a switch per kind (likes, comments, follows, followed posts,
+  challenges, walks, light forecasts, clubs, club photos, push).
 - **Collections** (`collections`, `collection_photos`) hold any visible photos; `Moderation.CollectionVisibleTo`
   shows a member their own and others' public ones (not suspended or blocked owners), and photos inside go through
   `PhotoVisibleTo`. **Spots**: `photos.place_id` links a photo to one of its owner's places (see Places and maps).
@@ -616,7 +696,20 @@ account is sent. The privacy policy names each provider.
   `walk_attendees`. `WalkRules` holds the checks (length ≤ 12 h, joining before the start, not full, not blocked);
   `WalksController.Visible` applies suspension and blocks both ways. Followers get `walk_new`, attendees
   `walk_changed`/`walk_cancelled`, and `ScheduledActivitySender` sends `walk_reminder` within 24 h of the start.
-  Photos join a walk through its tag, `walk-` plus the first 8 hex characters of its id.
+  Photos join a walk through its tag, `walk-` plus the first 8 hex characters of its id. A walk with `club_id` is a
+  **club walk**: `Visible` keeps it, meeting point included, to the club's active members and its organiser,
+  `walk_new` goes to the members instead of followers, and the club can't change after creation.
+- **Clubs.** `clubs` (owner, name, city, optional area, `join_policy` open or approval, `review_status`) and
+  `club_members` (role owner, admin or member; status active or pending). `ClubRules` (pure, tested) holds who may do
+  what: the owner and admins edit, let people in and remove members; only the owner changes roles, hands over
+  (the old owner becomes an admin, inside a transaction because of the one-owner index) or deletes; limits are 3
+  owned, 25 joined, 500 members. Joining an approval club creates a pending row and a `club_request` for the owner
+  and admins (once per requester); letting someone in sends `club_accepted`. **Club feed**: `club_photos` holds
+  members' own photos shared to a club (`PUT`/`DELETE api/clubs/{id}/photos/{photoId}`, `GET api/photos/{id}/clubs`
+  for the choice). `GET api/clubs/{id}/photos` lists them through `PhotoVisibleTo` and only from current members;
+  leaving or being removed deletes a member's shares. `ActivityFeed.NotifyClubPhotoAsync` sends `club_photo` to the
+  other members, at most one per club per member per day (`ActivityRules.ClubPhotoQuietFor`). A photo shared while
+  pending is announced when an admin approves it. Photos stay public: a club groups them, it doesn't hide them.
 - **Public portfolio.** `portfolios` (one per member, unique `slug`) and `portfolio_photos` (ordered by `position`;
   cascade with the photo or the member). `GET api/portfolios/{slug}` is `[AllowAnonymous]` like the showcase: it
   answers 404 unless `is_public` and the owner isn't suspended, and lists only chosen photos that pass
@@ -644,8 +737,10 @@ account is sent. The privacy policy names each provider.
   Members manage their own content in the app too: a photo editor (details, before version, delete), collection
   editor (name, description, public), portfolio settings with a share link, golden hour on photos with a place
   (`LightText` over `SunTimes`) and approval badges on their tiles (`ReviewBadgeConverter`). Editors announce changes
-  with `PhotoChangedMessage` / `CollectionChangedMessage`, so open pages and lists refresh. Writing blog posts and the
-  admin pages stay on the website.
+  with `PhotoChangedMessage` / `CollectionChangedMessage`, so open pages and lists refresh. Clubs (directory with
+  Near me, club page with walks, challenges, photos and members, the club editor), sharing photos to clubs from the
+  upload and photo editor screens, and the light forecast on a place are in the app too. Writing blog posts,
+  creating challenges and the admin pages stay on the website.
 
 ## 10. Email notifications
 
@@ -688,7 +783,8 @@ sequenceDiagram
   weekly summary on/off and its period, unsubscribe token); it cascades on account deletion.
 - **Weekly summary.** `WeeklySummarySender` (same schedule, its own advisory lock) emails members who switched it
   on, once 7 days have passed since `weekly_summary_from`: views, likes, comments, feedback and new followers on their
-  photos, walks in the coming week from people they follow, and open challenges. A quiet week sends nothing; the
+  photos, walks in the coming week (public ones from people they follow, and their clubs' walks), and open
+  challenges (site-wide ones and their clubs'). A quiet week sends nothing; the
   period moves on either way, and a failed send is retried. The unsubscribe link switches off both kinds of email.
 - Only posts the subscriber could see on the site are sent: published, not hidden by moderation, not their own.
 - No SMTP host configured (development): emails are written as `.eml` files to `src/PhotoWorld.Api/emails/`.
@@ -754,6 +850,8 @@ flowchart LR
 
 - [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs four jobs. `migrate` needs the
   `SUPABASE_DB_CONNECTION_STRING` repository secret.
+- Tests use xunit v3 on **Microsoft.Testing.Platform**: `global.json` opts `dotnet test` into that mode, which takes
+  the project with `--project` (`dotnet test --project tests/PhotoWorld.Api.Tests`).
 - **Migrations are never applied at startup**, so several API instances can't race. The API logs a warning if the
   database is behind. `docs/supabase-schema.sql` is the same schema as an idempotent script.
 - Deployment of the API and Web, and publishing the app to the App Store / Google Play, aren't automated yet (see the
@@ -769,6 +867,7 @@ production, a git-ignored `Local.props` for the app.
 | `ConnectionStrings:PhotoWorld` | API user-secrets | API, CI (`migrate`) | Supabase Postgres (session pooler) |
 | `ConnectionStrings:Logging` | Web (and optionally API) user-secrets | Web, API | Insert-only logging role |
 | `Supabase:SecretKey`, `Supabase:Url` | API user-secrets / settings | API | Storage uploads and deletes |
+| `Supabase:ImageTransforms` | API `appsettings.json` (default `false`) | API | Thumbnails via Supabase's resize endpoint (Pro plan or higher) |
 | `Jwt:SigningKey` (+ issuer, audience, lifetime) | API user-secrets / `appsettings.json` | API | Signing and validating PhotoWorld JWTs |
 | `Authentication:Google:ClientId` / `ClientSecret` | Web user-secrets (ID also in API) | Web, API | Google OAuth; the API checks `aud` |
 | `PhotoWorldApi:BaseUrl` | Web `appsettings.json` | Web | Where the API is |
@@ -794,6 +893,10 @@ production, a git-ignored `Local.props` for the app.
 | Moderation as one shared expression | The same visibility rule in every query, translated to SQL. |
 | Public portfolios are opt-in, per photo, and read through `PhotoVisibleTo(null)` | The only member content open to the internet is what its owner picked and what any signed-out visitor could already see on the home page. |
 | Golden hour computed locally, not from a weather or astronomy API | No key, no cost, works offline in the app, and no place a member plans to visit is sent to anyone. |
+| Light forecasts from Open-Meteo, with rounded coordinates, through the API | The weather does need a service: the API sends only ~1 km coordinates (never names or members), caches them hourly, and keeps clients free of a second weather integration. |
+| Club photos stay public; club walks are members-only | Photos are already public, and a club only groups them. A meeting point at a set time is personal, so a club walk is hidden from non-members by the visibility rule. |
+| Club photo alerts grouped to one a day per club | A busy club would otherwise flood its members; the feed shows everything, the alert just says there's something new. |
+| Image transforms behind a setting, off by default | Supabase's Free plan has none; with it on, uploads store one image and every stored path stays valid if it's switched off again. |
 | A before image sends an approved photo back for approval | It's a new image: approving the photo shouldn't approve whatever is added later. |
 | Members' photos approved before they're shown, through the visibility rule | One condition in `PhotoVisibleTo` covers every place a photo appears, so nothing can leak a pending photo by forgetting a check. |
 | Members' blog posts approved before publication; edits to approved posts aren't | A first look at every new post without making regular authors wait for each correction; reports still cover later edits. |

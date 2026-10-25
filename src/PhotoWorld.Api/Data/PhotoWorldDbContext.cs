@@ -35,6 +35,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Place> Places => Set<Place>();
     public DbSet<Club> Clubs => Set<Club>();
     public DbSet<ClubMember> ClubMembers => Set<ClubMember>();
+    public DbSet<ClubPhoto> ClubPhotos => Set<ClubPhoto>();
     public DbSet<PlaceForecastNotice> PlaceForecastNotices => Set<PlaceForecastNotice>();
     public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
     public DbSet<Follow> Follows => Set<Follow>();
@@ -307,6 +308,16 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(m => m.ClubId).IsUnique().HasFilter($"role = '{ClubRoles.Owner}'").HasDatabaseName("ix_club_members_one_owner");
         });
 
+        modelBuilder.Entity<ClubPhoto>(e =>
+        {
+            e.ToTable("club_photos");
+            e.HasKey(x => new { x.ClubId, x.PhotoId });
+            e.HasOne(x => x.Club).WithMany().HasForeignKey(x => x.ClubId);
+            e.HasOne(x => x.Photo).WithMany().HasForeignKey(x => x.PhotoId);
+            e.HasIndex(x => new { x.ClubId, x.SharedAt }).IsDescending(false, true);
+            e.HasIndex(x => x.PhotoId);
+        });
+
         modelBuilder.Entity<PlaceForecastNotice>(e =>
         {
             e.ToTable("place_forecast_notices");
@@ -359,6 +370,9 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(c => c.Title).HasMaxLength(ChallengeLimits.TitleMax);
             e.Property(c => c.Description).HasMaxLength(ChallengeLimits.DescriptionMax);
             e.HasIndex(c => c.EndsAt).IsDescending();
+            // A club challenge goes with its club.
+            e.HasOne(c => c.Club).WithMany().HasForeignKey(c => c.ClubId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(c => c.ClubId);
         });
 
         modelBuilder.Entity<ChallengeEntry>(e =>
@@ -401,6 +415,9 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(w => w.Description).HasMaxLength(WalkLimits.DescriptionMax);
             e.Property(w => w.MeetingPoint).HasMaxLength(WalkLimits.MeetingPointMax);
             e.HasOne(w => w.Organizer).WithMany().HasForeignKey(w => w.OrganizerId);
+            // A club walk goes with its club (its meeting point was for members only).
+            e.HasOne(w => w.Club).WithMany().HasForeignKey(w => w.ClubId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(w => w.ClubId);
             e.HasIndex(w => w.StartsAt);
             e.HasIndex(w => w.OrganizerId);
         });
@@ -449,6 +466,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(s => s.Walks).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.Forecasts).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.Clubs).HasDefaultValue(true).HasSentinel(true);
+            e.Property(s => s.ClubPhotos).HasDefaultValue(true).HasSentinel(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 

@@ -40,6 +40,10 @@ public sealed class ChallengeFormViewModel
     [Display(Name = "Ends (UTC)")]
     public DateTime? EndsAt { get; set; }
 
+    /// <summary>Set for a club challenge (fixed once created); <see cref="ClubName"/> is for the heading.</summary>
+    public Guid? ClubId { get; set; }
+    public string? ClubName { get; set; }
+
     /// <summary>Entries so far, shown as a warning when editing dates.</summary>
     public int EntryCount { get; set; }
 
@@ -54,9 +58,10 @@ public sealed class ChallengeFormViewModel
     {
         Id = c.Id, Title = c.Title, Description = c.Description,
         StartsAt = c.StartsAt.UtcDateTime, EndsAt = c.EndsAt.UtcDateTime, EntryCount = c.EntryCount,
+        ClubId = c.ClubId, ClubName = c.ClubName,
     };
 
-    public SaveChallengeRequest ToRequest() => new(Title, Description, Utc(StartsAt!.Value), Utc(EndsAt!.Value));
+    public SaveChallengeRequest ToRequest() => new(Title, Description, Utc(StartsAt!.Value), Utc(EndsAt!.Value), ClubId);
 
     private static DateTimeOffset Utc(DateTime value) => new(DateTime.SpecifyKind(value, DateTimeKind.Unspecified), TimeSpan.Zero);
 }
