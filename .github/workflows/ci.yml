@@ -13,7 +13,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          # The SDK pinned in global.json: "10.0.x" picks up new releases before their downloads are everywhere.
+          global-json-file: global.json
       # The server projects only: the iPhone/iPad app needs the MAUI workload and Xcode (see the ios job).
       - run: dotnet build src/PhotoWorld.Web --configuration Release
       - run: dotnet build tests/PhotoWorld.Api.Tests --configuration Release
@@ -27,7 +28,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          # The SDK pinned in global.json: "10.0.x" picks up new releases before their downloads are everywhere.
+          global-json-file: global.json
       - run: dotnet workload install maui-ios
       # The runner has Android tools too; skip that target here (it has its own job).
       - run: dotnet build src/PhotoWorld.App --configuration Release -f net10.0-ios -r iossimulator-arm64 -p:EnableAndroid=false
@@ -39,7 +41,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          # The SDK pinned in global.json: "10.0.x" picks up new releases before their downloads are everywhere.
+          global-json-file: global.json
       - uses: actions/setup-java@v5
         with:
           distribution: microsoft
@@ -60,7 +63,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          # The SDK pinned in global.json: "10.0.x" picks up new releases before their downloads are everywhere.
+          global-json-file: global.json
       - name: Check secret
         run: |
           if [ -z "$ConnectionStrings__PhotoWorld" ]; then
