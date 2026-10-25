@@ -64,6 +64,8 @@
 	</array>
 
 	<!-- Shown by iOS when the app first asks. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PhotoWorld uses your approximate location only when you tap Near me, to list camera clubs nearby. It isn't stored.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>PhotoWorld uses the camera when you choose to take a photo to share.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

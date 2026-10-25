@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.ClubEditorPage"
+             x:DataType="vm:ClubEditorViewModel"
+             Title="{Binding PageTitle}">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="12" MaximumWidthRequest="560">
+                <Label Text="New clubs appear in the directory once an admin approves them, usually within a day."
+                       Style="{StaticResource MutedText}" FontSize="14" IsVisible="{Binding IsNew}" />
+
+                <Label Text="Name" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding Name}" Placeholder="Bristol Street Photographers" MaxLength="{Binding NameMaxLength}" />
+                </Border>
+
+                <Label Text="Where you meet (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding City}" Placeholder="Bristol" MaxLength="{Binding CityMaxLength}" />
+                </Border>
+
+                <Label Text="Area on the map (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Picker ItemsSource="{Binding AreaOptions}" SelectedIndex="{Binding AreaIndex}" Title="Area" TextColor="{DynamicResource Text}" />
+                </Border>
+                <Label Text="Lets members find the club with Near me. Taken from one of your places, to about 1 km: an area, not an address."
+                       Style="{StaticResource MutedText}" FontSize="13" />
+
+                <Label Text="About the club (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Description}" Placeholder="Who it's for, how often you meet, what you like to shoot…"
+                            AutoSize="TextChanges" MinimumHeightRequest="120" MaxLength="{Binding DescriptionMaxLength}" />
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Ask to join" Style="{StaticResource Strong}" />
+                        <Label Text="You or your admins approve each request. Off: anyone can join." Style="{StaticResource MutedText}" FontSize="14" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding AskToJoin}" VerticalOptions="Center" />
+                </Grid>
+
+                <Button Text="Save club" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

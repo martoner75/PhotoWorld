@@ -1,0 +1,48 @@
+@model PagedResult<ClubSummaryDto>
+@{
+    ViewData["Title"] = "Clubs to review";
+    var here = Context.Request.Path + Context.Request.QueryString;
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Admin</h1>
+            <p class="text-muted">
+                @(Model.TotalCount == 0 ? "No clubs" : Model.TotalCount == 1 ? "1 club" : $"{Model.TotalCount} clubs") waiting for approval.
+                Members' new clubs appear in the directory only once an admin approves them.
+            </p>
+        </div>
+    </header>
+
+    <partial name="_AdminNav" model='"clubs"' />
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="empty-state"><p>All caught up: no clubs are waiting for approval.</p></div>
+    }
+    else
+    {
+        <div class="manage-table-wrap">
+            <table class="manage-table">
+                <thead>
+                    <tr><th>Club</th><th>Where</th><th>Joining</th><th><span class="visually-hidden">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Items)
+                    {
+                        <tr>
+                            <td><a asp-controller="Clubs" asp-action="Details" asp-route-id="@c.Id"><strong>@c.Name</strong></a></td>
+                            <td>@(c.City ?? "—")</td>
+                            <td>@(c.JoinPolicy == ClubJoinPolicy.Open ? "Anyone" : "Ask to join")</td>
+                            <td class="manage-actions">
+                                <partial name="_ClubReviewActions" model="new ClubReviewActionsModel(c.Id, c.Name, c.ReviewStatus, here)" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="new PagerViewModel(Model.Page, Model.TotalPages)" />
+    }
+</section>

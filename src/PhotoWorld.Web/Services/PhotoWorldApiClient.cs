@@ -7,6 +7,7 @@ using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
@@ -509,6 +510,97 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     {
         using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Place, ("id", id)), ct);
         return IsSuccess(res);
+    }
+
+    public async Task<PagedResult<ClubSummaryDto>> GetClubsAsync(string? query, Guid? nearPlace, int page, CancellationToken ct = default)
+    {
+        var url = $"{ApiRoutes.Clubs}?page={page}"
+                  + (string.IsNullOrWhiteSpace(query) ? "" : $"&q={Uri.EscapeDataString(query.Trim())}")
+                  + (nearPlace is null ? "" : $"&nearPlace={nearPlace}");
+        return await GetOrNullAsync<PagedResult<ClubSummaryDto>>(url, ct) ?? new PagedResult<ClubSummaryDto>([], page, 24, 0);
+    }
+
+    public async Task<IReadOnlyList<ClubSummaryDto>> GetMyClubsAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<List<ClubSummaryDto>>(ApiRoutes.MyClubs, ct) ?? [];
+
+    public Task<ClubDto?> GetClubAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<ClubDto>(ApiRoutes.Format(ApiRoutes.Club, ("id", id)), ct);
+
+    public async Task<ApiResult<ClubDto>> CreateClubAsync(SaveClubRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Clubs, request, ct);
+        return await ReadResultAsync<ClubDto>(res, ct);
+    }
+
+    public async Task<ApiResult<ClubDto>> UpdateClubAsync(Guid id, SaveClubRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Club, ("id", id)), request, ct);
+        return await ReadResultAsync<ClubDto>(res, ct, "That club no longer exists.");
+    }
+
+    public async Task<bool> DeleteClubAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Club, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<string?> JoinClubAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsync(ApiRoutes.Format(ApiRoutes.ClubMembership, ("id", id)), null, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That club isn't available.";
+    }
+
+    public async Task<string?> LeaveClubAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.ClubMembership, ("id", id)), ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "You're not in that club.";
+    }
+
+    public async Task<IReadOnlyList<ClubMemberDto>> GetClubMembersAsync(Guid id, bool pending, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<ClubMemberDto>>(ApiRoutes.Format(ApiRoutes.ClubMembers, ("id", id)) + (pending ? "?pending=true" : ""), ct) ?? [];
+
+    public async Task<string?> ApproveClubMemberAsync(Guid id, Guid userId, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.ClubMemberApproval, ("id", id), ("userId", userId)), null, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That request is no longer waiting.";
+    }
+
+    public async Task<string?> RemoveClubMemberAsync(Guid id, Guid userId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.ClubMember, ("id", id), ("userId", userId)), ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "They're no longer in the club.";
+    }
+
+    public async Task<string?> SetClubRoleAsync(Guid id, Guid userId, string role, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.ClubMemberRole, ("id", id), ("userId", userId)),
+            new SetClubRoleRequest(role), ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "They're no longer in the club.";
+    }
+
+    public Task<ReportOutcome> ReportClubAsync(Guid id, CreateReportRequest request, CancellationToken ct = default) =>
+        SendReportAsync(ApiRoutes.Format(ApiRoutes.ClubReports, ("id", id)), request, ct);
+
+    public Task<PagedResult<ClubSummaryDto>?> GetPendingClubsAsync(int page, CancellationToken ct = default) =>
+        GetOrNullAsync<PagedResult<ClubSummaryDto>>($"{ApiRoutes.AdminPendingClubs}?page={page}", ct);
+
+    public async Task<string?> ApproveClubAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.AdminClubApproval, ("id", id)), null, ct);
+        if (res.StatusCode == HttpStatusCode.Conflict) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That club no longer exists, or you're not an admin.";
+    }
+
+    public async Task<string?> RejectClubAsync(Guid id, string? reason, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminClubRejection, ("id", id)), new RejectClubRequest(reason), ct);
+        if (res.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That club no longer exists, or you're not an admin.";
     }
 
     public async Task<PlaceForecastDto?> GetPlaceForecastAsync(Guid id, CancellationToken ct = default)

@@ -37,6 +37,7 @@
 
                     <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsSearch, Converter={StaticResource Not}}">
                         <Button Text="📍 Photo walks" Style="{StaticResource GhostButton}" Padding="14,6" Command="{Binding OpenWalksCommand}" />
+                        <Button Text="👥 Clubs" Style="{StaticResource GhostButton}" Padding="14,6" Command="{Binding OpenClubsCommand}" />
                         <Button Text="Asking for feedback" Style="{StaticResource GhostButton}" Padding="14,6"
                                 Command="{Binding OpenFeedbackWantedCommand}" />
                     </HorizontalStackLayout>

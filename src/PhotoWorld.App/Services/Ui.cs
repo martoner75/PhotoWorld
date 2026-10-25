@@ -30,6 +30,12 @@ public static class Routes
     public const string PhotoEditor = "photo-editor";
     public const string CollectionEditor = "collection-editor";
     public const string Portfolio = "portfolio";
+    public const string Clubs = "clubs";
+    public const string Club = "club";
+    public const string ClubEditor = "club-editor";
+
+    public static Task OpenClubAsync(Guid id) =>
+        Shell.Current.GoToAsync(Club, new ShellNavigationQueryParameters { ["id"] = id });
 
     public static Task OpenWalkAsync(Guid id) =>
         Shell.Current.GoToAsync(Walk, new ShellNavigationQueryParameters { ["id"] = id });

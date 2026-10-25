@@ -72,6 +72,9 @@ public static class ApiRoutes
     /// <summary>POST a list of photo ids to approve them all.</summary>
     public const string AdminPhotoApproval = "api/admin/photos/approve";
     public const string AdminPhotoRejection = "api/admin/photos/{id:guid}/reject";
+    public const string AdminPendingClubs = "api/admin/clubs/pending";
+    public const string AdminClubApproval = "api/admin/clubs/{id:guid}/approve";
+    public const string AdminClubRejection = "api/admin/clubs/{id:guid}/reject";
 
     // Collections: without ownerId the caller's own (private ones included); with it, that member's public ones.
     public const string Collections = "api/collections";
@@ -81,6 +84,18 @@ public static class ApiRoutes
     public const string PhotoCollections = "api/photos/{id:guid}/collections";
 
     /// <summary>GET ?list=upcoming|past|mine; POST creates.</summary>
+    public const string Clubs = "api/clubs";
+    public const string MyClubs = "api/clubs/mine";
+    public const string Club = "api/clubs/{id:guid}";
+    /// <summary>PUT joins (or asks to); DELETE leaves (or withdraws the request).</summary>
+    public const string ClubMembership = "api/clubs/{id:guid}/membership";
+    public const string ClubMembers = "api/clubs/{id:guid}/members";
+    /// <summary>DELETE removes a member or turns down a request.</summary>
+    public const string ClubMember = "api/clubs/{id:guid}/members/{userId:guid}";
+    public const string ClubMemberApproval = "api/clubs/{id:guid}/members/{userId:guid}/approve";
+    public const string ClubMemberRole = "api/clubs/{id:guid}/members/{userId:guid}/role";
+    public const string ClubReports = "api/clubs/{id:guid}/reports";
+
     public const string Walks = "api/walks";
     public const string Walk = "api/walks/{id:guid}";
     public const string WalkCancel = "api/walks/{id:guid}/cancel";

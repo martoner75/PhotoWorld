@@ -1,9 +1,10 @@
 @model string
-@* Tabs across the admin pages; the model is the current one ("users", "photos", "posts", "potd" or "challenges"). *@
+@* Tabs across the admin pages; the model is the current one ("users", "photos", "posts", "clubs", "potd" or "challenges"). *@
 <nav class="feed-tabs" aria-label="Admin pages">
     <a asp-controller="Admin" asp-action="Users" class="@(Model == "users" ? "active" : "")" aria-current="@(Model == "users" ? "page" : null)">Users</a>
     <a asp-controller="Admin" asp-action="Photos" class="@(Model == "photos" ? "active" : "")" aria-current="@(Model == "photos" ? "page" : null)">Photos to review</a>
     <a asp-controller="Admin" asp-action="Posts" class="@(Model == "posts" ? "active" : "")" aria-current="@(Model == "posts" ? "page" : null)">Posts to review</a>
+    <a asp-controller="Admin" asp-action="Clubs" class="@(Model == "clubs" ? "active" : "")" aria-current="@(Model == "clubs" ? "page" : null)">Clubs to review</a>
     <a asp-controller="Admin" asp-action="PhotoOfTheDay" class="@(Model == "potd" ? "active" : "")" aria-current="@(Model == "potd" ? "page" : null)">Photo of the day</a>
     <a asp-controller="Challenges" asp-action="Manage" class="@(Model == "challenges" ? "active" : "")" aria-current="@(Model == "challenges" ? "page" : null)">Challenges</a>
 </nav>

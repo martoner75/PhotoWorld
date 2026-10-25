@@ -1,0 +1,30 @@
+@model ClubSummaryDto
+@{
+    var badge = Model.ReviewStatus switch
+    {
+        ClubReviewStatus.Pending => "Waiting for approval",
+        ClubReviewStatus.Rejected => "Not approved",
+        _ => Model.MyStatus == ClubMemberStatus.Pending ? "Requested"
+            : Model.MyRole switch { ClubRoles.Owner => "Owner", ClubRoles.Admin => "Admin", ClubRoles.Member => "Member", _ => null },
+    };
+}
+<article class="post-card club-card">
+    <a asp-controller="Clubs" asp-action="Details" asp-route-id="@Model.Id" class="post-card-cover" tabindex="-1" aria-hidden="true">
+        <span class="post-card-cover-empty club-cover-empty">@(Model.Name.Length > 0 ? Model.Name[..1].ToUpperInvariant() : "📷")</span>
+        @if (badge is not null)
+        {
+            <span class="moderation-badge photo-card-badge draft-badge">@badge</span>
+        }
+    </a>
+    <div class="post-card-body">
+        <h3><a asp-controller="Clubs" asp-action="Details" asp-route-id="@Model.Id">@Model.Name</a></h3>
+        @if (Model.City is not null)
+        {
+            <p class="text-muted small mb-0">📍 @Model.City@(Model.DistanceKm is { } km ? $" · {km:0} km away" : "")</p>
+        }
+        <div class="post-card-meta">
+            <span>@Model.MemberCount @(Model.MemberCount == 1 ? "member" : "members")</span>
+            <span>@(Model.JoinPolicy == ClubJoinPolicy.Open ? "Anyone can join" : "Ask to join")</span>
+        </div>
+    </div>
+</article>

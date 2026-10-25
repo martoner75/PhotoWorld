@@ -1,0 +1,19 @@
+@model ClubReviewActionsModel
+@* Approve / Reject for a club waiting for approval, or Take down for a live one: on the admin queue and the club's page. *@
+@if (Model.ReviewStatus == ClubReviewStatus.Pending)
+{
+    <form asp-controller="Admin" asp-action="ApproveClub" asp-route-id="@Model.ClubId" method="post"
+          data-confirm="Approve “@Model.Name”? It appears in the club directory.">
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <button type="submit" class="btn btn-accent btn-sm">Approve</button>
+    </form>
+}
+<details class="suspend-menu">
+    <summary class="btn btn-danger-ghost btn-sm">@(Model.ReviewStatus == ClubReviewStatus.Pending ? "Reject" : "Take down")</summary>
+    <form asp-controller="Admin" asp-action="RejectClub" asp-route-id="@Model.ClubId" method="post" class="suspend-form">
+        <label for="club-reason-@Model.ClubId">Reason <span class="text-muted">(shown to the owner)</span></label>
+        <input id="club-reason-@Model.ClubId" name="reason" maxlength="@ClubLimits.ReviewNoteMax" placeholder="e.g. please describe what the club is about" />
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <button type="submit" class="btn btn-danger btn-sm">@(Model.ReviewStatus == ClubReviewStatus.Pending ? "Reject the club" : "Take the club down")</button>
+    </form>
+</details>

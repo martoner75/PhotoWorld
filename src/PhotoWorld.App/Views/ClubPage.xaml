@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.ClubPage"
+             x:DataType="vm:ClubViewModel"
+             Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem x:Name="EditItem" Text="Edit" Command="{Binding EditCommand}" />
+    </ContentPage.ToolbarItems>
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18,12" Spacing="10">
+                <Border Padding="12,8" BackgroundColor="{DynamicResource DangerSoft}" Stroke="{DynamicResource DangerLine}"
+                        IsVisible="{Binding Notice, Converter={StaticResource HasValue}}">
+                    <Label Text="{Binding Notice}" FontSize="14" />
+                </Border>
+                <Label Text="Camera club" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="13" />
+                <Label Text="{Binding Title}" Style="{StaticResource Heading}" />
+                <Label Text="{Binding Facts}" FontSize="15" />
+
+                <Button Text="{Binding JoinText}" Command="{Binding JoinCommand}" IsVisible="{Binding Club.CanJoin}" />
+                <Button Text="Requested · withdraw" Style="{StaticResource GhostButton}" Command="{Binding LeaveCommand}" IsVisible="{Binding IsRequested}" />
+                <Button Text="Member ✓ · Leave" Style="{StaticResource GhostButton}" Command="{Binding LeaveCommand}" IsVisible="{Binding IsMember}" />
+
+                <Label Text="{Binding Club.Description}" FontSize="16"
+                       IsVisible="{Binding Club.Description, Converter={StaticResource HasValue}}" />
+
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding Club.CanManageMembers}">
+                    <Label Text="{Binding RequestsTitle}" Style="{StaticResource Subheading}" Margin="0,8,0,0"
+                           IsVisible="{Binding HasRequests}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Requests}" Spacing="6">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ClubMemberItem">
+                                <Border Padding="12,8">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                                        <Label Text="{Binding Name}" VerticalOptions="Center" Style="{StaticResource Strong}" />
+                                        <Button Grid.Column="1" Text="Let in" Padding="12,4" CommandParameter="{Binding .}"
+                                                Command="{Binding ApproveCommand, Source={RelativeSource AncestorType={x:Type vm:ClubViewModel}}, x:DataType=vm:ClubViewModel}" />
+                                        <Button Grid.Column="2" Text="Turn down" Style="{StaticResource GhostButton}" Padding="12,4" CommandParameter="{Binding .}"
+                                                Command="{Binding DeclineCommand, Source={RelativeSource AncestorType={x:Type vm:ClubViewModel}}, x:DataType=vm:ClubViewModel}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <Label Text="{Binding MembersTitle}" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Members}" Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ClubMemberItem">
+                            <Border Padding="12,10">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding MemberCommand, Source={RelativeSource AncestorType={x:Type vm:ClubViewModel}}, x:DataType=vm:ClubViewModel}" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding Name}" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="{Binding Badge}" Style="{StaticResource MutedText}"
+                                           IsVisible="{Binding Badge, Converter={StaticResource HasValue}}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Button Text="Delete club" Style="{StaticResource DangerButton}" Command="{Binding DeleteCommand}" IsVisible="{Binding Club.IsOwner}"
+                        Margin="0,12,0,0" />
+                <Button Text="Report this club" Style="{StaticResource LinkButton}" Command="{Binding ReportCommand}"
+                        IsVisible="{Binding Club.CanReport}" HorizontalOptions="Start" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

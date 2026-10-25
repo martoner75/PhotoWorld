@@ -1,0 +1,71 @@
+@model ClubFormViewModel
+@{
+    var isNew = Model.Id is null;
+    ViewData["Title"] = isNew ? "Start a club" : "Edit club";
+}
+
+<section class="container page narrow">
+    <h1>@ViewData["Title"]</h1>
+    @if (isNew)
+    {
+        <p class="text-muted">New clubs appear in the directory once an admin approves them, usually within a day.</p>
+    }
+
+    <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" class="form-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="field">
+            <label asp-for="Name"></label>
+            <input asp-for="Name" maxlength="@ClubLimits.NameMax" placeholder="Bristol Street Photographers" />
+            <span asp-validation-for="Name" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="City">Where you meet <span class="text-muted">(optional)</span></label>
+            <input asp-for="City" maxlength="@ClubLimits.CityMax" placeholder="Bristol" />
+            <span asp-validation-for="City" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Area">Area on the map <span class="text-muted">(optional)</span></label>
+            <select asp-for="Area" class="field-select">
+                <option value="">Not set</option>
+                @if (Model.Area is { Length: > 0 } area && !Model.Places.Any(p => ClubFormViewModel.AreaValue(Math.Round(p.Latitude, 2), Math.Round(p.Longitude, 2)) == area))
+                {
+                    <option value="@area" selected>Keep the current area</option>
+                }
+                @foreach (var p in Model.Places.OrderBy(p => p.Name))
+                {
+                    var value = ClubFormViewModel.AreaValue(Math.Round(p.Latitude, 2), Math.Round(p.Longitude, 2));
+                    <option value="@value" selected="@(value == Model.Area)">Around @p.Name</option>
+                }
+            </select>
+            <span class="text-muted small">Lets members find the club with "near" in the directory. Taken from one of
+                <a asp-controller="Places" asp-action="Index">your places</a>, to about 1 km: an area, not an address.</span>
+            <span asp-validation-for="Area" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Description">About the club <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Description" rows="5" maxlength="@ClubLimits.DescriptionMax"
+                      placeholder="Who it's for, how often you meet, what you like to shoot…"></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+        <fieldset class="field">
+            <legend>How people join</legend>
+            <label class="radio-row">
+                <input type="radio" asp-for="JoinPolicy" value="@ClubJoinPolicy.Open" />
+                <span><strong>Anyone can join</strong></span>
+            </label>
+            <label class="radio-row">
+                <input type="radio" asp-for="JoinPolicy" value="@ClubJoinPolicy.Approval" />
+                <span><strong>Ask to join</strong> <span class="text-muted small">(you or your admins approve each request)</span></span>
+            </label>
+            <span asp-validation-for="JoinPolicy" class="field-error"></span>
+        </fieldset>
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="@(isNew ? "Index" : "Details")" asp-route-id="@Model.Id">Cancel</a>
+            <button type="submit" class="btn btn-accent">@(isNew ? "Create club" : "Save changes")</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

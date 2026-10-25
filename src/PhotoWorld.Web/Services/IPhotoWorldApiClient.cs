@@ -3,6 +3,7 @@ using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
@@ -159,6 +160,24 @@ public interface IPhotoWorldApiClient
     Task<bool> DeletePlaceAsync(Guid id, CancellationToken ct = default);
     /// <summary>Null when the weather service is unavailable (or the place is gone).</summary>
     Task<PlaceForecastDto?> GetPlaceForecastAsync(Guid id, CancellationToken ct = default);
+
+    // Clubs. The string? results are an error to show, or null when it worked.
+    Task<PagedResult<ClubSummaryDto>> GetClubsAsync(string? query, Guid? nearPlace, int page, CancellationToken ct = default);
+    Task<IReadOnlyList<ClubSummaryDto>> GetMyClubsAsync(CancellationToken ct = default);
+    Task<ClubDto?> GetClubAsync(Guid id, CancellationToken ct = default);
+    Task<ApiResult<ClubDto>> CreateClubAsync(SaveClubRequest request, CancellationToken ct = default);
+    Task<ApiResult<ClubDto>> UpdateClubAsync(Guid id, SaveClubRequest request, CancellationToken ct = default);
+    Task<bool> DeleteClubAsync(Guid id, CancellationToken ct = default);
+    Task<string?> JoinClubAsync(Guid id, CancellationToken ct = default);
+    Task<string?> LeaveClubAsync(Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<ClubMemberDto>> GetClubMembersAsync(Guid id, bool pending, CancellationToken ct = default);
+    Task<string?> ApproveClubMemberAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<string?> RemoveClubMemberAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<string?> SetClubRoleAsync(Guid id, Guid userId, string role, CancellationToken ct = default);
+    Task<ReportOutcome> ReportClubAsync(Guid id, CreateReportRequest request, CancellationToken ct = default);
+    Task<PagedResult<ClubSummaryDto>?> GetPendingClubsAsync(int page, CancellationToken ct = default);
+    Task<string?> ApproveClubAsync(Guid id, CancellationToken ct = default);
+    Task<string?> RejectClubAsync(Guid id, string? reason, CancellationToken ct = default);
 
     // Email notifications about new blog posts
     Task<EmailNotificationsDto?> GetNotificationsAsync(CancellationToken ct = default);

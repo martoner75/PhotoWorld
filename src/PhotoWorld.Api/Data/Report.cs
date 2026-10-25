@@ -18,6 +18,8 @@ public class Report
     public BlogPost? BlogPost { get; set; }
     public Guid? BlogCommentId { get; set; }
     public BlogComment? BlogComment { get; set; }
+    public Guid? ClubId { get; set; }
+    public Club? Club { get; set; }
 
     public required string Reason { get; set; }
     public string? Note { get; set; }

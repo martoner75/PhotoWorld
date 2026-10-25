@@ -1,0 +1,72 @@
+@model ClubsPageViewModel
+@{
+    ViewData["Title"] = Model.Mine ? "My clubs" : "Clubs";
+    var clubs = Model.Clubs;
+    var near = Model.Places.FirstOrDefault(p => p.Id == Model.NearPlace);
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Camera clubs</h1>
+            <p class="text-muted">Local clubs run by members. Join one to meet photographers near you.</p>
+        </div>
+        <a class="btn btn-accent" asp-action="New">Start a club</a>
+    </header>
+
+    <nav class="feed-tabs" aria-label="Which clubs">
+        <a asp-action="Index" class="@(Model.Mine ? "" : "active")" aria-current="@(Model.Mine ? null : "page")">Directory</a>
+        <a asp-action="Mine" class="@(Model.Mine ? "active" : "")" aria-current="@(Model.Mine ? "page" : null)">My clubs</a>
+    </nav>
+
+    @if (!Model.Mine)
+    {
+        <form asp-action="Index" method="get" class="club-search" role="search">
+            <input type="search" name="q" value="@Model.Query" placeholder="Club name or city" aria-label="Search clubs" />
+            @if (Model.Places.Count > 0)
+            {
+                <select name="near" class="field-select" aria-label="Near one of your places">
+                    <option value="">Anywhere</option>
+                    @foreach (var p in Model.Places.OrderBy(p => p.Name))
+                    {
+                        <option value="@p.Id" selected="@(p.Id == Model.NearPlace)">Near @p.Name</option>
+                    }
+                </select>
+            }
+            <button type="submit" class="btn btn-ghost">Search</button>
+        </form>
+    }
+
+    @if (clubs.TotalCount == 0)
+    {
+        <div class="empty-state">
+            <p>
+                @if (Model.Mine)
+                {
+                    @:You're not in any clubs yet. Find one in the <a asp-action="Index">directory</a>, or start your own.
+                }
+                else if (near is not null)
+                {
+                    @:No clubs within @ClubLimits.NearKm.ToString("0") km of @near.Name yet. Why not start one?
+                }
+                else
+                {
+                    @:No clubs match that yet. Why not start one?
+                }
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="post-grid">
+            @foreach (var c in clubs.Items)
+            {
+                <partial name="_ClubCard" model="c" />
+            }
+        </div>
+        @if (!Model.Mine)
+        {
+            <partial name="_Pager" model="new PagerViewModel(clubs.Page, clubs.TotalPages)" />
+        }
+    }
+</section>

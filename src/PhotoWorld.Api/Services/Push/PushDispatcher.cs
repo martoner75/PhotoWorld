@@ -81,6 +81,7 @@ public sealed class PushDispatcher(
                 PostTitle = a.Post == null ? null : a.Post.Title,
                 ChallengeTitle = a.Challenge == null ? null : a.Challenge.Title,
                 a.WalkId, WalkTitle = a.Walk == null ? null : a.Walk.Title,
+                a.ClubId, ClubName = a.Club == null ? null : a.Club.Name,
                 Wanted = a.Recipient.SuspendedAt == null && !db.ActivitySettings.Any(s => s.UserId == a.RecipientId && !s.Push),
             })
             .ToListAsync(ct);
@@ -99,7 +100,7 @@ public sealed class PushDispatcher(
         foreach (var a in due.Where(a => a.Wanted && devices[a.RecipientId].Any()))
         {
             var dto = new ActivityDto(a.Id, a.Type, a.Actor, a.PhotoId, a.PhotoTitle, null, a.PostId, a.PostTitle, a.ChallengeId,
-                a.ChallengeTitle, a.Place, a.Snippet, a.CreatedAt, false, a.WalkId, a.WalkTitle);
+                a.ChallengeTitle, a.Place, a.Snippet, a.CreatedAt, false, a.WalkId, a.WalkTitle, a.ClubId, a.ClubName);
             var message = PushText.For(dto, unread.GetValueOrDefault(a.RecipientId));
             foreach (var device in devices[a.RecipientId])
             {
@@ -131,6 +132,7 @@ public static class PushText
         if (activity.PostId is { } post) data["postId"] = post.ToString();
         if (activity.ChallengeId is { } challenge) data["challengeId"] = challenge.ToString();
         if (activity.WalkId is { } walk) data["walkId"] = walk.ToString();
+        if (activity.ClubId is { } club) data["clubId"] = club.ToString();
         if (activity.Actor is { } actor) data["memberId"] = actor.Id.ToString();
         var body = ActivityText.Describe(activity) + (activity.Snippet is { } s ? $": “{s}”" : "");
         return new PushMessage("PhotoWorld", body, unread > 0 ? unread : null, data);

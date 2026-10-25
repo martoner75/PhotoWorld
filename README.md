@@ -331,6 +331,32 @@ the position and date, within a few minutes (golden hour: sun from 4° below to 
 4° below); no outside service is asked. Times show in the viewer's time zone; the day is picked from the place's
 longitude. Near the poles, days without sunrise say so.
 
+## Camera clubs
+
+**Clubs** (in the website's menu, and **👥 Clubs** on the app's Explore tab) are local camera clubs run by members.
+This is phase 1: clubs and membership. Club photo feeds, walks and challenges come next.
+
+- **Starting one.** Any member can start up to 3 clubs: a name, where they meet (a city), an optional area taken
+  from one of their places (rounded to about 1 km, an area rather than an address), a description, and how people
+  join: **anyone can join**, or **ask to join**, where the owner or an admin approves each request. A new club waits
+  for a site admin (Admin → **Clubs to review**). Until it's approved only its owner sees it, and a rejected club
+  stays visible to its owner only, with the admin's reason. Clubs started by site admins skip the queue. Site
+  admins can also **take down** a live club from its page.
+- **Directory.** Approved clubs, biggest first, searchable by name or city. On the website, *Near …* sorts by
+  distance from one of your places; in the app, **Near me** uses the phone's approximate location, rounded to about
+  1 km and not stored. Both show clubs within 150 km. **My clubs** lists the ones you own, run, belong to or asked
+  to join.
+- **Roles.** The **owner** (one per club) and **admins** edit the club, let people in or turn them down, and remove
+  members. Only the owner makes or removes admins, hands the club over (the old owner stays on as an admin) or
+  deletes it. The owner can't leave without handing over first. Members can be in up to 25 clubs, and a club holds
+  up to 500 members including requests.
+- **Activity.** Owners and admins hear when someone asks to join, and people hear when they're let in. Both can
+  be switched off with the **Clubs** setting. Owners always hear when a site admin approves or rejects their club.
+- **Moderation.** Clubs follow the same rules as other content: members can report a club (not their own), 3
+  open reports or an upheld one hide it from everyone but its owner, and clubs by suspended or blocked owners are
+  hidden. Reported clubs appear in the `open_reports` view with `content_type = 'club'`. Uphold or dismiss them
+  with `club_id` like the other targets. A club goes when its owner's account does, unless they hand it over first.
+
 ## Activity
 
 Members get notifications (an inbox icon in the website's menu with an unread count; on the app's Gallery tab, with a dot for
@@ -392,6 +418,8 @@ Admins see **Admin** in the website's account menu, under their avatar (after si
   blog post waiting for approval: approving the post approves its photos. Editing an approved photo's details doesn't
   send it back. Photos from before approval existed count as approved. As with any photo, the image file itself is
   at a public address: the approval controls where PhotoWorld shows it.
+- **Clubs to review**: members' new clubs waiting for approval, longest-waiting first, with **Approve** and
+  **Reject** (optional reason, shown to the owner). See Camera clubs above.
 - **Posts to review**: members' blog posts waiting for approval, longest-waiting first (see Blogs above), with
   **Approve** and **Reject** (optional reason, shown to the author). The same buttons appear at the top of a
   pending post when an admin opens it.
@@ -537,7 +565,7 @@ update photoworld.reports set status = 'upheld' where photo_id = '<photo id>' an
 -- Nothing wrong: dismiss the reports (auto-hidden content reappears)
 update photoworld.reports set status = 'dismissed' where comment_id = '<comment id>' and status = 'open';
 
--- Blog posts and blog comments work the same way, with blog_post_id / blog_comment_id
+-- Blog posts, blog comments and clubs work the same way, with blog_post_id / blog_comment_id / club_id
 update photoworld.reports set status = 'upheld' where blog_post_id = '<post id>' and status = 'open';
 ```
 

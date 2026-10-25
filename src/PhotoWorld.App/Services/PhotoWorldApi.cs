@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -6,6 +7,7 @@ using PhotoWorld.Shared;
 using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
@@ -251,6 +253,51 @@ public sealed class PhotoWorldApi(HttpClient http)
 
     public Task<PlaceDto> UpdatePlaceAsync(Guid id, SavePlaceRequest request, CancellationToken ct = default) =>
         SendAsync<PlaceDto>(HttpMethod.Put, WithId(ApiRoutes.Place, id), JsonContent.Create(request, options: Json), ct);
+
+    // ----- Clubs -----
+    /// <summary>The directory; with <paramref name="near"/>, only clubs nearby, nearest first.</summary>
+    public Task<PagedResult<ClubSummaryDto>> GetClubsAsync(string? query, Location? near, int page, CancellationToken ct = default)
+    {
+        var url = $"{ApiRoutes.Clubs}?page={page}" + (string.IsNullOrWhiteSpace(query) ? "" : $"&q={Uri.EscapeDataString(query.Trim())}");
+        // Rounded to about 1 km: enough to sort clubs by distance.
+        if (near is not null)
+            url += string.Create(CultureInfo.InvariantCulture, $"&lat={Math.Round(near.Latitude, 2)}&lon={Math.Round(near.Longitude, 2)}");
+        return GetAsync<PagedResult<ClubSummaryDto>>(url, ct);
+    }
+
+    public Task<List<ClubSummaryDto>> GetMyClubsAsync(CancellationToken ct = default) => GetAsync<List<ClubSummaryDto>>(ApiRoutes.MyClubs, ct);
+
+    public Task<ClubDto> GetClubAsync(Guid id, CancellationToken ct = default) => GetAsync<ClubDto>(WithId(ApiRoutes.Club, id), ct);
+
+    public Task<ClubDto> CreateClubAsync(SaveClubRequest request, CancellationToken ct = default) =>
+        SendAsync<ClubDto>(HttpMethod.Post, ApiRoutes.Clubs, JsonContent.Create(request, options: Json), ct);
+
+    public Task<ClubDto> UpdateClubAsync(Guid id, SaveClubRequest request, CancellationToken ct = default) =>
+        SendAsync<ClubDto>(HttpMethod.Put, WithId(ApiRoutes.Club, id), JsonContent.Create(request, options: Json), ct);
+
+    public Task DeleteClubAsync(Guid id, CancellationToken ct = default) => SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Club, id), null, ct);
+
+    public Task<ClubDto> JoinClubAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync<ClubDto>(HttpMethod.Put, WithId(ApiRoutes.ClubMembership, id), null, ct);
+
+    public Task LeaveClubAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, WithId(ApiRoutes.ClubMembership, id), null, ct);
+
+    public Task<List<ClubMemberDto>> GetClubMembersAsync(Guid id, bool pending, CancellationToken ct = default) =>
+        GetAsync<List<ClubMemberDto>>(WithId(ApiRoutes.ClubMembers, id) + (pending ? "?pending=true" : ""), ct);
+
+    public Task ApproveClubMemberAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Post, ApiRoutes.Format(ApiRoutes.ClubMemberApproval, ("id", id), ("userId", userId)), null, ct);
+
+    public Task RemoveClubMemberAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, ApiRoutes.Format(ApiRoutes.ClubMember, ("id", id), ("userId", userId)), null, ct);
+
+    public Task SetClubRoleAsync(Guid id, Guid userId, string role, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Put, ApiRoutes.Format(ApiRoutes.ClubMemberRole, ("id", id), ("userId", userId)),
+            JsonContent.Create(new SetClubRoleRequest(role), options: Json), ct);
+
+    public Task ReportClubAsync(Guid id, CreateReportRequest request, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Post, WithId(ApiRoutes.ClubReports, id), JsonContent.Create(request, options: Json), ct);
 
     public Task<PlaceForecastDto> GetPlaceForecastAsync(Guid id, CancellationToken ct = default) =>
         GetAsync<PlaceForecastDto>(WithId(ApiRoutes.PlaceForecast, id), ct);

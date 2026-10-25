@@ -126,6 +126,9 @@ public partial class ExploreViewModel(PhotoWorldApi api) : ViewModelBase
     private Task OpenWalksAsync() => Shell.Current.GoToAsync(Routes.Walks);
 
     [RelayCommand]
+    private Task OpenClubsAsync() => Shell.Current.GoToAsync(Routes.Clubs);
+
+    [RelayCommand]
     private Task OpenFeedbackWantedAsync() => ShowInGalleryAsync(new PhotoSearch { WantsFeedback = true });
 
     [RelayCommand]

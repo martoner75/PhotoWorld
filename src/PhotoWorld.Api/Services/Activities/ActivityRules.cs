@@ -26,11 +26,14 @@ public static class ActivityRules
         ActivityTypes.WalkNew or ActivityTypes.WalkJoined or ActivityTypes.WalkChanged or ActivityTypes.WalkCancelled
             or ActivityTypes.WalkReminder => settings.Walks,
         ActivityTypes.LightForecast => settings.Forecasts,
+        ActivityTypes.ClubRequest or ActivityTypes.ClubAccepted => settings.Clubs,
+        ActivityTypes.ClubApproved or ActivityTypes.ClubRejected => true, // the answer the owner is waiting for
         _ => settings.Challenges,
     };
 
     /// <summary>Likes and follows are one-per-person: liking again (after an unlike) doesn't notify twice.</summary>
-    public static bool IsOncePerActor(string type) => type is ActivityTypes.Like or ActivityTypes.Follow or ActivityTypes.Feedback;
+    public static bool IsOncePerActor(string type) =>
+        type is ActivityTypes.Like or ActivityTypes.Follow or ActivityTypes.Feedback or ActivityTypes.ClubRequest;
 
     public static string? Snippet(string? text)
     {

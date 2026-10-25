@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Web.Models;
 using PhotoWorld.Web.Services;
@@ -69,6 +70,30 @@ public class AdminController(IPhotoWorldApiClient api) : Controller
         TempData["Flash"] = await api.RejectPostAsync(id, reason, ct)
             ?? "Post sent back to its author. It stays hidden until they submit it again.";
         return BackTo(returnUrl, nameof(Posts));
+    }
+
+    /// <summary>New clubs waiting for approval, longest-waiting first.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Clubs(int page = 1, CancellationToken ct = default)
+    {
+        var clubs = await api.GetPendingClubsAsync(page, ct);
+        return clubs is null ? Forbid() : View(clubs);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveClub(Guid id, string? returnUrl, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.ApproveClubAsync(id, ct) ?? "Club approved. It's in the directory, and its owner has been told.";
+        return BackTo(returnUrl, nameof(Clubs));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectClub(Guid id, string? reason, string? returnUrl, CancellationToken ct)
+    {
+        if (reason?.Length > ClubLimits.ReviewNoteMax) reason = reason[..ClubLimits.ReviewNoteMax];
+        TempData["Flash"] = await api.RejectClubAsync(id, reason, ct)
+            ?? "Club turned down. Only its owner can see it now, with your reason.";
+        return BackTo(returnUrl, nameof(Clubs));
     }
 
     /// <summary>Uploaded photos waiting for approval, longest-waiting first.</summary>

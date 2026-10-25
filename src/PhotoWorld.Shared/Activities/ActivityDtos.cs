@@ -29,10 +29,18 @@ public static class ActivityTypes
     public const string PhotoRejected = "photo_rejected";
     /// <summary>The golden-hour light at one of the member's places looks good tomorrow (the snippet says where and why).</summary>
     public const string LightForecast = "light_forecast";
+    /// <summary>Someone asked to join a club the recipient runs (owner or admin).</summary>
+    public const string ClubRequest = "club_request";
+    /// <summary>The recipient's request to join a club was accepted.</summary>
+    public const string ClubAccepted = "club_accepted";
+    /// <summary>A site admin approved the recipient's new club, or turned it down (the snippet is their reason).</summary>
+    public const string ClubApproved = "club_approved";
+    public const string ClubRejected = "club_rejected";
 
     public static readonly IReadOnlyList<string> All =
         [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback,
-         WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected, LightForecast];
+         WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected, LightForecast,
+         ClubRequest, ClubAccepted, ClubApproved, ClubRejected];
 }
 
 /// <summary>
@@ -55,14 +63,16 @@ public sealed record ActivityDto(
     DateTimeOffset CreatedAt,
     bool IsRead,
     Guid? WalkId = null,
-    string? WalkTitle = null);
+    string? WalkTitle = null,
+    Guid? ClubId = null,
+    string? ClubName = null);
 
 /// <summary>Which kinds of activity a member wants. Everything is on until they change it.</summary>
 /// <param name="Push">Also send them to the member's phones (where the app is allowed to show notifications).</param>
 public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows, bool FollowedPosts, bool Challenges, bool Push = true,
-    bool Walks = true, bool Forecasts = true)
+    bool Walks = true, bool Forecasts = true, bool Clubs = true)
 {
-    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true);
+    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true);
 }
 
 public static class DevicePlatforms

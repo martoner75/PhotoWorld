@@ -11,6 +11,7 @@ public static class ActivityText
         var post = Quote(a.PostTitle);
         var challenge = Quote(a.ChallengeTitle);
         var walk = Quote(a.WalkTitle);
+        var club = Quote(a.ClubName);
         return a.Type switch
         {
             ActivityTypes.Like => $"{who} liked your photo {photo}",
@@ -31,6 +32,10 @@ public static class ActivityText
             ActivityTypes.PostRejected => $"Your post {post} wasn't approved. Edit it and submit it again",
             ActivityTypes.PhotoApproved => $"Your photo {photo} was approved and is now in the gallery",
             ActivityTypes.PhotoRejected => $"Your photo {photo} wasn't approved, so only you can see it",
+            ActivityTypes.ClubRequest => $"{who} asked to join {club}",
+            ActivityTypes.ClubAccepted => $"You're in! Your request to join {club} was accepted",
+            ActivityTypes.ClubApproved => $"Your club {club} was approved and is now in the directory",
+            ActivityTypes.ClubRejected => $"Your club {club} wasn't approved, so only you can see it",
             ActivityTypes.LightForecast => "Good light is forecast tomorrow at one of your places",
             ActivityTypes.ChallengeOpen => $"New photo challenge: {challenge} is open for entries",
             ActivityTypes.ChallengeEnding => $"The {challenge} challenge ends in less than a day",
@@ -54,6 +59,7 @@ public static class ActivityText
         [nameof(ActivitySettingsDto.Challenges)] = "Photo challenges: new ones, closing soon, results",
         [nameof(ActivitySettingsDto.Walks)] = "Photo walks: new ones by members you follow, people joining yours, changes and reminders",
         [nameof(ActivitySettingsDto.Forecasts)] = "Light forecasts: good golden hours at places you asked about",
+        [nameof(ActivitySettingsDto.Clubs)] = "Clubs: requests to join clubs you run, and your requests being accepted",
         [nameof(ActivitySettingsDto.Push)] = "Also send them to my phone (in the PhotoWorld app)",
     };
 

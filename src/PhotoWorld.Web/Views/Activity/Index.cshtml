@@ -30,6 +30,7 @@
                     { PostId: { } post } => ("Blogs", "Post", post),
                     { ChallengeId: { } challenge } => ("Challenges", "Details", challenge),
                     { WalkId: { } walk } => ("Walks", "Details", walk),
+                    { ClubId: { } club } => ("Clubs", "Details", club),
                     { Type: ActivityTypes.LightForecast } => ("Places", "Index", Guid.Empty),
                     { Actor: { } actor } => ("Members", "Details", actor.Id),
                     _ => ("Home", "Index", Guid.Empty),

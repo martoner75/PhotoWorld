@@ -42,6 +42,7 @@ public partial class ActivityViewModel(PhotoWorldApi api) : PagedListViewModel<A
         { PostId: { } post } => Shell.Current.GoToAsync(Routes.Post, new ShellNavigationQueryParameters { ["id"] = post }),
         { ChallengeId: { } challenge } => Routes.OpenChallengeAsync(challenge),
         { WalkId: { } walk } => Routes.OpenWalkAsync(walk),
+        { ClubId: { } club } => Routes.OpenClubAsync(club),
         { Type: ActivityTypes.LightForecast } => Shell.Current.GoToAsync(Routes.Places),
         { Actor: { } actor } => Routes.OpenMemberAsync(actor.Id),
         _ => Task.CompletedTask,

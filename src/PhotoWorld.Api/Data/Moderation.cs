@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using PhotoWorld.Shared.Blogs;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Api.Data;
@@ -56,6 +57,19 @@ public static class Moderation
     public static Expression<Func<Collection, bool>> CollectionVisibleTo(Guid? userId) => c =>
         c.OwnerId == userId
         || (c.IsPublic && c.Owner.SuspendedAt == null && !c.Owner.BlockedBy.Any(b => b.BlockerId == userId));
+
+    /// <summary>
+    /// Approved and not hidden by moderation (reports, or a suspended or blocked owner); owners always see their own
+    /// club, whatever its state. A <paramref name="reviewer"/> (a site admin) also sees clubs waiting for approval.
+    /// </summary>
+    public static Expression<Func<Club, bool>> ClubVisibleTo(Guid? userId, bool reviewer = false) => c =>
+        c.OwnerId == userId
+        || (reviewer && c.ReviewStatus == ClubReviewStatus.Pending)
+        || (c.ReviewStatus == ClubReviewStatus.Approved
+            && !(c.Reports.Any(r => r.Status == ReportStatus.Upheld)
+                 || c.Reports.Count(r => r.Status == ReportStatus.Open) >= ReportRules.AutoHideThreshold)
+            && c.Owner.SuspendedAt == null
+            && !c.Owner.BlockedBy.Any(b => b.BlockerId == userId));
 
     /// <summary>The state shown to a content owner, from the same two facts the visibility rule uses.</summary>
     public static ModerationState State(bool anyUpheld, int openReports) =>

@@ -4,6 +4,7 @@ using PhotoWorld.Api.Services.Activities;
 using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Challenges;
+using PhotoWorld.Shared.Clubs;
 using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Notifications;
@@ -32,6 +33,8 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<BlogAttachment> BlogAttachments => Set<BlogAttachment>();
     public DbSet<BlogComment> BlogComments => Set<BlogComment>();
     public DbSet<Place> Places => Set<Place>();
+    public DbSet<Club> Clubs => Set<Club>();
+    public DbSet<ClubMember> ClubMembers => Set<ClubMember>();
     public DbSet<PlaceForecastNotice> PlaceForecastNotices => Set<PlaceForecastNotice>();
     public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
     public DbSet<Follow> Follows => Set<Follow>();
@@ -157,7 +160,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
         {
             e.ToTable(t =>
             {
-                t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id) = 1");
+                t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id, club_id) = 1");
                 t.HasCheckConstraint("ck_reports_status",
                     $"status in ('{ReportStatus.Open}', '{ReportStatus.Dismissed}', '{ReportStatus.Upheld}')");
                 t.HasCheckConstraint("ck_reports_reason",
@@ -177,10 +180,13 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(r => new { r.ReporterId, r.CommentId }).IsUnique();
             e.HasIndex(r => new { r.ReporterId, r.BlogPostId }).IsUnique();
             e.HasIndex(r => new { r.ReporterId, r.BlogCommentId }).IsUnique();
+            e.HasOne(r => r.Club).WithMany(c => c.Reports).HasForeignKey(r => r.ClubId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(r => new { r.ReporterId, r.ClubId }).IsUnique();
             e.HasIndex(r => new { r.PhotoId, r.Status });
             e.HasIndex(r => new { r.CommentId, r.Status });
             e.HasIndex(r => new { r.BlogPostId, r.Status });
             e.HasIndex(r => new { r.BlogCommentId, r.Status });
+            e.HasIndex(r => new { r.ClubId, r.Status });
         });
 
         modelBuilder.Entity<Portfolio>(e =>
@@ -264,6 +270,43 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(p => p.ForecastAlerts).HasFilter("forecast_alerts");
         });
 
+        modelBuilder.Entity<Club>(e =>
+        {
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_clubs_join_policy", $"join_policy in ({Quoted(ClubJoinPolicy.All)})");
+                t.HasCheckConstraint("ck_clubs_review_status", $"review_status in ({Quoted(ClubReviewStatus.All)})");
+                t.HasCheckConstraint("ck_clubs_area", "(latitude is null) = (longitude is null)");
+            });
+            e.Property(c => c.Name).HasMaxLength(ClubLimits.NameMax);
+            e.Property(c => c.Description).HasMaxLength(ClubLimits.DescriptionMax);
+            e.Property(c => c.City).HasMaxLength(ClubLimits.CityMax);
+            e.Property(c => c.JoinPolicy).HasMaxLength(16);
+            e.Property(c => c.ReviewStatus).HasMaxLength(16).HasDefaultValue(ClubReviewStatus.Pending);
+            e.Property(c => c.ReviewNote).HasMaxLength(ClubLimits.ReviewNoteMax);
+            // Goes with the owner's account; handing the club over first keeps it.
+            e.HasOne(c => c.Owner).WithMany().HasForeignKey(c => c.OwnerId);
+            e.HasIndex(c => c.OwnerId);
+            e.HasIndex(c => new { c.ReviewStatus, c.CreatedAt });
+        });
+
+        modelBuilder.Entity<ClubMember>(e =>
+        {
+            e.ToTable("club_members", t =>
+            {
+                t.HasCheckConstraint("ck_club_members_role", $"role in ({Quoted(ClubRoles.All)})");
+                t.HasCheckConstraint("ck_club_members_status", $"status in ({Quoted(ClubMemberStatus.All)})");
+            });
+            e.HasKey(m => new { m.ClubId, m.UserId });
+            e.Property(m => m.Role).HasMaxLength(16);
+            e.Property(m => m.Status).HasMaxLength(16);
+            e.HasOne(m => m.Club).WithMany(c => c.Members).HasForeignKey(m => m.ClubId);
+            e.HasOne(m => m.User).WithMany().HasForeignKey(m => m.UserId);
+            e.HasIndex(m => m.UserId);
+            // One owner per club.
+            e.HasIndex(m => m.ClubId).IsUnique().HasFilter($"role = '{ClubRoles.Owner}'").HasDatabaseName("ix_club_members_one_owner");
+        });
+
         modelBuilder.Entity<PlaceForecastNotice>(e =>
         {
             e.ToTable("place_forecast_notices");
@@ -339,6 +382,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(a => a.Post).WithMany().HasForeignKey(a => a.PostId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Challenge).WithMany().HasForeignKey(a => a.ChallengeId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Walk).WithMany().HasForeignKey(a => a.WalkId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Club).WithMany().HasForeignKey(a => a.ClubId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(a => new { a.RecipientId, a.CreatedAt }).IsDescending(false, true);
             e.HasIndex(a => new { a.RecipientId, a.ReadAt });
             e.HasIndex(a => a.CreatedAt);
@@ -404,6 +448,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(s => s.Push).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.Walks).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.Forecasts).HasDefaultValue(true).HasSentinel(true);
+            e.Property(s => s.Clubs).HasDefaultValue(true).HasSentinel(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 
@@ -424,4 +469,6 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(l => l.TraceId);
         });
     }
+
+    private static string Quoted(IEnumerable<string> values) => string.Join(", ", values.Select(v => $"'{v}'"));
 }

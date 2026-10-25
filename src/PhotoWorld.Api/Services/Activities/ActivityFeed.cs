@@ -12,18 +12,18 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 {
     /// <summary>Tells one member that <paramref name="actorId"/> did something.</summary>
     public Task NotifyAsync(Guid recipientId, Guid actorId, string type, Guid? photoId = null, Guid? postId = null,
-        string? snippet = null, Guid? walkId = null, CancellationToken ct = default) =>
+        string? snippet = null, Guid? walkId = null, Guid? clubId = null, CancellationToken ct = default) =>
         SafelyAsync(type, async () =>
         {
             if (recipientId == actorId) return;
             if (!ActivityRules.Wants(await SettingsAsync(recipientId, ct), type)) return;
             if (await db.Blocks.AnyAsync(b => b.BlockerId == recipientId && b.BlockedId == actorId, ct)) return;
             if (ActivityRules.IsOncePerActor(type) && await db.Activities.AnyAsync(a => a.RecipientId == recipientId
-                    && a.ActorId == actorId && a.Type == type && a.PhotoId == photoId, ct)) return;
+                    && a.ActorId == actorId && a.Type == type && a.PhotoId == photoId && a.ClubId == clubId, ct)) return;
 
             db.Activities.Add(new Activity
             {
-                RecipientId = recipientId, ActorId = actorId, Type = type, PhotoId = photoId, PostId = postId, WalkId = walkId,
+                RecipientId = recipientId, ActorId = actorId, Type = type, PhotoId = photoId, PostId = postId, WalkId = walkId, ClubId = clubId,
                 Snippet = ActivityRules.Snippet(snippet), CreatedAt = clock.GetUtcNow(),
             });
             await db.SaveChangesAsync(ct);
@@ -81,7 +81,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 
     public async Task<ActivitySettingsDto> SettingsAsync(Guid userId, CancellationToken ct) =>
         await db.ActivitySettings.AsNoTracking().Where(s => s.UserId == userId)
-            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks, s.Forecasts))
+            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks, s.Forecasts, s.Clubs))
             .SingleOrDefaultAsync(ct) ?? ActivitySettingsDto.AllOn;
 
     private async Task SafelyAsync(string type, Func<Task> work)

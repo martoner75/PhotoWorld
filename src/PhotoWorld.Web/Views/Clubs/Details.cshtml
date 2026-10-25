@@ -1,0 +1,159 @@
+@model ClubPageViewModel
+@{
+    var c = Model.Club;
+    var s = c.Summary;
+    ViewData["Title"] = s.Name;
+    var requested = s.MyStatus == ClubMemberStatus.Pending;
+}
+
+<section class="container page">
+    @if (c.IsOwner && s.ReviewStatus == ClubReviewStatus.Pending)
+    {
+        <div class="alert alert-info" role="status">Waiting for an admin to approve your club. Until then only you can see it.</div>
+    }
+    else if (c.IsOwner && s.ReviewStatus == ClubReviewStatus.Rejected)
+    {
+        <div class="alert alert-danger" role="status">
+            This club wasn't approved, so only you can see it.@(c.ReviewNote is { } note ? $" The admin said: “{note}”" : "")
+        </div>
+    }
+    @if (c.IsOwner)
+    {
+        <partial name="_ModerationBanner" model='new ModerationBannerModel(c.Moderation, "club")' />
+    }
+
+    <header class="page-header">
+        <div>
+            <p class="hero-eyebrow">Camera club</p>
+            <h1>@s.Name</h1>
+            <p class="text-muted">
+                @if (s.City is not null)
+                {
+                    @:📍 @s.City ·
+                }
+                @s.MemberCount @(s.MemberCount == 1 ? "member" : "members") ·
+                @(s.JoinPolicy == ClubJoinPolicy.Open ? "anyone can join" : "ask to join") ·
+                run by <a asp-controller="Members" asp-action="Details" asp-route-id="@c.Owner.Id">@c.Owner.DisplayName</a>
+            </p>
+        </div>
+        <div class="member-actions">
+            @if (c.CanJoin)
+            {
+                <form asp-action="Join" asp-route-id="@s.Id" method="post">
+                    <button type="submit" class="btn btn-accent">@(s.JoinPolicy == ClubJoinPolicy.Open ? "Join the club" : "Ask to join")</button>
+                </form>
+            }
+            else if (requested)
+            {
+                <form asp-action="Leave" asp-route-id="@s.Id" method="post" data-confirm="Withdraw your request to join?">
+                    <button type="submit" class="btn btn-ghost">Requested · withdraw</button>
+                </form>
+            }
+            else if (c.CanLeave)
+            {
+                <form asp-action="Leave" asp-route-id="@s.Id" method="post" data-confirm="Leave @s.Name?">
+                    <button type="submit" class="btn btn-ghost">Leave</button>
+                </form>
+            }
+            @if (c.CanEdit)
+            {
+                <a class="btn btn-ghost" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+            }
+            @if (c.IsOwner)
+            {
+                <form asp-action="Delete" asp-route-id="@s.Id" method="post"
+                      data-confirm="Delete @s.Name? Its members are let go. This can't be undone.">
+                    <button type="submit" class="btn btn-danger-ghost">Delete</button>
+                </form>
+            }
+        </div>
+    </header>
+
+    @if (c.CanReview)
+    {
+        <div class="form-card club-review">
+            <p class="mb-0"><strong>Admin:</strong> @(s.ReviewStatus == ClubReviewStatus.Pending ? "this club is waiting for approval." : "this club is live in the directory.")</p>
+            <partial name="_ClubReviewActions" model="new ClubReviewActionsModel(s.Id, s.Name, s.ReviewStatus, Context.Request.Path)" />
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(c.Description))
+    {
+        <p class="blog-intro">@c.Description</p>
+    }
+
+    @if (Model.Requests.Count > 0)
+    {
+        <section class="club-section" id="requests">
+            <h2>Asking to join <span class="text-muted">@Model.Requests.Count</span></h2>
+            <ul class="club-members">
+                @foreach (var r in Model.Requests)
+                {
+                    <li>
+                        <a asp-controller="Members" asp-action="Details" asp-route-id="@r.User.Id" class="photo-card-owner">
+                            <partial name="_Avatar" model="r.User" /> @r.User.DisplayName
+                        </a>
+                        <span class="text-muted small">asked <time datetime="@r.JoinedAt.ToString("O")" data-local-time="full">@r.JoinedAt.ToString("d MMM")</time></span>
+                        <span class="club-member-actions">
+                            <form asp-action="Approve" asp-route-id="@s.Id" asp-route-userId="@r.User.Id" method="post">
+                                <button type="submit" class="btn btn-accent btn-sm">Let in</button>
+                            </form>
+                            <form asp-action="Remove" asp-route-id="@s.Id" asp-route-userId="@r.User.Id" asp-route-request="true" method="post">
+                                <button type="submit" class="btn btn-ghost btn-sm">Turn down</button>
+                            </form>
+                        </span>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="club-section" id="members">
+        <h2>Members <span class="text-muted">@Model.Members.Count</span></h2>
+        <ul class="club-members">
+            @foreach (var m in Model.Members)
+            {
+                var isMe = m.IsMe;
+                <li>
+                    <a asp-controller="Members" asp-action="Details" asp-route-id="@m.User.Id" class="photo-card-owner">
+                        <partial name="_Avatar" model="m.User" /> @m.User.DisplayName
+                    </a>
+                    @if (m.Role != ClubRoles.Member)
+                    {
+                        <span class="moderation-badge draft-badge">@(m.Role == ClubRoles.Owner ? "Owner" : "Admin")</span>
+                    }
+                    @if (!isMe && m.Role != ClubRoles.Owner && (c.IsOwner || (c.CanManageMembers && m.Role == ClubRoles.Member)))
+                    {
+                        <details class="suspend-menu club-member-actions">
+                            <summary class="btn btn-ghost btn-sm">Manage</summary>
+                            <div class="suspend-form">
+                                @if (c.IsOwner)
+                                {
+                                    var next = m.Role == ClubRoles.Admin ? ClubRoles.Member : ClubRoles.Admin;
+                                    <form asp-action="Role" asp-route-id="@s.Id" asp-route-userId="@m.User.Id" method="post">
+                                        <input type="hidden" name="role" value="@next" />
+                                        <button type="submit" class="btn btn-ghost btn-sm">@(next == ClubRoles.Admin ? "Make admin" : "Make a member again")</button>
+                                    </form>
+                                    <form asp-action="Role" asp-route-id="@s.Id" asp-route-userId="@m.User.Id" method="post"
+                                          data-confirm="Hand @s.Name to @m.User.DisplayName? They become the owner and you stay on as an admin.">
+                                        <input type="hidden" name="role" value="@ClubRoles.Owner" />
+                                        <button type="submit" class="btn btn-ghost btn-sm">Hand the club over</button>
+                                    </form>
+                                }
+                                <form asp-action="Remove" asp-route-id="@s.Id" asp-route-userId="@m.User.Id" method="post"
+                                      data-confirm="Remove @m.User.DisplayName from the club?">
+                                    <button type="submit" class="btn btn-danger-ghost btn-sm">Remove from club</button>
+                                </form>
+                            </div>
+                        </details>
+                    }
+                </li>
+            }
+        </ul>
+    </section>
+
+    @if (c.CanReport)
+    {
+        <p class="report-link"><a asp-action="Report" asp-route-id="@s.Id">Report this club</a></p>
+    }
+</section>
