@@ -869,9 +869,11 @@ flowchart LR
   `SUPABASE_DB_CONNECTION_STRING` repository secret.
 - Tests use xunit v3 on **Microsoft.Testing.Platform**: `global.json` opts `dotnet test` into that mode, which takes
   the project with `--project` (`dotnet test --project tests/PhotoWorld.Api.Tests`).
-- **The SDK is pinned** in `global.json` (`10.0.402`, rolling forward to newer patches only when one is installed),
-  and every CI job installs it with `setup-dotnet`'s `global-json-file`. A floating `10.0.x` broke CI when a new SDK
-  was announced before its downloads were available. Moving to a newer SDK is a one-line change there.
+- **The SDK is pinned** in `global.json` (`10.0.402`), and every CI job installs exactly that with `setup-dotnet`'s
+  `global-json-file`. A floating `10.0.x` broke CI when a new SDK was announced before its downloads were available.
+  Leave out `rollForward`: with `latestPatch`, `setup-dotnet` asks for the newest patch of the band (`10.0.4xx`) and
+  fails the same way. Locally the SDK still rolls forward to a newer installed patch by default. Moving to a newer
+  SDK is a one-line change there.
 - **Migrations are never applied at startup**, so several API instances can't race. The API logs a warning if the
   database is behind. `docs/supabase-schema.sql` is the same schema as an idempotent script.
 - Deployment of the API and Web, and publishing the app to the App Store / Google Play, aren't automated yet (see the
