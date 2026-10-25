@@ -17,7 +17,7 @@
             This club wasn't approved, so only you can see it.@(c.ReviewNote is { } note ? $" The admin said: “{note}”" : "")
         </div>
     }
-    @if (c.IsOwner)
+    @if (c.IsOwner && c.Moderation != ModerationState.Visible)
     {
         <partial name="_ModerationBanner" model='new ModerationBannerModel(c.Moderation, "club")' />
     }
