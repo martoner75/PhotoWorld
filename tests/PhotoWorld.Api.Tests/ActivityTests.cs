@@ -101,4 +101,25 @@ public class ActivityTests
         Assert.Equal("yesterday", ActivityText.Ago(Start, Start.AddHours(30)));
         Assert.Equal("1 Nov 2026", ActivityText.Ago(Start, Start.AddDays(10)));
     }
+
+    [Fact]
+    public void Every_setting_is_in_exactly_one_section_with_a_label()
+    {
+        var grouped = ActivityText.SettingGroups.SelectMany(g => g.Settings).ToList();
+        var all = typeof(ActivitySettingsDto).GetProperties().Where(p => p.PropertyType == typeof(bool)).Select(p => p.Name).ToList();
+
+        Assert.Equal(all.OrderBy(n => n), grouped.OrderBy(n => n));
+        Assert.All(grouped, n => Assert.True(ActivityText.SettingLabels.ContainsKey(n), n));
+    }
+
+    [Fact]
+    public void Each_setting_can_be_read_and_changed_by_name_without_touching_the_others()
+    {
+        foreach (var name in ActivityText.SettingGroups.SelectMany(g => g.Settings))
+        {
+            var off = ActivitySettingsDto.AllOn.With(name, false);
+            Assert.False(off.Get(name));
+            Assert.All(ActivityText.SettingGroups.SelectMany(g => g.Settings).Where(n => n != name), other => Assert.True(off.Get(other)));
+        }
+    }
 }

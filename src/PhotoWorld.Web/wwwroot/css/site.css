@@ -468,6 +468,12 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .club-search input[type="search"] { flex: 1 1 14rem; min-width: 0; }
 .club-cover-empty { display: grid; place-items: center; font-size: 2.5rem; font-weight: 700; color: var(--pw-accent); }
 .club-review { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-bottom: 1.25rem; }
+.club-cover { margin: 0 0 1.25rem; border-radius: 16px; overflow: hidden; aspect-ratio: 3 / 1; background: var(--pw-ink-2); }
+.club-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.club-cover-pick { display: inline; margin-right: .75rem; }
+.directions-menu .suspend-form { left: 0; right: auto; width: min(300px, calc(100vw - 32px)); gap: .4rem; border-color: var(--pw-line); }
+.settings-group { border: 0; padding: 0; margin: .75rem 0 0; display: grid; gap: .35rem; }
+.settings-group legend { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--pw-muted); margin-bottom: .1rem; }
 .club-section { margin-top: 2rem; }
 .club-section-header { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; }
 .club-section-header h2 { margin: 0; }
@@ -647,6 +653,10 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 /* ---------- Activity ---------- */
 .nav-bell { position: relative; display: inline-flex; align-items: center; }
 .nav-bell-icon { display: block; }
+.line-icon { flex: none; display: inline-block; vertical-align: -.25em; }
+.community-menu .dropdown-item { display: flex; align-items: center; gap: .6rem; }
+.community-menu .line-icon { color: var(--pw-accent); }
+.community-menu .dropdown-item.active .line-icon, .community-menu .dropdown-item:active .line-icon { color: inherit; }
 .nav-bell-count { position: absolute; top: .1rem; right: -.2rem; min-width: 1.15rem; padding: 0 .3rem; border-radius: 99px;
   background: var(--pw-accent); color: var(--pw-accent-ink); font-size: .7rem; font-weight: 700; line-height: 1.15rem; text-align: center; }
 .activity-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }

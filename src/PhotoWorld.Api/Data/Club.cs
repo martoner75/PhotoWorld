@@ -24,6 +24,13 @@ public class Club
 
     public string JoinPolicy { get; set; } = ClubJoinPolicy.Open;
 
+    /// <summary>
+    /// The owner's or an admin's pick from the club's shared photos for its tile and page. While it's unset (or no
+    /// longer shared, visible or from a member) the newest shared photo is used. Cleared if the photo is deleted.
+    /// </summary>
+    public Guid? CoverPhotoId { get; set; }
+    public Photo? CoverPhoto { get; set; }
+
     public string ReviewStatus { get; set; } = ClubReviewStatus.Pending;
     public DateTimeOffset? ReviewedAt { get; set; }
     /// <summary>Why a site admin rejected it or took it down; shown to the owner only.</summary>

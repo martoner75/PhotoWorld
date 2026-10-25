@@ -183,6 +183,8 @@ public interface IPhotoWorldApiClient
     Task<PagedResult<PhotoSummaryDto>> GetClubPhotosAsync(Guid id, int page, CancellationToken ct = default);
     Task<string?> ShareToClubAsync(Guid id, Guid photoId, CancellationToken ct = default);
     Task<string?> UnshareFromClubAsync(Guid id, Guid photoId, CancellationToken ct = default);
+    /// <summary>Null <paramref name="photoId"/>: back to the newest shared photo.</summary>
+    Task<string?> SetClubCoverAsync(Guid id, Guid? photoId, CancellationToken ct = default);
     /// <summary>Null when the photo isn't the caller's.</summary>
     Task<IReadOnlyList<ClubShareChoiceDto>?> GetPhotoClubsAsync(Guid photoId, CancellationToken ct = default);
 

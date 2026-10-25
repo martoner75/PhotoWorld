@@ -29,6 +29,8 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Feedback, typeof(FeedbackPage));
         Routing.RegisterRoute(Routes.Walks, typeof(WalksPage));
         Routing.RegisterRoute(Routes.Walk, typeof(WalkPage));
+        Routing.RegisterRoute(Routes.Settings, typeof(SettingsPage));
+        Routing.RegisterRoute(Routes.Upload, typeof(UploadPage));
         Routing.RegisterRoute(Routes.Clubs, typeof(ClubsPage));
         Routing.RegisterRoute(Routes.Club, typeof(ClubPage));
         Routing.RegisterRoute(Routes.ClubEditor, typeof(ClubEditorPage));

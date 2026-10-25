@@ -311,6 +311,10 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task UnshareFromClubAsync(Guid id, Guid photoId, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Delete, ApiRoutes.Format(ApiRoutes.ClubPhoto, ("id", id), ("photoId", photoId)), null, ct);
 
+    /// <summary>Null <paramref name="photoId"/>: back to the newest shared photo.</summary>
+    public Task SetClubCoverAsync(Guid id, Guid? photoId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Put, WithId(ApiRoutes.ClubCover, id), JsonContent.Create(new SetClubCoverRequest(photoId), options: Json), ct);
+
     public Task<List<ClubShareChoiceDto>> GetPhotoClubsAsync(Guid photoId, CancellationToken ct = default) =>
         GetAsync<List<ClubShareChoiceDto>>(WithId(ApiRoutes.PhotoClubs, photoId), ct);
 

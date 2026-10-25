@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:ch="clr-namespace:PhotoWorld.Shared.Challenges"
+             xmlns:services="clr-namespace:PhotoWorld.App.Services"
+             x:Class="PhotoWorld.App.Views.CommunityPage"
+             x:DataType="vm:CommunityViewModel"
+             Title="Community">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="icon_create.png" Text="Create" Command="{Binding CreateCommand}" Order="Primary"
+                     SemanticProperties.Description="Create: upload photos, organise a walk, start a club" />
+    </ContentPage.ToolbarItems>
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16,12" Spacing="12" MaximumWidthRequest="640">
+                <Label Text="Meet other photographers: join a club, go on a walk, enter a challenge." Style="{StaticResource MutedText}" FontSize="14" />
+
+                <!-- The three sections, each a card with its line icon (LineIcons, as in the website's Community menu). -->
+                <Border Padding="14,12">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding OpenClubsCommand}" /></Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Style="{StaticResource LineIconBadge}">
+                            <Path Data="{x:Static services:LineIconShapes.Clubs}" Style="{StaticResource LineIcon}" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Clubs" Style="{StaticResource Subheading}" FontSize="18" />
+                            <Label Text="Local camera clubs: their photos, walks and challenges. Find one near you." Style="{StaticResource MutedText}" FontSize="14" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+                <Border Padding="14,12">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding OpenWalksCommand}" /></Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Style="{StaticResource LineIconBadge}">
+                            <Path Data="{x:Static services:LineIconShapes.Walks}" Style="{StaticResource LineIcon}" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Photo walks" Style="{StaticResource Subheading}" FontSize="18" />
+                            <Label Text="Meet up and shoot together, with the light and directions to the meeting point." Style="{StaticResource MutedText}" FontSize="14" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+                <Border Padding="14,12">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding OpenChallengesCommand}" /></Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Style="{StaticResource LineIconBadge}">
+                            <Path Data="{x:Static services:LineIconShapes.Challenges}" Style="{StaticResource LineIcon}" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Challenges" Style="{StaticResource Subheading}" FontSize="18" />
+                            <Label Text="A theme each time: enter your photos, and likes are the votes." Style="{StaticResource MutedText}" FontSize="14" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <Label Text="Your next walks" Style="{StaticResource Subheading}" Margin="0,8,0,0" IsVisible="{Binding HasWalks}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Walks}" Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WalkItem">
+                            <Border Padding="12,8">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding OpenWalkCommand, Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, x:DataType=vm:CommunityViewModel}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="1">
+                                    <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="13" />
+                                    <Label Text="{Binding Walk.Title}" Style="{StaticResource Strong}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="Open challenges" Style="{StaticResource Subheading}" Margin="0,8,0,0" IsVisible="{Binding HasChallenges}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Challenges}" Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="ch:ChallengeSummaryDto">
+                            <Border Padding="12,8">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding OpenChallengeCommand, Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, x:DataType=vm:CommunityViewModel}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="1">
+                                    <Label Text="{Binding Title}" Style="{StaticResource Strong}" />
+                                    <Label Text="{Binding EntryCount, StringFormat='{0} entries so far'}" Style="{StaticResource MutedText}" FontSize="13" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

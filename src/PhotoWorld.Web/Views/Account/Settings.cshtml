@@ -110,14 +110,19 @@
         <h2 class="settings-heading">Activity</h2>
         <p class="text-muted mb-0">What shows under Activity (the inbox icon) in the menu and on the app's Activity screen.</p>
         <form asp-controller="Activity" asp-action="Settings" method="post" class="notify-form">
-            @foreach (var (name, label) in ActivityText.SettingLabels)
+            @foreach (var (heading, names) in ActivityText.SettingGroups)
             {
-                var on = (bool)typeof(ActivitySettingsDto).GetProperty(name)!.GetValue(Model.Activity)!;
-                <label class="check-row">
-                    <input type="checkbox" name="@name" value="true" checked="@on" />
-                    <input type="hidden" name="@name" value="false" />
-                    <span>@label</span>
-                </label>
+                <fieldset class="settings-group">
+                    <legend>@heading</legend>
+                    @foreach (var name in names)
+                    {
+                        <label class="check-row">
+                            <input type="checkbox" name="@name" value="true" checked="@Model.Activity.Get(name)" />
+                            <input type="hidden" name="@name" value="false" />
+                            <span>@ActivityText.SettingLabels[name]</span>
+                        </label>
+                    }
+                </fieldset>
             }
             <div class="form-actions">
                 <button type="submit" class="btn btn-accent">Save activity settings</button>

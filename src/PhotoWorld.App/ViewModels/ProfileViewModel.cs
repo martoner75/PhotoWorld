@@ -62,36 +62,45 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     private void SetTheme(string choice) =>
         ThemePalette.Choose(choice switch { "light" => AppTheme.Light, "dark" => AppTheme.Dark, _ => AppTheme.Unspecified });
 
-    // Also follows the top-bar icon. The Me tab's page and view model live as long as the app, so no unsubscribing.
+    // Also follows the top-bar icon. This view model is a singleton (Me and Settings share it), so no unsubscribing.
     private bool _followsThemeChoice;
 
-    // ----- Activity: which kinds of notification the member wants -----
-    [ObservableProperty] public partial bool ActivityLikes { get; set; } = true;
-    [ObservableProperty] public partial bool ActivityComments { get; set; } = true;
-    [ObservableProperty] public partial bool ActivityFollows { get; set; } = true;
-    [ObservableProperty] public partial bool ActivityFollowedPosts { get; set; } = true;
-    [ObservableProperty] public partial bool ActivityChallenges { get; set; } = true;
-    [ObservableProperty] public partial bool ActivityWalks { get; set; } = true;
-    [ObservableProperty] public partial bool ActivityForecasts { get; set; } = true;
-    [ObservableProperty] public partial bool ActivityClubs { get; set; } = true;
+    // ----- Activity: which kinds of notification the member wants, in the sections the website uses too -----
 
-    // Kept as the member set it on the website; the app gets its own switch once it can receive push.
-    private bool _activityPush = true;
+    /// <summary>
+    /// <see cref="ActivityText.SettingGroups"/> as switches. Push isn't listed: it's kept as the member set it on the
+    /// website, until the app can receive push itself.
+    /// </summary>
+    public ObservableCollection<ActivitySettingGroup> ActivityGroups { get; } = [];
+
+    /// <summary>The settings as loaded, so saving keeps anything not shown here (push).</summary>
+    private ActivitySettingsDto _activitySettings = ActivitySettingsDto.AllOn;
 
     private void ShowActivitySettings(ActivitySettingsDto s)
     {
-        (ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, ActivityWalks, ActivityForecasts, ActivityClubs) =
-            (s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Walks, s.Forecasts, s.Clubs);
-        _activityPush = s.Push;
+        _activitySettings = s;
+        ActivityGroups.Clear();
+        foreach (var (heading, names) in ActivityText.SettingGroups)
+        {
+            var items = names.Where(n => n != nameof(ActivitySettingsDto.Push))
+                .Select(n => new ActivitySettingItem(n, ActivityText.SettingLabels[n], s.Get(n))).ToList();
+            if (items.Count > 0) ActivityGroups.Add(new ActivitySettingGroup(heading, items));
+        }
     }
 
     [RelayCommand]
     private Task SaveActivitySettingsAsync() => RunAsync(async () =>
     {
-        ShowActivitySettings(await api.SaveActivitySettingsAsync(new ActivitySettingsDto(
-            ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, _activityPush, ActivityWalks, ActivityForecasts, ActivityClubs)));
+        var settings = ActivityGroups.SelectMany(g => g.Items).Aggregate(_activitySettings, (s, i) => s.With(i.Name, i.IsOn));
+        ShowActivitySettings(await api.SaveActivitySettingsAsync(settings));
         await Ui.AlertAsync("Activity settings saved.");
     });
+
+    [RelayCommand]
+    private Task OpenSettingsAsync() => Shell.Current.GoToAsync(Routes.Settings);
+
+    [RelayCommand]
+    private Task OpenClubsAsync() => Shell.Current.GoToAsync(Routes.Clubs, new ShellNavigationQueryParameters { ["mine"] = true });
 
     [RelayCommand]
     private Task OpenActivityAsync() => Shell.Current.GoToAsync(Routes.Activity);
@@ -168,12 +177,6 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     [RelayCommand]
     private Task OpenPortfolioAsync() => Shell.Current.GoToAsync(Routes.Portfolio);
 
-    [RelayCommand]
-    private Task OpenWalksAsync() => Shell.Current.GoToAsync(Routes.Walks);
-
-    [RelayCommand]
-    private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);
-
     private async Task LoadBlockedAsync()
     {
         Blocked.Clear();
@@ -221,4 +224,15 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
         auth.SignOut();
         await Ui.AlertAsync("Your account and everything you shared have been deleted.");
     });
+}
+
+/// <summary>One section of activity switches ("Community": challenges, walks, clubs…).</summary>
+public sealed record ActivitySettingGroup(string Heading, IReadOnlyList<ActivitySettingItem> Items);
+
+/// <summary>One activity switch, by its <see cref="ActivitySettingsDto"/> name.</summary>
+public partial class ActivitySettingItem(string name, string label, bool isOn) : ObservableObject
+{
+    public string Name { get; } = name;
+    public string Label { get; } = label;
+    [ObservableProperty] public partial bool IsOn { get; set; } = isOn;
 }

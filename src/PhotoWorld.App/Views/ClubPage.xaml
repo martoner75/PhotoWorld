@@ -17,6 +17,11 @@
                         IsVisible="{Binding Notice, Converter={StaticResource HasValue}}">
                     <Label Text="{Binding Notice}" FontSize="14" />
                 </Border>
+                <Border Padding="0" StrokeThickness="0" StrokeShape="RoundRectangle 14" HeightRequest="160"
+                        BackgroundColor="{DynamicResource PhotoBackground}"
+                        IsVisible="{Binding Club.CoverDisplayUrl, Converter={StaticResource HasValue}}">
+                    <Image Source="{Binding Club.CoverDisplayUrl}" Aspect="AspectFill" />
+                </Border>
                 <Label Text="Camera club" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="13" />
                 <Label Text="{Binding Title}" Style="{StaticResource Heading}" />
                 <Label Text="{Binding Facts}" FontSize="15" />

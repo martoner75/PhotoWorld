@@ -300,10 +300,7 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
         if (!await Visible(me, await admins.IsAdminAsync(me, ct)).AnyAsync(c => c.Id == id, ct)) return NotFound();
 
         page = Math.Max(1, page);
-        var visible = db.Photos.Where(Moderation.PhotoVisibleTo(me));
-        var shares = db.ClubPhotos.Where(x => x.ClubId == id)
-            .Where(x => visible.Any(p => p.Id == x.PhotoId))
-            .Where(x => db.ClubMembers.Any(m => m.ClubId == id && m.UserId == x.Photo.OwnerId && m.Status == ClubMemberStatus.Active));
+        var shares = Feed(me).Where(x => x.ClubId == id);
         var total = await shares.CountAsync(ct);
         var items = await shares.OrderByDescending(x => x.SharedAt)
             .Skip((page - 1) * PageSize).Take(PageSize)
@@ -356,6 +353,28 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
         if (!ClubRules.CanUnshare(ownerId == me, await RoleAsync(id, me, ct))) return Forbid();
 
         await db.ClubPhotos.Where(x => x.ClubId == id && x.PhotoId == photoId).ExecuteDeleteAsync(ct);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// The owner or an admin picks the club's cover from its feed, or clears it (null) to show the newest photo.
+    /// The pick must be visible to everyone, since everyone who can see the club sees its cover.
+    /// </summary>
+    [HttpPut(ApiRoutes.ClubCover)]
+    public async Task<IActionResult> SetCover(Guid id, SetClubCoverRequest request, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        var club = await db.Clubs.Where(Moderation.ClubVisibleTo(me)).SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (club is null) return NotFound();
+        var inFeed = request.PhotoId is { } photoId
+                     && await Feed(me).AnyAsync(x => x.ClubId == id && x.PhotoId == photoId, ct)
+                     && await db.Photos.Where(Moderation.PhotoVisibleTo(null)).AnyAsync(p => p.Id == photoId, ct);
+        if (ClubRules.CannotSetCover(await RoleAsync(id, me, ct), request.PhotoId is null || inFeed) is { } problem)
+            return Problem(problem, statusCode: StatusCodes.Status400BadRequest);
+
+        club.CoverPhotoId = request.PhotoId;
+        club.UpdatedAt = clock.GetUtcNow();
+        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -462,7 +481,8 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
             .SingleOrDefaultAsync(ct);
         if (row is null) return null;
 
-        var summary = (await SummariesAsync(db.Clubs.Where(c => c.Id == id), me, ct)).Single().Club;
+        var summaryRow = (await SummariesAsync(db.Clubs.Where(c => c.Id == id), me, ct)).Single();
+        var summary = summaryRow.Club;
         var manages = summary.MyStatus == ClubMemberStatus.Active && ClubRules.CanManage(summary.MyRole);
         var isOwner = row.OwnerId == me;
         return new ClubDto(summary, row.Description, row.Latitude, row.Longitude, row.Owner, row.CreatedAt,
@@ -475,24 +495,51 @@ public class ClubsController(PhotoWorldDbContext db, ActivityFeed activity, Admi
             CanReview: isAdmin && summary.ReviewStatus != ClubReviewStatus.Rejected && !isOwner,
             PendingRequests: manages ? row.Pending : 0,
             Moderation: Moderation.State(row.Upheld, row.OpenReports),
-            ReviewNote: isOwner ? row.ReviewNote : null);
+            ReviewNote: isOwner ? row.ReviewNote : null,
+            CoverPhotoId: summaryRow.CoverPhotoId,
+            CoverDisplayUrl: summaryRow.CoverDisplayUrl);
     }
 
-    private sealed record SummaryRow(ClubSummaryDto Club, double? Latitude, double? Longitude);
+    /// <param name="CoverPhotoId">The chosen cover while it's still in the feed (null: the newest photo is shown).</param>
+    /// <param name="CoverDisplayUrl">The full image of whichever photo is shown.</param>
+    private sealed record SummaryRow(ClubSummaryDto Club, double? Latitude, double? Longitude, Guid? CoverPhotoId, string? CoverDisplayUrl);
 
-    private static async Task<List<SummaryRow>> SummariesAsync(IQueryable<Club> query, Guid me, CancellationToken ct)
+    /// <summary>
+    /// A club's feed as the viewer sees it: shared photos they may see, from people still in the club. The club's page,
+    /// its cover and its feed all use this one definition.
+    /// </summary>
+    private IQueryable<ClubPhoto> Feed(Guid me) =>
+        db.ClubPhotos
+            .Where(x => db.Photos.Where(Moderation.PhotoVisibleTo(me)).Any(p => p.Id == x.PhotoId))
+            .Where(x => db.ClubMembers.Any(m => m.ClubId == x.ClubId && m.UserId == x.Photo.OwnerId && m.Status == ClubMemberStatus.Active));
+
+    private async Task<List<SummaryRow>> SummariesAsync(IQueryable<Club> query, Guid me, CancellationToken ct)
     {
+        var feed = Feed(me);
         var rows = await query
             .Select(c => new
             {
                 c.Id, c.Name, c.City, c.JoinPolicy, c.ReviewStatus, c.Latitude, c.Longitude,
                 Count = c.Members.Count(m => m.Status == ClubMemberStatus.Active && m.User.SuspendedAt == null),
                 Mine = c.Members.Where(m => m.UserId == me).Select(m => new { m.Role, m.Status }).FirstOrDefault(),
+                // The pick counts only while it's still in the feed; otherwise the newest photo stands in.
+                Chosen = feed.Where(x => x.ClubId == c.Id && x.PhotoId == c.CoverPhotoId).Select(x => (Guid?)x.PhotoId).FirstOrDefault(),
+                Newest = feed.Where(x => x.ClubId == c.Id).OrderByDescending(x => x.SharedAt).Select(x => (Guid?)x.PhotoId).FirstOrDefault(),
             })
             .ToListAsync(ct);
-        return rows.Select(r => new SummaryRow(
-            new ClubSummaryDto(r.Id, r.Name, r.City, r.JoinPolicy, r.Count, r.ReviewStatus, r.Mine?.Role, r.Mine?.Status),
-            r.Latitude, r.Longitude)).ToList();
+
+        var coverIds = rows.Select(r => r.Chosen ?? r.Newest).OfType<Guid>().Distinct().ToList();
+        var paths = await db.Photos.AsNoTracking().Where(p => coverIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.ThumbnailPath, p.DisplayPath }).ToDictionaryAsync(p => p.Id, ct);
+        return rows.Select(r =>
+        {
+            var cover = r.Chosen ?? r.Newest;
+            var path = cover is { } id ? paths.GetValueOrDefault(id) : null;
+            return new SummaryRow(
+                new ClubSummaryDto(r.Id, r.Name, r.City, r.JoinPolicy, r.Count, r.ReviewStatus, r.Mine?.Role, r.Mine?.Status,
+                    CoverUrl: path is null ? null : storage.ThumbnailUrl(path.ThumbnailPath)),
+                r.Latitude, r.Longitude, r.Chosen, path is null ? null : storage.PublicUrl(path.DisplayPath));
+        }).ToList();
     }
 
     private bool Validate(SaveClubRequest request)

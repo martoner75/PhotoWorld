@@ -75,6 +75,26 @@ public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows
     bool Walks = true, bool Forecasts = true, bool Clubs = true, bool ClubPhotos = true)
 {
     public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true, true);
+
+    /// <summary>One switch by its name (see <see cref="ActivityText.SettingGroups"/>), so forms can list them in order.</summary>
+    public bool Get(string name) => name switch
+    {
+        nameof(Likes) => Likes, nameof(Comments) => Comments, nameof(Follows) => Follows, nameof(FollowedPosts) => FollowedPosts,
+        nameof(Challenges) => Challenges, nameof(Push) => Push, nameof(Walks) => Walks, nameof(Forecasts) => Forecasts,
+        nameof(Clubs) => Clubs, nameof(ClubPhotos) => ClubPhotos,
+        _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Not an activity setting."),
+    };
+
+    /// <summary>A copy with one switch changed.</summary>
+    public ActivitySettingsDto With(string name, bool on) => name switch
+    {
+        nameof(Likes) => this with { Likes = on }, nameof(Comments) => this with { Comments = on },
+        nameof(Follows) => this with { Follows = on }, nameof(FollowedPosts) => this with { FollowedPosts = on },
+        nameof(Challenges) => this with { Challenges = on }, nameof(Push) => this with { Push = on },
+        nameof(Walks) => this with { Walks = on }, nameof(Forecasts) => this with { Forecasts = on },
+        nameof(Clubs) => this with { Clubs = on }, nameof(ClubPhotos) => this with { ClubPhotos = on },
+        _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Not an activity setting."),
+    };
 }
 
 public static class DevicePlatforms

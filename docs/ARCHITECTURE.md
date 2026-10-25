@@ -209,7 +209,7 @@ so run a single Web instance or move them to a shared cache.
 - **Sign out:** the Web deletes its cookie; the app deletes its stored session.
 - **Expiry or rejection:** any `401` from the API ends the session. The Web sends the member to sign in again
   (`ApiUnauthorizedFilter`); the app's `ApiAuthHandler` signs out and the shell returns to the sign-in page.
-- **Account deletion** (Web settings or the app's Me tab): `DELETE api/users/me` removes the member and, through
+- **Account deletion** (Settings on the website, or Me → Settings in the app): `DELETE api/users/me` removes the member and, through
   database cascades, everything they created; their photo and PDF files are then deleted from Storage.
 
 ## 4. A request, end to end
@@ -427,6 +427,7 @@ erDiagram
         float latitude
         float longitude
         text join_policy
+        uuid cover_photo_id FK
         text review_status
         text review_note
     }
@@ -696,7 +697,11 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   `walk_attendees`. `WalkRules` holds the checks (length ≤ 12 h, joining before the start, not full, not blocked);
   `WalksController.Visible` applies suspension and blocks both ways. Followers get `walk_new`, attendees
   `walk_changed`/`walk_cancelled`, and `ScheduledActivitySender` sends `walk_reminder` within 24 h of the start.
-  Photos join a walk through its tag, `walk-` plus the first 8 hex characters of its id. A walk with `club_id` is a
+  Photos join a walk through its tag, `walk-` plus the first 8 hex characters of its id. **Directions** hand the
+  meeting point to a maps service that routes from the device's own location: Google Maps' keyless directions URL
+  (`travelmode` walking, driving or transit; `rel="noreferrer"`) on the website, MAUI's `Map.OpenAsync` with a
+  `NavigationMode` in the app (Apple Maps, or Android's default maps app). PhotoWorld never receives the member's
+  location for this. A walk with `club_id` is a
   **club walk**: `Visible` keeps it, meeting point included, to the club's active members and its organiser,
   `walk_new` goes to the members instead of followers, and the club can't change after creation.
 - **Clubs.** `clubs` (owner, name, city, optional area, `join_policy` open or approval, `review_status`) and
@@ -710,6 +715,11 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   leaving or being removed deletes a member's shares. `ActivityFeed.NotifyClubPhotoAsync` sends `club_photo` to the
   other members, at most one per club per member per day (`ActivityRules.ClubPhotoQuietFor`). A photo shared while
   pending is announced when an admin approves it. Photos stay public: a club groups them, it doesn't hide them.
+  **Cover**: `clubs.cover_photo_id` (set null if the photo goes) is the owner's or an admin's pick, set with
+  `PUT api/clubs/{id}/cover` from photos in the feed that everyone can see. `ClubsController.Feed` is the one
+  definition of the feed; summaries take the pick while it's still in the viewer's feed, else the newest photo
+  there, so a cover is never a photo the viewer couldn't see. Summaries return its thumbnail, the club page also its
+  display image.
 - **Public portfolio.** `portfolios` (one per member, unique `slug`) and `portfolio_photos` (ordered by `position`;
   cascade with the photo or the member). `GET api/portfolios/{slug}` is `[AllowAnonymous]` like the showcase: it
   answers 404 unless `is_public` and the owner isn't suspended, and lists only chosen photos that pass
@@ -731,6 +741,13 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   returns the last 30 days and the 30 before (views, likes, new followers, comments), per-day views and likes, the
   top 5 photos and the top 8 tags by likes. The website draws two SVG column charts (one measure each, never two
   scales on one plot); the app draws the same with `GraphicsView`.
+- **Navigation** follows the same groups on both clients: Photos (Gallery, Explore), Blogs, Community (Clubs, Walks,
+  Challenges), Places, Create and the member's own things. The website has Gallery · Explore · Blogs · Community ▾ ·
+  Places, a **＋ Create ▾** menu and the avatar menu; the app has five tabs (Gallery · Blogs · Community · Places ·
+  Me, iOS's limit) with creating behind **＋** on the Gallery and Community toolbars (`Routes.CreateAsync`), and
+  Settings as its own screen sharing the Me tab's view model (a singleton). The activity switches come in sections
+  from `ActivityText.SettingGroups`, read through `ActivitySettingsDto.Get` / `With`, so the website's settings page
+  and the app's Settings screen list the same switches in the same order.
 - **In the app** the same API calls back the Gallery's Everyone / Following switch, Filter page and challenge
   banner, the Blogs switch, a member page (follow, trophies, photos) and the challenge, entries and "enter a
   photo" pages. Challenge wording (`ChallengeDisplay`) lives in Shared so the website and app read the same.

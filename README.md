@@ -130,14 +130,26 @@ server build is green, it applies any pending EF migrations to Supabase. It need
 PhotoWorld uses **Gallery White** (white pages, amber accent) and **Graphite** (soft charcoal) for dark mode. Members
 choose **Automatic** (follow the device, the default), **Light** or **Dark**. On the website, signed-in members pick
 Light / Dark / Auto in the account menu under their avatar (signed out, a moon/sun icon in the header switches
-between light and dark in one click), and Account settings → Appearance also offers all three (remembered in that browser); in the app, the same moon/sun icon is in the top bar of every tab, and Appearance on the Me tab offers all three (remembered on that device). Website: the colours are CSS variables at the top of `site.css` (`:root` and its `[data-theme="dark"]`
+between light and dark in one click), and Settings → Appearance also offers all three (remembered in that browser); in the app, the same moon/sun icon is in the top bar of the Blogs, Places and Me tabs, and Me → Settings → Appearance offers all three (remembered on that device). Website: the colours are CSS variables at the top of `site.css` (`:root` and its `[data-theme="dark"]`
 block); a small script in the layout's `<head>` sets `data-theme` and Bootstrap's `data-bs-theme` before the page
 paints.
 
-The website header, once signed in, has the sections on the left (Gallery, Explore, Blogs, Challenges, Walks, with
-the current one highlighted) and search, **Upload**, the Activity icon and the avatar on the right. The avatar opens
-the account menu: My profile, My places, Account settings, Admin (admins only), the theme and Sign out. Below 992px it
-all folds into the mobile menu, with the account items listed in full. Green confirmation messages (such as the
+**Finding your way.** The website and the app use the same groups, so each feature has one home on both:
+
+| Group | Website (signed in) | App |
+|---|---|---|
+| Photos | **Gallery** · **Explore** in the header, plus search | **Gallery** tab (toolbar: Explore, ＋, Activity, Filter) |
+| Blogs | **Blogs** | **Blogs** tab |
+| Community | **Community ▾**: Clubs, Photo walks, Challenges | **Community** tab: the three, plus your next walks and the open challenges |
+| Places | **Places** | **Places** tab |
+| Create | **＋ Create ▾**: upload a photo or several, write a post, organise a walk, start a club, new collection | **＋** on the Gallery and Community toolbars: upload photos, organise a walk, start a club, new collection |
+| Your own | The avatar menu: My profile, My collections, My clubs, My portfolio, Insights, Settings, Admin (admins), the theme, Sign out | **Me** tab: Activity, My member page, collections, clubs, portfolio, Insights, **Settings**, help links, Sign out |
+
+Settings has the same sections on both: Appearance, Activity (switches grouped as *Your photos and posts*, *People*,
+*Community*, *Places*, *Delivery*, defined once in `ActivityText.SettingGroups`), email notifications, blocked
+members and the account. Writing blog posts, creating challenges and the Admin pages are website-only. On the
+website the current section is highlighted; below 992px the header folds into the mobile menu, with the account
+items listed in full. Green confirmation messages (such as the
 welcome after signing in) close by themselves after 3 seconds (`data-auto-dismiss` on the alert, paused while the
 pointer is over it); error messages stay until the member moves on. App: `Resources/Styles/Colors.xaml` holds the light values and `ThemePalette` swaps in the dark ones; the
 choice sets `UserAppTheme` (pages use `DynamicResource`). Text drawn on photos stays light in both. The Activity (inbox tray) and challenge (trophy)
@@ -182,7 +194,7 @@ doesn't. It's deleted with the photo or the account.
 
 ## Public portfolio
 
-**My portfolio** (account menu) gives each member one page anyone can open without signing in, at
+**My portfolio** (avatar menu; the app's Me tab) gives each member one page anyone can open without signing in, at
 `/p/{address}`: their name, picture, a short bio, optional website, Instagram and contact email, and up to 24 of
 their photos in the order they choose. It's off until they switch it on. Only photos visible to signed-out visitors
 can be chosen or shown (approved, not hidden by reports), and a suspended member's portfolio answers 404. The page
@@ -270,7 +282,7 @@ Without a choice, it's the first photo in the post. The API only accepts the aut
 
 ## Photo challenges
 
-**Challenges** (in the menu) are themes to shoot for. While a challenge is open, members enter up to 3 of their
+**Challenges** (Community in the menu; the app's Community tab) are themes to shoot for. While a challenge is open, members enter up to 3 of their
 own photos and can withdraw them until it ends. **Votes are likes**: a like from another member counts if it was
 given between the moment the photo was entered and the end of the challenge. When it ends, the entry with the most
 votes wins (on a tie, the one entered first), and the winner gets a trophy on their member page. Photos hidden by
@@ -317,12 +329,19 @@ The owner's own views don't count.
 
 ## Photo walks
 
-**Walks** (in the menu; on the app's Me tab and Explore) are meetups to shoot together: a title, plan, start and
+**Walks** (Community in the menu; the app's Community tab) are meetups to shoot together: a title, plan, start and
 length (up to 12 hours), an optional limit on people, and a meeting point picked on the map (or from your places).
 Members join and leave until it starts; the organiser edits, cancels or deletes it. Followers hear about a new walk,
 those going hear about changes and cancellations, and everyone going gets a reminder within the last day
 (Activity, so push too once it's on). Each walk has a tag (`walk-1a2b3c4d`): photos tagged with it show on the
 walk's page. Members blocked either way don't see each other's walks; suspended organisers' walks are hidden.
+
+**Directions.** **Directions** on a walk's page gets members to the meeting point by walking, driving or public
+transport. The website opens Google Maps' directions link (`google.com/maps/dir/?api=1&destination=…&travelmode=…`,
+no API key; it opens the Google Maps app on phones that have it), with a **View on OpenStreetMap** link too. The app
+asks for the mode and opens the phone's maps app (Apple Maps on iPhone and iPad, the default maps app on Android)
+straight into directions. Either way the maps service works out the route, distance and time from the device's
+location; PhotoWorld only passes the meeting point and never sees where the member is.
 
 **Golden hour.** A walk's page (website and app) shows the light at the meeting point on the day: blue hour, golden
 hour, sunrise, sunset, golden hour, blue hour, and which of them the walk catches ("✨ The walk catches the evening
@@ -333,7 +352,7 @@ longitude. Near the poles, days without sunrise say so.
 
 ## Camera clubs
 
-**Clubs** (in the website's menu, and **👥 Clubs** on the app's Explore tab) are local camera clubs run by members.
+**Clubs** (Community in the website's menu, and the app's Community tab) are local camera clubs run by members.
 Clubs have members, a photo feed, and (below) their own walks and challenges.
 
 - **Starting one.** Any member can start up to 3 clubs: a name, where they meet (a city), an optional area taken
@@ -357,6 +376,10 @@ Clubs have members, a photo feed, and (below) their own walks and challenges.
   out of the feed. The photo's owner or a club admin can take one out. Members hear about new photos in a club at
   most **once a day per club** ("Anna shared a new photo in “Bristol Street”"), with their own **club photos**
   switch. A photo waiting for approval is announced when it's approved.
+- **Cover.** A club's tile in the directory, and the banner on its page, show its newest shared photo. The owner
+  or an admin can pick a different one (**Use as cover** under a photo on the club page; in the app, tap a photo)
+  and go back to the newest later. A pick only counts while it's still in the feed and visible to everyone;
+  otherwise the newest photo stands in, and a club with no photos shows its initial.
 - **Club walks.** When organising a walk, members choose *Everyone* or one of their clubs (**Organise a club
   walk** on the club page starts with the club picked). A club walk, meeting point included, is shown only to the
   club's active members and its organiser. Members, rather than the organiser's followers, hear about it, and only
@@ -380,7 +403,7 @@ Members get notifications (an inbox icon in the website's menu with an unread co
 new items, and *Activity* on the Me tab) when someone likes or comments on their photo, comments on their post or follows them; when a member
 they follow shares a photo or publishes a post (once per item); and for photo challenges: a new one opens, one they
 entered ends within a day, and the results (won, placed #2/#3, or "results are in"). Opening Activity marks it all
-read. Members switch kinds off in account settings or on the Me tab.
+read. Members switch kinds off in Settings (website, or Me → Settings in the app).
 
 Nobody is notified about their own actions, by members they blocked, or by suspended members, and items about
 photos or posts they can no longer see are left out. Unliking or unfollowing takes back an unread notification.
@@ -471,7 +494,7 @@ if the place is deleted. `GET api/spots` returns the newest 2,000 visible photos
 
 ## My places
 
-**My places** (in the account menu under the avatar) is a private map of the places a member has been. They search for a place or click
+**Places** (in the header, and a tab in the app) is a private map of the places a member has been. They search for a place or click
 the map to drop a pin (draggable to adjust), then add a name, an optional visit date and notes. Clicking a place in
 the list flies the map to it.
 

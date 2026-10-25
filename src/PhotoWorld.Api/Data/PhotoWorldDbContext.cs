@@ -287,6 +287,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(c => c.ReviewNote).HasMaxLength(ClubLimits.ReviewNoteMax);
             // Goes with the owner's account; handing the club over first keeps it.
             e.HasOne(c => c.Owner).WithMany().HasForeignKey(c => c.OwnerId);
+            e.HasOne(c => c.CoverPhoto).WithMany().HasForeignKey(c => c.CoverPhotoId).OnDelete(DeleteBehavior.SetNull);
             e.HasIndex(c => c.OwnerId);
             e.HasIndex(c => new { c.ReviewStatus, c.CreatedAt });
         });

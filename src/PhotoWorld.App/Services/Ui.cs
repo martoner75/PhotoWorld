@@ -8,6 +8,9 @@ public static class Routes
     public const string Login = "//login";
     public const string Gallery = "//main/gallery";
     public const string Places = "//main/places";
+    public const string Community = "//main/community";
+    public const string Upload = "upload";
+    public const string Settings = "settings";
     public const string Photo = "photo";
     public const string Post = "post";
     public const string PostComments = "post-comments";
@@ -33,6 +36,21 @@ public static class Routes
     public const string Clubs = "clubs";
     public const string Club = "club";
     public const string ClubEditor = "club-editor";
+
+    /// <summary>The ＋ in the Gallery and Community toolbars: what a member can start, like the website's Create menu.</summary>
+    public static async Task CreateAsync()
+    {
+        const string photos = "Upload photos", walk = "Organise a photo walk", club = "Start a club", collection = "New collection";
+        var route = await Shell.Current.DisplayActionSheetAsync("Create", "Cancel", null, photos, walk, club, collection) switch
+        {
+            photos => Upload,
+            walk => WalkEditor,
+            club => ClubEditor,
+            collection => CollectionEditor,
+            _ => null,
+        };
+        if (route is not null) await Shell.Current.GoToAsync(route);
+    }
 
     public static Task OpenClubAsync(Guid id) =>
         Shell.Current.GoToAsync(Club, new ShellNavigationQueryParameters { ["id"] = id });

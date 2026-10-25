@@ -65,6 +65,20 @@ public static class ActivityText
         [nameof(ActivitySettingsDto.Push)] = "Also send them to my phone (in the PhotoWorld app)",
     };
 
+    /// <summary>
+    /// The switches in sections, in the order the website's settings page and the app's Settings screen show them. A
+    /// new kind of activity gets its label above and a place here, and both pick it up.
+    /// </summary>
+    public static readonly IReadOnlyList<(string Heading, IReadOnlyList<string> Settings)> SettingGroups =
+    [
+        ("Your photos and posts", [nameof(ActivitySettingsDto.Likes), nameof(ActivitySettingsDto.Comments)]),
+        ("People", [nameof(ActivitySettingsDto.Follows), nameof(ActivitySettingsDto.FollowedPosts)]),
+        ("Community", [nameof(ActivitySettingsDto.Challenges), nameof(ActivitySettingsDto.Walks),
+            nameof(ActivitySettingsDto.Clubs), nameof(ActivitySettingsDto.ClubPhotos)]),
+        ("Places", [nameof(ActivitySettingsDto.Forecasts)]),
+        ("Delivery", [nameof(ActivitySettingsDto.Push)]),
+    ];
+
     /// <summary>"just now", "5 min ago", "3 h ago", "2 days ago", then the date.</summary>
     public static string Ago(DateTimeOffset when, DateTimeOffset now)
     {

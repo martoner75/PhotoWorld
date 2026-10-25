@@ -18,7 +18,7 @@
                            Style="{StaticResource MutedText}" FontSize="14" Margin="4,0,4,12" />
                 </CollectionView.Header>
                 <CollectionView.EmptyView>
-                    <Label Text="You haven't shared any photos yet. Upload one from the Upload tab, then come back to enter it."
+                    <Label Text="You haven't shared any photos yet. Upload one with ＋ on the Gallery tab, then come back to enter it."
                            Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center" Margin="32,80"
                            IsVisible="{Binding IsEmpty}" />
                 </CollectionView.EmptyView>

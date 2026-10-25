@@ -77,7 +77,7 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
     public string EmptyMessage =>
         IsFiltered ? "No photos match."
         : Following ? "No photos from members you follow yet. Tap a member's name to see their page and follow them."
-        : "No photos yet. Be the first to share one from the Upload tab.";
+        : "No photos yet. Be the first to share one: tap ＋ and Upload photos.";
 
     /// <summary>Leads the plain gallery (everyone, no filters).</summary>
     [ObservableProperty]
@@ -144,7 +144,7 @@ public partial class GalleryViewModel : PagedListViewModel<PhotoSummaryDto>
         FeaturedChallenge is { } c ? Routes.OpenChallengeAsync(c.Id) : Task.CompletedTask;
 
     [RelayCommand]
-    private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);
+    private Task CreateAsync() => Routes.CreateAsync();
 
     [RelayCommand]
     private Task OpenExploreAsync() => Shell.Current.GoToAsync(Routes.Explore);

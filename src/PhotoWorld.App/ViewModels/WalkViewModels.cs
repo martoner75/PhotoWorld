@@ -148,9 +148,30 @@ public partial class WalkViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     }
 
     [RelayCommand]
-    private Task DirectionsAsync() => Location is { } at
-        ? Microsoft.Maui.ApplicationModel.Map.Default.OpenAsync(at, new MapLaunchOptions { Name = Walk!.Walk.MeetingPoint })
-        : Task.CompletedTask;
+    private async Task DirectionsAsync()
+    {
+        if (Location is not { } at) return;
+        // The phone's maps app (Apple Maps, or the default on Android) routes from where the phone is; PhotoWorld only
+        // passes the meeting point, never the member's location.
+        const string walk = "Walking", drive = "Driving", transit = "Public transport";
+        var mode = await Shell.Current.DisplayActionSheetAsync("Directions to the meeting point", "Cancel", null, walk, drive, transit) switch
+        {
+            walk => NavigationMode.Walking,
+            drive => NavigationMode.Driving,
+            transit => NavigationMode.Transit,
+            _ => (NavigationMode?)null,
+        };
+        if (mode is null) return;
+        try
+        {
+            await Microsoft.Maui.ApplicationModel.Map.Default.OpenAsync(at,
+                new MapLaunchOptions { Name = Walk!.Walk.MeetingPoint, NavigationMode = mode.Value });
+        }
+        catch (Exception ex) when (ex is FeatureNotSupportedException or InvalidOperationException)
+        {
+            await Ui.AlertAsync("No maps app could open the directions on this device.");
+        }
+    }
 
     [RelayCommand]
     private Task OpenMemberAsync(UserSummaryDto member) => Routes.OpenMemberAsync(member.Id);

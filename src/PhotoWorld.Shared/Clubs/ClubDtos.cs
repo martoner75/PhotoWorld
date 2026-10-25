@@ -72,6 +72,7 @@ public static class ClubReviewStatus
 /// <summary>A club in the directory or a member's list.</summary>
 /// <param name="MyRole">The viewer's role, or null when they aren't in it. <paramref name="MyStatus"/> says if it's a pending request.</param>
 /// <param name="DistanceKm">From the place the directory was sorted by, when it was.</param>
+/// <param name="CoverUrl">The chosen cover's thumbnail, else the newest shared photo's (only photos the viewer may see); null without any.</param>
 public sealed record ClubSummaryDto(
     Guid Id,
     string Name,
@@ -81,7 +82,8 @@ public sealed record ClubSummaryDto(
     string ReviewStatus,
     string? MyRole,
     string? MyStatus,
-    double? DistanceKm = null);
+    double? DistanceKm = null,
+    string? CoverUrl = null);
 
 /// <summary>One club's page. The Can… flags say what the viewer may do.</summary>
 public sealed record ClubDto(
@@ -100,7 +102,9 @@ public sealed record ClubDto(
     bool CanReview,
     int PendingRequests,
     ModerationState Moderation,
-    string? ReviewNote);
+    string? ReviewNote,
+    Guid? CoverPhotoId = null,
+    string? CoverDisplayUrl = null);
 
 /// <param name="IsMe">The viewer themself, so screens don't offer to manage them.</param>
 public sealed record ClubMemberDto(UserSummaryDto User, string Role, string Status, DateTimeOffset JoinedAt, bool IsMe = false);
@@ -120,3 +124,6 @@ public sealed record RejectClubRequest([StringLength(ClubLimits.ReviewNoteMax)] 
 
 /// <summary>One of the caller's clubs, and whether a photo of theirs is shared to it (for the "Share to clubs" choice).</summary>
 public sealed record ClubShareChoiceDto(Guid ClubId, string Name, bool Shared);
+
+/// <summary>The club's cover: one of its shared photos, or null to go back to the newest one.</summary>
+public sealed record SetClubCoverRequest(Guid? PhotoId);

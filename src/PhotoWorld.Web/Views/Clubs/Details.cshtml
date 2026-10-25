@@ -22,6 +22,11 @@
         <partial name="_ModerationBanner" model='new ModerationBannerModel(c.Moderation, "club")' />
     }
 
+    @if (c.CoverDisplayUrl is not null)
+    {
+        <div class="club-cover"><img src="@c.CoverDisplayUrl" alt="" /></div>
+    }
+
     <header class="page-header">
         <div>
             <p class="hero-eyebrow">Camera club</p>
@@ -174,6 +179,20 @@
                 {
                     <div class="collection-photo">
                         <partial name="_PhotoCard" model="photo" />
+                        @if (c.CanManageMembers && photo.Id == c.CoverPhotoId)
+                        {
+                            <form asp-action="Cover" asp-route-id="@s.Id" method="post" class="club-cover-pick">
+                                <button type="submit" class="btn-link-muted" title="Show the newest photo instead">✓ Cover · Use newest</button>
+                            </form>
+                        }
+                        else if (c.CanManageMembers && photo.Moderation == ModerationState.Visible
+                                 && photo.ReviewStatus == PhotoReviewStatus.Approved)
+                        {
+                            <form asp-action="Cover" asp-route-id="@s.Id" method="post" class="club-cover-pick">
+                                <input type="hidden" name="photoId" value="@photo.Id" />
+                                <button type="submit" class="btn-link-muted">Use as cover</button>
+                            </form>
+                        }
                         @if (c.CanManageMembers || photo.Owner.Id == me)
                         {
                             <form asp-action="Toggle" asp-route-id="@s.Id" method="post" class="collection-remove"

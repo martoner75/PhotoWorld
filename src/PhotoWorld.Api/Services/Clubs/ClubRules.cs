@@ -95,6 +95,12 @@ public static class ClubRules
     public static string? CannotEnterClubChallenge(bool isActiveMember) =>
         isActiveMember ? null : "This challenge is for the club's members. Join the club to enter.";
 
+    /// <summary>The owner and admins pick the cover, from photos in the club's feed (or none, for the newest).</summary>
+    public static string? CannotSetCover(string? role, bool photoInFeed) =>
+        !CanManage(role) ? "Only the club's owner and admins choose its cover."
+        : !photoInFeed ? "Choose one of the photos shared to the club that everyone can see."
+        : null;
+
     /// <summary>A shared photo comes out of the club's feed at its owner's wish, or a club admin's.</summary>
     public static bool CanUnshare(bool ownsPhoto, string? role) => ownsPhoto || CanManage(role);
 

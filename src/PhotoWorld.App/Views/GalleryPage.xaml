@@ -8,13 +8,13 @@
              x:DataType="vm:GalleryViewModel"
              Title="Gallery">
     <ContentPage.ToolbarItems>
-        <views:ThemeToolbarItem />
+        <!-- Challenges moved to the Community tab and the theme to Me → Settings, leaving room for ＋ Create. -->
         <ToolbarItem IconImageSource="icon_search.png" Text="Explore" Command="{Binding OpenExploreCommand}" Order="Primary"
                      SemanticProperties.Description="Search and explore" />
+        <ToolbarItem IconImageSource="icon_create.png" Text="Create" Command="{Binding CreateCommand}" Order="Primary"
+                     SemanticProperties.Description="Create: upload photos, organise a walk, start a club" />
         <ToolbarItem IconImageSource="{Binding ActivityIcon}" Text="{Binding ActivityDescription}" Command="{Binding OpenActivityCommand}"
                      Order="Primary" SemanticProperties.Description="{Binding ActivityDescription}" />
-        <ToolbarItem IconImageSource="icon_trophy.png" Text="Challenges" Command="{Binding OpenChallengesCommand}" Order="Primary"
-                     SemanticProperties.Description="Photo challenges" />
         <ToolbarItem IconImageSource="icon_filter.png" Text="Filter" Command="{Binding OpenFiltersCommand}" Order="Primary"
                      SemanticProperties.Description="Filter photos" />
     </ContentPage.ToolbarItems>

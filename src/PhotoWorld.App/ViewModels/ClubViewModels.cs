@@ -10,6 +10,9 @@ namespace PhotoWorld.App.ViewModels;
 
 public sealed record ClubItem(ClubSummaryDto Club)
 {
+    /// <summary>Shown when the club has no photos for a cover yet.</summary>
+    public string Initial => Club.Name.Length > 0 ? Club.Name[..1].ToUpperInvariant() : "📷";
+
     public string Facts => string.Join(" · ", new[]
     {
         Club.City is null ? null : $"📍 {Club.City}" + (Club.DistanceKm is { } km ? $" ({km:0} km)" : ""),
@@ -27,7 +30,7 @@ public sealed record ClubItem(ClubSummaryDto Club)
 }
 
 /// <summary>The club directory (search, or near the phone) and the member's own clubs.</summary>
-public partial class ClubsViewModel(PhotoWorldApi api) : ViewModelBase
+public partial class ClubsViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAttributable
 {
     public ObservableCollection<ClubItem> Items { get; } = [];
 
@@ -44,6 +47,12 @@ public partial class ClubsViewModel(PhotoWorldApi api) : ViewModelBase
         : "No clubs match that yet. Why not start one?";
 
     public void Reload() { if (!IsRefreshing) IsRefreshing = true; }
+
+    /// <summary>"mine" = true (from Me → My clubs) opens on the member's own clubs.</summary>
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("mine", out var mine) && mine is true) Mine = true;
+    }
 
     [RelayCommand]
     private async Task RefreshAsync()
@@ -201,9 +210,36 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     [RelayCommand]
     private Task OpenChallengeAsync(Shared.Challenges.ChallengeSummaryDto challenge) => Routes.OpenChallengeAsync(challenge.Id);
 
+    /// <summary>Opens the photo; the club's owner and admins can also make it the cover (or go back to the newest).</summary>
     [RelayCommand]
-    private Task OpenPhotoAsync(PhotoSummaryDto photo) =>
-        Shell.Current.GoToAsync(Routes.Photo, new ShellNavigationQueryParameters { ["id"] = photo.Id });
+    private async Task OpenPhotoAsync(PhotoSummaryDto photo)
+    {
+        Task Open() => Shell.Current.GoToAsync(Routes.Photo, new ShellNavigationQueryParameters { ["id"] = photo.Id });
+        if (Club is not { CanManageMembers: true } club)
+        {
+            await Open();
+            return;
+        }
+
+        const string open = "Open photo", useAsCover = "Use as the club's cover", useNewest = "Use the newest photo as the cover";
+        var isCover = club.CoverPhotoId == photo.Id;
+        var canBeCover = photo.Moderation == ModerationState.Visible && photo.ReviewStatus == PhotoReviewStatus.Approved;
+        var options = isCover ? new[] { open, useNewest } : canBeCover ? new[] { open, useAsCover } : new[] { open };
+        switch (await Shell.Current.DisplayActionSheetAsync(photo.Title, "Cancel", null, options))
+        {
+            case open:
+                await Open();
+                break;
+            case useAsCover:
+                await RunAsync(() => api.SetClubCoverAsync(_id, photo.Id));
+                await LoadAsync();
+                break;
+            case useNewest:
+                await RunAsync(() => api.SetClubCoverAsync(_id, null));
+                await LoadAsync();
+                break;
+        }
+    }
 
     [RelayCommand]
     private async Task JoinAsync()

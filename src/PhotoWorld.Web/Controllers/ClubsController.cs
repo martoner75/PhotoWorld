@@ -160,6 +160,15 @@ public class ClubsController(IPhotoWorldApiClient api) : Controller
         return Redirect(Url.Action(nameof(Details), new { id }) + "#members");
     }
 
+    /// <summary>The owner or an admin picks the club's cover from its photos; no <paramref name="photoId"/> means the newest.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Cover(Guid id, Guid? photoId, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.SetClubCoverAsync(id, photoId, ct)
+                            ?? (photoId is null ? "The club's newest photo is its cover again." : "Cover updated.");
+        return Redirect(Url.Action(nameof(Details), new { id }) + "#photos");
+    }
+
     [HttpGet]
     public async Task<IActionResult> Report(Guid id, CancellationToken ct)
     {

@@ -626,6 +626,13 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res) ? null : "Only the photo's owner or the club's admins can take it out.";
     }
 
+    public async Task<string?> SetClubCoverAsync(Guid id, Guid? photoId, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.ClubCover, ("id", id)), new SetClubCoverRequest(photoId), ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That club is no longer available.";
+    }
+
     public async Task<IReadOnlyList<ClubShareChoiceDto>?> GetPhotoClubsAsync(Guid photoId, CancellationToken ct = default) =>
         await GetOrNullAsync<List<ClubShareChoiceDto>>(ApiRoutes.Format(ApiRoutes.PhotoClubs, ("id", photoId)), ct);
 

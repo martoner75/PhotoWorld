@@ -3,6 +3,10 @@
     var w = Model.Walk;
     ViewData["Title"] = w.Title;
     var light = SunTimes.For(SunTimes.LocalDate(w.StartsAt, w.Longitude), w.Latitude, w.Longitude);
+    // The meeting point for the Directions links, written the same way in every culture.
+    var lat = w.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    var lng = w.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    var at = $"{lat},{lng}";
 }
 
 @section Head {
@@ -56,7 +60,21 @@
                     {
                         <span class="text-muted">@reason</span>
                     }
-                    <a class="btn btn-ghost" href="https://www.openstreetmap.org/?mlat=@w.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)&mlon=@w.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)#map=17/@w.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)/@w.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)" rel="noopener" target="_blank">Directions</a>
+                    @* Google Maps works out the route, distance and time from the visitor's own location (and opens its app on
+                       phones); only the meeting point is in the link. noreferrer keeps the walk's page address out of it. *@
+                    <details class="suspend-menu directions-menu">
+                        <summary class="btn btn-ghost">Directions</summary>
+                        <div class="suspend-form">
+                            @foreach (var (mode, label) in new[] { ("walking", "🚶 Walking"), ("driving", "🚗 Driving"), ("transit", "🚆 Public transport") })
+                            {
+                                <a class="btn btn-ghost btn-sm" href="https://www.google.com/maps/dir/?api=1&destination=@at&travelmode=@mode"
+                                   rel="noopener noreferrer" target="_blank">@label</a>
+                            }
+                            <a class="btn-link-muted small" href="https://www.openstreetmap.org/?mlat=@lat&mlon=@lng#map=17/@lat/@lng"
+                               rel="noopener noreferrer" target="_blank">View on OpenStreetMap</a>
+                            <span class="text-muted small">Opens Google Maps with the route, distance and time from where you are.</span>
+                        </div>
+                    </details>
                 </div>
             }
 

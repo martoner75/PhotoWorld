@@ -16,8 +16,9 @@
         <Tab Title="Blogs" Icon="tab_blogs.png" Route="blogs">
             <ShellContent ContentTemplate="{DataTemplate views:BlogsPage}" />
         </Tab>
-        <Tab Title="Upload" Icon="tab_upload.png" Route="upload">
-            <ShellContent ContentTemplate="{DataTemplate views:UploadPage}" />
+        <!-- Clubs, walks and challenges: the website's Community menu. Creating is the ＋ in the toolbar (iOS shows five tabs). -->
+        <Tab Title="Community" Icon="tab_community.png" Route="community">
+            <ShellContent ContentTemplate="{DataTemplate views:CommunityPage}" />
         </Tab>
         <Tab Title="Places" Icon="tab_places.png" Route="places">
             <ShellContent ContentTemplate="{DataTemplate views:PlacesPage}" />

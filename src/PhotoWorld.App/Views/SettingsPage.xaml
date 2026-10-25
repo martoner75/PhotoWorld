@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Me → Settings: the same sections as the website's Settings page. Shares the Me tab's view model. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             x:Class="PhotoWorld.App.Views.SettingsPage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Settings">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="14" MaximumWidthRequest="560">
+                <Border Padding="16">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Appearance" Style="{StaticResource Subheading}" />
+                        <Label Text="Automatic follows your device's light or dark setting." Style="{StaticResource MutedText}" FontSize="14" />
+                        <Border Padding="3" StrokeShape="RoundRectangle 10">
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="3">
+                                <Button Text="Automatic" Style="{StaticResource SegmentButton}" Command="{Binding SetThemeCommand}" CommandParameter="auto">
+                                    <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ThemeChoice}" Value="auto">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                    </DataTrigger></Button.Triggers>
+                                </Button>
+                                <Button Grid.Column="1" Text="Light" Style="{StaticResource SegmentButton}" Command="{Binding SetThemeCommand}" CommandParameter="light">
+                                    <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ThemeChoice}" Value="light">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                    </DataTrigger></Button.Triggers>
+                                </Button>
+                                <Button Grid.Column="2" Text="Dark" Style="{StaticResource SegmentButton}" Command="{Binding SetThemeCommand}" CommandParameter="dark">
+                                    <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ThemeChoice}" Value="dark">
+                                        <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                    </DataTrigger></Button.Triggers>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="16">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Activity" Style="{StaticResource Subheading}" />
+                        <Label Text="What shows on your Activity screen (the inbox icon on the Gallery tab)." Style="{StaticResource MutedText}" FontSize="14" />
+                        <!-- Sections and wording from ActivityText.SettingGroups, as on the website. -->
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ActivityGroups}" Spacing="12">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ActivitySettingGroup">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding Heading}" Style="{StaticResource MutedText}" FontSize="13" FontAttributes="Bold" />
+                                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}" Spacing="6">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ActivitySettingItem">
+                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                                        <Label Text="{Binding Label}" VerticalOptions="Center" />
+                                                        <Switch Grid.Column="1" IsToggled="{Binding IsOn}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                        <Button Text="Save activity settings" Command="{Binding SaveActivitySettingsCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="16">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Email notifications" Style="{StaticResource Subheading}" />
+                        <Label Text="Get an email when members publish new blog posts." Style="{StaticResource MutedText}" FontSize="14" />
+                        <Label Text="{Binding NotifyStatus}" FontSize="14" />
+                        <Button Text="Send the confirmation link again" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding ResendConfirmationCommand}" IsVisible="{Binding AwaitingConfirmation}" />
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Email me about new blog posts" Style="{StaticResource Strong}" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" IsToggled="{Binding NotifyEnabled}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout>
+                                <Label Text="Send me a weekly summary" Style="{StaticResource Strong}" />
+                                <Label Text="Views, likes, comments, feedback and new followers on your photos, and walks coming up. Nothing after a quiet week."
+                                       Style="{StaticResource MutedText}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" IsToggled="{Binding WeeklySummary}" VerticalOptions="Center" />
+                        </Grid>
+                        <Label Text="Send them to" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}">
+                            <Entry Text="{Binding NotifyEmail}" Keyboard="Email" Placeholder="you@example.com" />
+                        </Border>
+                        <Label Text="Any address you like. If it isn't the email you sign in with, we'll send a confirmation link first."
+                               Style="{StaticResource MutedText}" />
+                        <Label Text="How often" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}">
+                            <Picker ItemsSource="{Binding FrequencyOptions}" SelectedIndex="{Binding FrequencyIndex}"
+                                    TextColor="{DynamicResource Text}" Title="How often" />
+                        </Border>
+                        <Button Text="Save notification settings" Command="{Binding SaveNotificationsCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="16">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Blocked members" Style="{StaticResource Subheading}" />
+                        <Label Text="You haven't blocked anyone. To block a member, open their page and tap Block."
+                               Style="{StaticResource MutedText}" FontSize="14" IsVisible="{Binding HasBlocked, Converter={StaticResource Not}}" />
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Blocked}" Spacing="4">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="dto:UserSummaryDto">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="{Binding DisplayName}" VerticalOptions="Center" />
+                                        <Button Grid.Column="1" Text="Unblock" Style="{StaticResource LinkButton}" CommandParameter="{Binding .}"
+                                                Command="{Binding UnblockCommand, Source={RelativeSource AncestorType={x:Type vm:ProfileViewModel}}, x:DataType=vm:ProfileViewModel}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="16" Stroke="{DynamicResource DangerLine}" Margin="0,18,0,0">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Delete account" Style="{StaticResource Subheading}" />
+                        <Label Text="Permanently deletes your account, all your photos, your blog, your places, notification settings, likes and comments, straight away. This can't be undone."
+                               Style="{StaticResource MutedText}" FontSize="14" />
+                        <Button Text="Delete my account" Command="{Binding DeleteAccountCommand}" Style="{StaticResource DangerButton}" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

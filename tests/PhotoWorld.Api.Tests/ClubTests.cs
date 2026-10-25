@@ -213,6 +213,17 @@ public class ClubTests
         Assert.Contains("Join the club", ClubRules.CannotEnterClubChallenge(isActiveMember: false));
     }
 
+    [Theory]
+    [InlineData(ClubRoles.Owner, true, true)]
+    [InlineData(ClubRoles.Admin, true, true)]
+    [InlineData(ClubRoles.Member, true, false)]
+    [InlineData(null, true, false)]
+    [InlineData(ClubRoles.Owner, false, false)]
+    public void The_owner_and_admins_pick_the_cover_from_the_clubs_photos(string? role, bool photoInFeed, bool allowed)
+    {
+        Assert.Equal(allowed, ClubRules.CannotSetCover(role, photoInFeed) is null);
+    }
+
     [Fact]
     public void Club_activity_names_the_club()
     {

@@ -1751,3 +1751,421 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    ALTER TABLE photoworld.activities DROP CONSTRAINT ck_activities_type;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    ALTER TABLE photoworld.places ADD forecast_alerts boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    ALTER TABLE photoworld.activity_settings ADD forecasts boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    CREATE TABLE photoworld.place_forecast_notices (
+        place_id uuid NOT NULL,
+        date date NOT NULL,
+        sent_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_place_forecast_notices PRIMARY KEY (place_id, date),
+        CONSTRAINT fk_place_forecast_notices_places_place_id FOREIGN KEY (place_id) REFERENCES photoworld.places (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    CREATE INDEX ix_places_forecast_alerts ON photoworld.places (forecast_alerts) WHERE forecast_alerts;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT ck_activities_type CHECK (type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    CREATE INDEX ix_place_forecast_notices_sent_at ON photoworld.place_forecast_notices (sent_at);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025085114_AddLightForecasts') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261025085114_AddLightForecasts', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.reports DROP CONSTRAINT ck_reports_one_target;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.activities DROP CONSTRAINT ck_activities_type;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.reports ADD club_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.activity_settings ADD clubs boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.activities ADD club_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE TABLE photoworld.clubs (
+        id uuid NOT NULL,
+        owner_id uuid NOT NULL,
+        name character varying(80) NOT NULL,
+        description character varying(1000),
+        city character varying(80),
+        latitude double precision,
+        longitude double precision,
+        join_policy character varying(16) NOT NULL,
+        review_status character varying(16) NOT NULL DEFAULT 'pending',
+        reviewed_at timestamp with time zone,
+        review_note character varying(500),
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_clubs PRIMARY KEY (id),
+        CONSTRAINT ck_clubs_area CHECK ((latitude is null) = (longitude is null)),
+        CONSTRAINT ck_clubs_join_policy CHECK (join_policy in ('open', 'approval')),
+        CONSTRAINT ck_clubs_review_status CHECK (review_status in ('pending', 'approved', 'rejected')),
+        CONSTRAINT fk_clubs_users_owner_id FOREIGN KEY (owner_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE TABLE photoworld.club_members (
+        club_id uuid NOT NULL,
+        user_id uuid NOT NULL,
+        role character varying(16) NOT NULL,
+        status character varying(16) NOT NULL,
+        joined_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_club_members PRIMARY KEY (club_id, user_id),
+        CONSTRAINT ck_club_members_role CHECK (role in ('owner', 'admin', 'member')),
+        CONSTRAINT ck_club_members_status CHECK (status in ('active', 'pending')),
+        CONSTRAINT fk_club_members_clubs_club_id FOREIGN KEY (club_id) REFERENCES photoworld.clubs (id) ON DELETE CASCADE,
+        CONSTRAINT fk_club_members_users_user_id FOREIGN KEY (user_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE INDEX ix_reports_club_id_status ON photoworld.reports (club_id, status);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE UNIQUE INDEX ix_reports_reporter_id_club_id ON photoworld.reports (reporter_id, club_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.reports ADD CONSTRAINT ck_reports_one_target CHECK (num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id, club_id) = 1);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE INDEX ix_activities_club_id ON photoworld.activities (club_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT ck_activities_type CHECK (type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE UNIQUE INDEX ix_club_members_one_owner ON photoworld.club_members (club_id) WHERE role = 'owner';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE INDEX ix_club_members_user_id ON photoworld.club_members (user_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE INDEX ix_clubs_owner_id ON photoworld.clubs (owner_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    CREATE INDEX ix_clubs_review_status_created_at ON photoworld.clubs (review_status, created_at);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT fk_activities_clubs_club_id FOREIGN KEY (club_id) REFERENCES photoworld.clubs (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    ALTER TABLE photoworld.reports ADD CONSTRAINT fk_reports_clubs_club_id FOREIGN KEY (club_id) REFERENCES photoworld.clubs (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    drop view if exists photoworld.open_reports;
+    create view photoworld.open_reports with (security_invoker = true) as
+    select r.id as report_id,
+           r.created_at,
+           case when r.photo_id is not null then 'photo'
+                when r.comment_id is not null then 'photo_comment'
+                when r.blog_post_id is not null then 'blog_post'
+                when r.blog_comment_id is not null then 'blog_comment'
+                else 'club' end as content_type,
+           coalesce(r.photo_id, c.photo_id) as photo_id,
+           r.comment_id,
+           coalesce(r.blog_post_id, bc.post_id) as blog_post_id,
+           r.blog_comment_id,
+           r.club_id,
+           coalesce(p.title, c.text, bp.title, bc.text, cl.name) as content,
+           owner.display_name as content_owner,
+           r.reason,
+           r.note,
+           reporter.display_name as reporter,
+           (select count(*) from photoworld.reports o
+             where o.status = 'open'
+               and (o.photo_id = r.photo_id or o.comment_id = r.comment_id
+                    or o.blog_post_id = r.blog_post_id or o.blog_comment_id = r.blog_comment_id
+                    or o.club_id = r.club_id)) as open_reports_on_item
+    from photoworld.reports r
+    left join photoworld.photos p on p.id = r.photo_id
+    left join photoworld.photo_comments c on c.id = r.comment_id
+    left join photoworld.blog_posts bp on bp.id = r.blog_post_id
+    left join photoworld.blog_comments bc on bc.id = r.blog_comment_id
+    left join photoworld.clubs cl on cl.id = r.club_id
+    left join photoworld.users owner on owner.id = coalesce(p.owner_id, c.author_id, bp.author_id, bc.author_id, cl.owner_id)
+    join photoworld.users reporter on reporter.id = r.reporter_id
+    where r.status = 'open'
+    order by r.created_at desc;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025091536_AddClubs') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261025091536_AddClubs', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025093403_AddClubPhotos') THEN
+    ALTER TABLE photoworld.activities DROP CONSTRAINT ck_activities_type;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025093403_AddClubPhotos') THEN
+    ALTER TABLE photoworld.activity_settings ADD club_photos boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025093403_AddClubPhotos') THEN
+    CREATE TABLE photoworld.club_photos (
+        club_id uuid NOT NULL,
+        photo_id uuid NOT NULL,
+        shared_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_club_photos PRIMARY KEY (club_id, photo_id),
+        CONSTRAINT fk_club_photos_clubs_club_id FOREIGN KEY (club_id) REFERENCES photoworld.clubs (id) ON DELETE CASCADE,
+        CONSTRAINT fk_club_photos_photos_photo_id FOREIGN KEY (photo_id) REFERENCES photoworld.photos (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025093403_AddClubPhotos') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT ck_activities_type CHECK (type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025093403_AddClubPhotos') THEN
+    CREATE INDEX ix_club_photos_club_id_shared_at ON photoworld.club_photos (club_id, shared_at DESC);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025093403_AddClubPhotos') THEN
+    CREATE INDEX ix_club_photos_photo_id ON photoworld.club_photos (photo_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025093403_AddClubPhotos') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261025093403_AddClubPhotos', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025094216_AddClubWalksAndChallenges') THEN
+    ALTER TABLE photoworld.walks ADD club_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025094216_AddClubWalksAndChallenges') THEN
+    ALTER TABLE photoworld.challenges ADD club_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025094216_AddClubWalksAndChallenges') THEN
+    CREATE INDEX ix_walks_club_id ON photoworld.walks (club_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025094216_AddClubWalksAndChallenges') THEN
+    CREATE INDEX ix_challenges_club_id ON photoworld.challenges (club_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025094216_AddClubWalksAndChallenges') THEN
+    ALTER TABLE photoworld.challenges ADD CONSTRAINT fk_challenges_clubs_club_id FOREIGN KEY (club_id) REFERENCES photoworld.clubs (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025094216_AddClubWalksAndChallenges') THEN
+    ALTER TABLE photoworld.walks ADD CONSTRAINT fk_walks_clubs_club_id FOREIGN KEY (club_id) REFERENCES photoworld.clubs (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025094216_AddClubWalksAndChallenges') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261025094216_AddClubWalksAndChallenges', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025100345_AddClubCover') THEN
+    ALTER TABLE photoworld.clubs ADD cover_photo_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025100345_AddClubCover') THEN
+    CREATE INDEX ix_clubs_cover_photo_id ON photoworld.clubs (cover_photo_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025100345_AddClubCover') THEN
+    ALTER TABLE photoworld.clubs ADD CONSTRAINT fk_clubs_photos_cover_photo_id FOREIGN KEY (cover_photo_id) REFERENCES photoworld.photos (id) ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261025100345_AddClubCover') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261025100345_AddClubCover', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -524,6 +524,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("character varying(80)")
                         .HasColumnName("city");
 
+                    b.Property<Guid?>("CoverPhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cover_photo_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -580,6 +584,9 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_clubs");
+
+                    b.HasIndex("CoverPhotoId")
+                        .HasDatabaseName("ix_clubs_cover_photo_id");
 
                     b.HasIndex("OwnerId")
                         .HasDatabaseName("ix_clubs_owner_id");
@@ -2034,12 +2041,20 @@ namespace PhotoWorld.Api.Data.Migrations
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Club", b =>
                 {
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "CoverPhoto")
+                        .WithMany()
+                        .HasForeignKey("CoverPhotoId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_clubs_photos_cover_photo_id");
+
                     b.HasOne("PhotoWorld.Api.Data.User", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_clubs_users_owner_id");
+
+                    b.Navigation("CoverPhoto");
 
                     b.Navigation("Owner");
                 });

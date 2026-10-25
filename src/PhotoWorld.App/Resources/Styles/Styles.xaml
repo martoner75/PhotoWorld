@@ -116,6 +116,30 @@
         <Setter Property="FontFamily" Value="OpenSansSemibold" />
     </Style>
 
+    <!-- Line icons (Shared LineIcons, via LineIconShapes): the Activity icon's style, stroked in the theme's accent. -->
+    <Style x:Key="LineIcon" TargetType="Path">
+        <Setter Property="Stroke" Value="{DynamicResource Accent}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="StrokeLineCap" Value="Round" />
+        <Setter Property="StrokeLineJoin" Value="Round" />
+        <Setter Property="Fill" Value="Transparent" />
+        <Setter Property="Aspect" Value="None" />
+        <Setter Property="WidthRequest" Value="24" />
+        <Setter Property="HeightRequest" Value="24" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+    <!-- The soft accent tile a line icon sits on, on cards. -->
+    <Style x:Key="LineIconBadge" TargetType="Border">
+        <Setter Property="WidthRequest" Value="44" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource AccentSoft}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
     <Style x:Key="MutedText" TargetType="Label">
         <Setter Property="TextColor" Value="{DynamicResource Muted}" />
         <Setter Property="FontSize" Value="13" />

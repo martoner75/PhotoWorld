@@ -95,6 +95,8 @@ public static class ApiRoutes
     public const string ClubMemberApproval = "api/clubs/{id:guid}/members/{userId:guid}/approve";
     public const string ClubMemberRole = "api/clubs/{id:guid}/members/{userId:guid}/role";
     public const string ClubReports = "api/clubs/{id:guid}/reports";
+    /// <summary>PUT: the owner or an admin picks the cover from the club's photos (null: the newest one).</summary>
+    public const string ClubCover = "api/clubs/{id:guid}/cover";
     /// <summary>The club's feed: photos members shared to it, newest first.</summary>
     public const string ClubPhotos = "api/clubs/{id:guid}/photos";
     /// <summary>PUT shares one of the caller's photos to the club; DELETE takes it out (the photo's owner, or a club admin).</summary>

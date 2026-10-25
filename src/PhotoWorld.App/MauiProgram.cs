@@ -42,7 +42,10 @@ public static class MauiProgram
         services.AddTransient<PostCommentsPage>().AddTransient<PostCommentsViewModel>();
         services.AddTransient<PlacesPage>().AddTransient<PlacesViewModel>();
         services.AddTransient<PlaceEditorPage>().AddTransient<PlaceEditorViewModel>();
-        services.AddTransient<ProfilePage>().AddTransient<ProfileViewModel>();
+        // One view model for Me and Settings: like the Me tab itself it lives as long as the app.
+        services.AddTransient<ProfilePage>().AddSingleton<ProfileViewModel>();
+        services.AddTransient<SettingsPage>();
+        services.AddTransient<CommunityPage>().AddTransient<CommunityViewModel>();
         services.AddTransient<MemberPage>().AddTransient<MemberViewModel>();
         services.AddTransient<PhotoFilterPage>().AddTransient<PhotoFilterViewModel>();
         services.AddTransient<ChallengesPage>().AddTransient<ChallengesViewModel>();
