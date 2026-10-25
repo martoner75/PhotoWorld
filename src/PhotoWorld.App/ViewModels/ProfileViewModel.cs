@@ -72,14 +72,15 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     [ObservableProperty] public partial bool ActivityFollowedPosts { get; set; } = true;
     [ObservableProperty] public partial bool ActivityChallenges { get; set; } = true;
     [ObservableProperty] public partial bool ActivityWalks { get; set; } = true;
+    [ObservableProperty] public partial bool ActivityForecasts { get; set; } = true;
 
     // Kept as the member set it on the website; the app gets its own switch once it can receive push.
     private bool _activityPush = true;
 
     private void ShowActivitySettings(ActivitySettingsDto s)
     {
-        (ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, ActivityWalks) =
-            (s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Walks);
+        (ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, ActivityWalks, ActivityForecasts) =
+            (s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Walks, s.Forecasts);
         _activityPush = s.Push;
     }
 
@@ -87,7 +88,7 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     private Task SaveActivitySettingsAsync() => RunAsync(async () =>
     {
         ShowActivitySettings(await api.SaveActivitySettingsAsync(new ActivitySettingsDto(
-            ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, _activityPush, ActivityWalks)));
+            ActivityLikes, ActivityComments, ActivityFollows, ActivityFollowedPosts, ActivityChallenges, _activityPush, ActivityWalks, ActivityForecasts)));
         await Ui.AlertAsync("Activity settings saved.");
     });
 

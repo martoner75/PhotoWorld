@@ -11,6 +11,7 @@ using PhotoWorld.Api.Services.Identity;
 using PhotoWorld.Api.Services.Moderation;
 using PhotoWorld.Api.Services.Notifications;
 using PhotoWorld.Api.Services.Photos;
+using PhotoWorld.Api.Services.Places;
 using PhotoWorld.Api.Services.Push;
 using PhotoWorld.Shared.Auth;
 using PhotoWorld.Shared.Logging;
@@ -57,6 +58,8 @@ builder.Services.AddScoped<ChallengeStandings>();
 builder.Services.AddScoped<AdminAccess>();
 builder.Services.AddScoped<ActivityFeed>();
 builder.Services.AddHostedService<ScheduledActivitySender>();
+builder.Services.AddHttpClient<OpenMeteoClient>(c => c.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddHostedService<ForecastSender>();
 
 // Push notifications to phones: off until APNs / FCM keys are set (README → Push notifications).
 builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.Section));

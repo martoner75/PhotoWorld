@@ -58,6 +58,10 @@
                                 {
                                     <span class="place-item-note">@place.Note</span>
                                 }
+                                @if (place.ForecastAlerts)
+                                {
+                                    <span class="place-item-alerts">🔔 Light forecast alerts on</span>
+                                }
                             </button>
                             <div class="place-item-actions">
                                 <button type="button" class="btn btn-ghost btn-sm" data-place-edit>Edit</button>
@@ -66,6 +70,7 @@
                                     <button type="submit" class="btn btn-danger-ghost btn-sm">Remove</button>
                                 </form>
                             </div>
+                            <div class="place-forecast" data-place-forecast="@Url.Action("Forecast", new { id = place.Id })" hidden aria-live="polite"></div>
                         </li>
                     }
                 </ul>
@@ -76,6 +81,7 @@
     <p class="places-credit text-muted">
         Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors.
         Place search by <a href="https://nominatim.org" rel="noopener">Nominatim</a>.
+        <a href="https://open-meteo.com/" rel="noopener">Weather data by Open-Meteo.com</a>.
     </p>
 </section>
 

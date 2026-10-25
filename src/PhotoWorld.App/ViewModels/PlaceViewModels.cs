@@ -15,6 +15,14 @@ public sealed record PlaceItem(PlaceDto Place)
     public string? Note => Place.Note;
 }
 
+/// <summary>One golden hour in the forecast list, in the phone's time zone.</summary>
+public sealed record ForecastItem(LightWindowDto Window)
+{
+    public string When => $"{Window.Date:ddd d} · {(Window.Morning ? "morning" : "evening")} · {Window.Start.ToLocalTime():HH:mm}";
+    public string Rating => LightForecast.Label(Window.Rating);
+    public string Detail => LightForecast.Describe(Window);
+}
+
 /// <summary>The member's private map. Map placement (camera moves) is left to the page.</summary>
 public partial class PlacesViewModel(PhotoWorldApi api) : ViewModelBase
 {
@@ -116,6 +124,19 @@ public partial class PlaceEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQ
     [NotifyPropertyChangedFor(nameof(Coordinates))]
     public partial Location? Location { get; set; }
 
+    [ObservableProperty]
+    public partial bool ForecastAlerts { get; set; }
+
+    /// <summary>The next few days of golden hours, for a saved place.</summary>
+    public ObservableCollection<ForecastItem> Forecast { get; } = [];
+
+    /// <summary>"Loading…", "isn't available", or empty once the forecast is shown.</summary>
+    [ObservableProperty]
+    public partial string ForecastMessage { get; set; } = "";
+
+    public string ForecastAlertsHint =>
+        $"An Activity alert (and a push) the evening before a clear or dramatic golden hour. Up to {PlaceLimits.MaxForecastAlerts} places.";
+
     public bool IsExisting => _id is not null;
 
     public DateTime Today => DateTime.Today;
@@ -135,6 +156,8 @@ public partial class PlaceEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQ
             (Name, Note) = (place.Name, place.Note ?? "");
             (HasDate, VisitedOn) = (place.VisitedOn is not null, place.VisitedOn?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today);
             Location = new Location(place.Latitude, place.Longitude);
+            ForecastAlerts = place.ForecastAlerts;
+            _ = LoadForecastAsync(place.Id);
         }
         else if (query.TryGetValue("location", out var loc) && loc is Location location)
         {
@@ -161,13 +184,30 @@ public partial class PlaceEditorViewModel(PhotoWorldApi api) : ViewModelBase, IQ
         }
     }
 
+    /// <summary>Shown under the form; a failure only says so, since the place itself is still editable.</summary>
+    private async Task LoadForecastAsync(Guid id)
+    {
+        ForecastMessage = "Loading the light forecast…";
+        try
+        {
+            var forecast = await api.GetPlaceForecastAsync(id);
+            Forecast.Clear();
+            foreach (var w in forecast.Windows) Forecast.Add(new ForecastItem(w));
+            ForecastMessage = Forecast.Count == 0 ? "No golden hour here in the next few days." : "";
+        }
+        catch (Exception ex) when (ex is ApiException or HttpRequestException)
+        {
+            ForecastMessage = "The weather forecast isn't available right now.";
+        }
+    }
+
     private bool CanSave() => !string.IsNullOrWhiteSpace(Name) && Location is not null;
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private Task SaveAsync() => RunAsync(async () =>
     {
         var request = new SavePlaceRequest(Name.Trim(), string.IsNullOrWhiteSpace(Note) ? null : Note.Trim(),
-            Location!.Latitude, Location.Longitude, HasDate ? DateOnly.FromDateTime(VisitedOn) : null);
+            Location!.Latitude, Location.Longitude, HasDate ? DateOnly.FromDateTime(VisitedOn) : null, ForecastAlerts);
         if (_id is { } id) await api.UpdatePlaceAsync(id, request);
         else await api.CreatePlaceAsync(request);
         await Shell.Current.GoToAsync("..");

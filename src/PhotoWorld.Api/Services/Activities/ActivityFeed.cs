@@ -81,7 +81,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 
     public async Task<ActivitySettingsDto> SettingsAsync(Guid userId, CancellationToken ct) =>
         await db.ActivitySettings.AsNoTracking().Where(s => s.UserId == userId)
-            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks))
+            .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks, s.Forecasts))
             .SingleOrDefaultAsync(ct) ?? ActivitySettingsDto.AllOn;
 
     private async Task SafelyAsync(string type, Func<Task> work)

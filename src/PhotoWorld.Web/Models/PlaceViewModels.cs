@@ -30,6 +30,9 @@ public sealed class PlaceFormViewModel
     [DataType(DataType.Date)]
     public DateOnly? VisitedOn { get; set; }
 
+    /// <summary>Tell the member the evening before when the golden-hour light here looks good.</summary>
+    public bool ForecastAlerts { get; set; }
+
     public bool TryGetCoordinates(out double latitude, out double longitude)
     {
         longitude = 0;

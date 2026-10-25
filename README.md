@@ -439,6 +439,29 @@ the list flies the map to it.
   are fine for a small site; with heavy traffic, switch the tile URL in `wwwroot/js/places.js` to a commercial
   OSM tile provider and run or rent a geocoder.
 
+## Light forecasts
+
+Opening a place on **My places** (or editing it in the app) shows its next three days of morning and evening golden
+hours, each rated from [Open-Meteo](https://open-meteo.com)'s hourly cloud and rain forecast:
+
+- **☀️ Clear:** under 30% low, mid and high cloud, and under 30% chance of rain.
+- **🌅 Dramatic:** under 30% low cloud (so the sun gets through) with 30–80% mid or high cloud for it to light up.
+- **☁️ Poor:** anything else (low cloud, a grey lid, likely rain).
+
+The rules live in `LightForecast` (PhotoWorld.Shared) and the golden hours come from `SunTimes`.
+
+**Alerts.** Ticking *Tell me when the light looks good here* on a place (up to 10 places) turns on an alert: every
+hour, `ForecastSender` looks at places where it's now 18:00 (judged by longitude) and, when tomorrow's golden hour
+there rates Clear or Dramatic, adds a `light_forecast` activity ("Richmond Park · Sunset looks dramatic: 45% high
+cloud, clear horizon"), which `PushDispatcher` sends to the member's phones. Each place and day is claimed in
+`place_forecast_notices`, so it goes out once even with several API instances. Members can switch light forecasts
+off under *Activity* in their settings.
+
+**Privacy and limits.** Only coordinates rounded to two decimals (about 1 km) go to Open-Meteo: never a place's
+name or whose it is. Answers are cached for an hour per rounded location. Open-Meteo is free without a key for
+non-commercial use (up to about 10,000 calls a day); its data is CC BY 4.0, so the website and app credit it. A
+commercial PhotoWorld (selling prints, say) would need Open-Meteo's paid plan.
+
 ## Email notifications
 
 Members can get an email when new blog posts are published (account settings on the website, or the app's **Me**

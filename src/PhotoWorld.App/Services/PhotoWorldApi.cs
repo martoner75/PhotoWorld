@@ -252,6 +252,9 @@ public sealed class PhotoWorldApi(HttpClient http)
     public Task<PlaceDto> UpdatePlaceAsync(Guid id, SavePlaceRequest request, CancellationToken ct = default) =>
         SendAsync<PlaceDto>(HttpMethod.Put, WithId(ApiRoutes.Place, id), JsonContent.Create(request, options: Json), ct);
 
+    public Task<PlaceForecastDto> GetPlaceForecastAsync(Guid id, CancellationToken ct = default) =>
+        GetAsync<PlaceForecastDto>(WithId(ApiRoutes.PlaceForecast, id), ct);
+
     public Task DeletePlaceAsync(Guid id, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Place, id), null, ct);
 

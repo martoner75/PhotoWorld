@@ -47,6 +47,7 @@ public class ActivitySettings
     public bool Challenges { get; set; } = true;
     public bool Push { get; set; } = true;
     public bool Walks { get; set; } = true;
+    public bool Forecasts { get; set; } = true;
 }
 
 /// <summary>A member's phone that receives push notifications. Goes with the account; dead tokens are removed when sending.</summary>

@@ -1,0 +1,27 @@
+@model PlaceForecastDto?
+@* The next few days of golden hours at a place, rated from Open-Meteo's forecast. Loaded into the list by places.js,
+   which also turns the UTC times into the visitor's time zone. *@
+@if (Model is null)
+{
+    <p class="text-muted small">The weather forecast isn't available right now. Try again later.</p>
+}
+else if (Model.Windows.Count == 0)
+{
+    <p class="text-muted small">No golden hour here in the next few days.</p>
+}
+else
+{
+    <ol class="forecast-strip" aria-label="Golden-hour forecast">
+        @foreach (var w in Model.Windows)
+        {
+            <li class="forecast-window forecast-@w.Rating" title="@LightForecast.Describe(w)">
+                <span class="forecast-when">@w.Date.ToString("ddd d") · @(w.Morning ? "morning" : "evening")</span>
+                <strong>@LightForecast.Label(w.Rating)</strong>
+                <span class="forecast-detail">
+                    <time datetime="@w.Start.ToString("O")" data-local-time="time">@w.Start.ToString("HH:mm") UTC</time>
+                    · @w.LowCloud% low cloud@(w.RainChance > 0 ? $" · {w.RainChance}% rain" : "")
+                </span>
+            </li>
+        }
+    </ol>
+}

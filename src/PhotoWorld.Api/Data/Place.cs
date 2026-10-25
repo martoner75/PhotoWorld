@@ -16,6 +16,21 @@ public class Place
     public double Longitude { get; set; }
     public DateOnly? VisitedOn { get; set; }
 
+    /// <summary>The owner wants a heads-up the evening before when the golden-hour light here looks good.</summary>
+    public bool ForecastAlerts { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// A light-forecast alert sent for a place and local day, so each goes out once even with several API instances
+/// (the key is the claim). Goes with the place.
+/// </summary>
+public class PlaceForecastNotice
+{
+    public Guid PlaceId { get; set; }
+    public Place Place { get; set; } = null!;
+    public DateOnly Date { get; set; }
+    public DateTimeOffset SentAt { get; set; }
 }

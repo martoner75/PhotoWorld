@@ -511,6 +511,14 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res);
     }
 
+    public async Task<PlaceForecastDto?> GetPlaceForecastAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.GetAsync(ApiRoutes.Format(ApiRoutes.PlaceForecast, ("id", id)), ct);
+        // 503: the weather service is down. The page says so rather than failing.
+        if (res.StatusCode == HttpStatusCode.ServiceUnavailable) return null;
+        return IsSuccess(res) ? await res.Content.ReadFromJsonAsync<PlaceForecastDto>(ct) : null;
+    }
+
     public Task<EmailNotificationsDto?> GetNotificationsAsync(CancellationToken ct = default) =>
         GetOrNullAsync<EmailNotificationsDto>(ApiRoutes.MyNotifications, ct);
 

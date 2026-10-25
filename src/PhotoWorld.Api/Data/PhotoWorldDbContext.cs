@@ -32,6 +32,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<BlogAttachment> BlogAttachments => Set<BlogAttachment>();
     public DbSet<BlogComment> BlogComments => Set<BlogComment>();
     public DbSet<Place> Places => Set<Place>();
+    public DbSet<PlaceForecastNotice> PlaceForecastNotices => Set<PlaceForecastNotice>();
     public DbSet<EmailSubscription> EmailSubscriptions => Set<EmailSubscription>();
     public DbSet<Follow> Follows => Set<Follow>();
     public DbSet<Block> Blocks => Set<Block>();
@@ -259,6 +260,16 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             // Goes with the account (cascade), like everything else a member creates.
             e.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId);
             e.HasIndex(p => new { p.UserId, p.CreatedAt });
+            // The hourly forecast job only looks at places with alerts on.
+            e.HasIndex(p => p.ForecastAlerts).HasFilter("forecast_alerts");
+        });
+
+        modelBuilder.Entity<PlaceForecastNotice>(e =>
+        {
+            e.ToTable("place_forecast_notices");
+            e.HasKey(n => new { n.PlaceId, n.Date });
+            e.HasOne(n => n.Place).WithMany().HasForeignKey(n => n.PlaceId);
+            e.HasIndex(n => n.SentAt);
         });
 
         modelBuilder.Entity<EmailSubscription>(e =>
@@ -392,6 +403,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             // false as sentinel, a new row saved with false would silently get the database's true).
             e.Property(s => s.Push).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.Walks).HasDefaultValue(true).HasSentinel(true);
+            e.Property(s => s.Forecasts).HasDefaultValue(true).HasSentinel(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 

@@ -30,6 +30,7 @@
                     { PostId: { } post } => ("Blogs", "Post", post),
                     { ChallengeId: { } challenge } => ("Challenges", "Details", challenge),
                     { WalkId: { } walk } => ("Walks", "Details", walk),
+                    { Type: ActivityTypes.LightForecast } => ("Places", "Index", Guid.Empty),
                     { Actor: { } actor } => ("Members", "Details", actor.Id),
                     _ => ("Home", "Index", Guid.Empty),
                 };
@@ -41,7 +42,7 @@
                         }
                         else
                         {
-                            <span class="avatar avatar-initial activity-icon" aria-hidden="true">🏆</span>
+                            <span class="avatar avatar-initial activity-icon" aria-hidden="true">@(a.Type == ActivityTypes.LightForecast ? "🌅" : "🏆")</span>
                         }
                         <span class="activity-body">
                             <span class="activity-text">@ActivityText.Describe(a)</span>

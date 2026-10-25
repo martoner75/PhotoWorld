@@ -7,6 +7,7 @@ public static class Routes
 {
     public const string Login = "//login";
     public const string Gallery = "//main/gallery";
+    public const string Places = "//main/places";
     public const string Photo = "photo";
     public const string Post = "post";
     public const string PostComments = "post-comments";

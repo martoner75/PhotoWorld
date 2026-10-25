@@ -27,10 +27,12 @@ public static class ActivityTypes
     /// <summary>The same for an uploaded photo.</summary>
     public const string PhotoApproved = "photo_approved";
     public const string PhotoRejected = "photo_rejected";
+    /// <summary>The golden-hour light at one of the member's places looks good tomorrow (the snippet says where and why).</summary>
+    public const string LightForecast = "light_forecast";
 
     public static readonly IReadOnlyList<string> All =
         [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback,
-         WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected];
+         WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected, LightForecast];
 }
 
 /// <summary>
@@ -58,9 +60,9 @@ public sealed record ActivityDto(
 /// <summary>Which kinds of activity a member wants. Everything is on until they change it.</summary>
 /// <param name="Push">Also send them to the member's phones (where the app is allowed to show notifications).</param>
 public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows, bool FollowedPosts, bool Challenges, bool Push = true,
-    bool Walks = true)
+    bool Walks = true, bool Forecasts = true)
 {
-    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true);
+    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true);
 }
 
 public static class DevicePlatforms

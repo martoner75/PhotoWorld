@@ -13,6 +13,8 @@
   const searchButton = form.querySelector("[data-place-search]");
   const results = form.querySelector("[data-place-results]");
   const title = document.getElementById("place-form-title");
+  // Not field(): the checkbox shares its name with the hidden "false" that's posted when it's unticked.
+  const alerts = form.querySelector('input[type="checkbox"][name="ForecastAlerts"]');
 
   // ----- Map -----
   const map = L.map("places-map", { worldCopyJump: true, zoomControl: true });
@@ -77,10 +79,31 @@
   for (const place of places) {
     const marker = L.marker([place.latitude, place.longitude], { icon: pin(false), title: place.name, keyboard: true })
       .bindPopup(() => popupFor(place))
-      .on("click", () => highlight(place.id))
+      .on("click", () => { highlight(place.id); loadForecast(place.id); })
       .addTo(map);
     markers.set(place.id, marker);
   }
+
+  // The golden-hour forecast under a place, fetched the first time it's opened (the server renders it).
+  const loadForecast = async (id) => {
+    const box = listItem(id)?.querySelector("[data-place-forecast]");
+    if (!box || box.dataset.loaded) return;
+    box.dataset.loaded = "true";
+    box.hidden = false;
+    box.innerHTML = '<p class="text-muted small">Loading the light forecast…</p>';
+    try {
+      const response = await fetch(box.dataset.placeForecast, { headers: { Accept: "text/html" } });
+      if (!response.ok) throw new Error(String(response.status));
+      box.innerHTML = await response.text();
+      box.querySelectorAll("time[data-local-time]").forEach((el) => {
+        const d = new Date(el.getAttribute("datetime"));
+        if (!Number.isNaN(d.getTime())) el.textContent = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      });
+    } catch {
+      box.innerHTML = '<p class="text-muted small">The light forecast couldn\'t be loaded. Open the place again to retry.</p>';
+      delete box.dataset.loaded;
+    }
+  };
 
   const showPlace = (id) => {
     const marker = markers.get(id);
@@ -88,6 +111,7 @@
     move(marker.getLatLng(), Math.max(map.getZoom(), 8));
     marker.openPopup();
     highlight(id);
+    loadForecast(id);
   };
 
   if (places.length > 0) {
@@ -138,12 +162,14 @@
       field("Name").value = place.name;
       field("VisitedOn").value = place.visitedOn ?? "";
       field("Note").value = place.note ?? "";
+      alerts.checked = place.forecastAlerts === true;
       // Swap the saved pin for a draggable one until the edit is saved or cancelled.
       editingMarker = markers.get(place.id)?.remove() ?? null;
       setPending(place.latitude, place.longitude);
       move([place.latitude, place.longitude], Math.max(map.getZoom(), 8));
     } else {
       title.textContent = "Add a place";
+      alerts.checked = false;
     }
     form.hidden = false;
     addButton.hidden = true;
@@ -265,5 +291,6 @@
     map.setView(markers.get(focus).getLatLng(), Math.max(map.getZoom(), 6));
     markers.get(focus).openPopup();
     highlight(focus);
+    loadForecast(focus);
   }
 })();

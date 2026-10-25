@@ -95,6 +95,7 @@ public static class ApiRoutes
     // Always the signed-in member's own places; there is deliberately no route to anyone else's.
     public const string Places = "api/places";
     public const string Place = "api/places/{id:guid}";
+    public const string PlaceForecast = "api/places/{id:guid}/forecast";
 
     // Email notifications about new blog posts: the member's own settings, and the anonymous links in emails.
     public const string MyNotifications = "api/users/me/notifications";

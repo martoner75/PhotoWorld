@@ -33,6 +33,21 @@
     <span asp-validation-for="Note" class="field-error"></span>
 </div>
 
+<div class="field">
+    <label class="check-row">
+        <input type="checkbox" name="ForecastAlerts" value="true" @(Model.ForecastAlerts ? "checked" : "") />
+        <span>
+            <strong>Tell me when the light looks good here</strong>
+            <span class="text-muted small d-block">
+                An Activity alert (and a push to your phone) the evening before a clear or dramatic golden hour.
+                Up to @PlaceLimits.MaxForecastAlerts places.
+            </span>
+        </span>
+    </label>
+    <input type="hidden" name="ForecastAlerts" value="false" />
+    <span asp-validation-for="ForecastAlerts" class="field-error"></span>
+</div>
+
 <input asp-for="Id" type="hidden" />
 <input asp-for="Latitude" type="hidden" />
 <input asp-for="Longitude" type="hidden" />

@@ -157,6 +157,8 @@ public interface IPhotoWorldApiClient
     Task<ApiResult<PlaceDto>> CreatePlaceAsync(SavePlaceRequest request, CancellationToken ct = default);
     Task<ApiResult<PlaceDto>> UpdatePlaceAsync(Guid id, SavePlaceRequest request, CancellationToken ct = default);
     Task<bool> DeletePlaceAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Null when the weather service is unavailable (or the place is gone).</summary>
+    Task<PlaceForecastDto?> GetPlaceForecastAsync(Guid id, CancellationToken ct = default);
 
     // Email notifications about new blog posts
     Task<EmailNotificationsDto?> GetNotificationsAsync(CancellationToken ct = default);

@@ -114,7 +114,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast')");
                         });
                 });
 
@@ -139,6 +139,12 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Property<bool>("Follows")
                         .HasColumnType("boolean")
                         .HasColumnName("follows");
+
+                    b.Property<bool>("Forecasts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("forecasts");
 
                     b.Property<bool>("Likes")
                         .HasColumnType("boolean")
@@ -1211,6 +1217,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("ForecastAlerts")
+                        .HasColumnType("boolean")
+                        .HasColumnName("forecast_alerts");
+
                     b.Property<double>("Latitude")
                         .HasColumnType("double precision")
                         .HasColumnName("latitude");
@@ -1245,6 +1255,10 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_places");
 
+                    b.HasIndex("ForecastAlerts")
+                        .HasDatabaseName("ix_places_forecast_alerts")
+                        .HasFilter("forecast_alerts");
+
                     b.HasIndex("UserId", "CreatedAt")
                         .HasDatabaseName("ix_places_user_id_created_at");
 
@@ -1254,6 +1268,29 @@ namespace PhotoWorld.Api.Data.Migrations
 
                             t.HasCheckConstraint("ck_places_longitude", "longitude between -180 and 180");
                         });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PlaceForecastNotice", b =>
+                {
+                    b.Property<Guid>("PlaceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("place_id");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.HasKey("PlaceId", "Date")
+                        .HasName("pk_place_forecast_notices");
+
+                    b.HasIndex("SentAt")
+                        .HasDatabaseName("ix_place_forecast_notices_sent_at");
+
+                    b.ToTable("place_forecast_notices", "photoworld");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Portfolio", b =>
@@ -2002,6 +2039,18 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasConstraintName("fk_places_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.PlaceForecastNotice", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Place", "Place")
+                        .WithMany()
+                        .HasForeignKey("PlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_place_forecast_notices_places_place_id");
+
+                    b.Navigation("Place");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Portfolio", b =>

@@ -455,6 +455,15 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .place-item-note { color: var(--pw-muted); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .place-item-actions { display: flex; gap: .35rem; flex: none; }
 .places-credit { font-size: .8rem; margin-top: 1rem; }
+.place-item { flex-wrap: wrap; }
+.place-item-alerts { color: var(--pw-accent); }
+.place-forecast { flex-basis: 100%; }
+.forecast-strip { list-style: none; margin: .25rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .4rem; }
+.forecast-window { display: grid; gap: .1rem; padding: .45rem .55rem; border: 1px solid var(--pw-line); border-radius: 10px; font-size: .85rem; }
+.forecast-when, .forecast-detail { color: var(--pw-muted); font-size: .78rem; }
+.forecast-clear { border-color: color-mix(in srgb, var(--pw-accent) 45%, var(--pw-line)); }
+.forecast-dramatic { border-color: var(--pw-accent); background: color-mix(in srgb, var(--pw-accent) 10%, transparent); }
+.forecast-poor strong { color: var(--pw-muted); }
 
 /* Pins: a teardrop in the accent colour; the one being placed pulses (unless motion is reduced). */
 .place-pin { background: none; border: 0; }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
+using PhotoWorld.Api.Services.Places;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Places;
 
@@ -14,7 +15,7 @@ namespace PhotoWorld.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-public class PlacesController(PhotoWorldDbContext db, TimeProvider clock) : ControllerBase
+public class PlacesController(PhotoWorldDbContext db, OpenMeteoClient weather, TimeProvider clock) : ControllerBase
 {
     [HttpGet(ApiRoutes.Places)]
     public async Task<ActionResult<List<PlaceDto>>> List(CancellationToken ct)
@@ -23,7 +24,7 @@ public class PlacesController(PhotoWorldDbContext db, TimeProvider clock) : Cont
         return await db.Places.AsNoTracking()
             .Where(p => p.UserId == me)
             .OrderBy(p => p.CreatedAt)
-            .Select(p => new PlaceDto(p.Id, p.Name, p.Note, p.Latitude, p.Longitude, p.VisitedOn, p.CreatedAt))
+            .Select(p => new PlaceDto(p.Id, p.Name, p.Note, p.Latitude, p.Longitude, p.VisitedOn, p.CreatedAt, p.ForecastAlerts))
             .ToListAsync(ct);
     }
 
@@ -31,7 +32,7 @@ public class PlacesController(PhotoWorldDbContext db, TimeProvider clock) : Cont
     public async Task<ActionResult<PlaceDto>> Create(SavePlaceRequest request, CancellationToken ct)
     {
         if (User.GetUserId() is not { } me) return Unauthorized();
-        if (!Validate(request)) return ValidationProblem(ModelState);
+        if (!await ValidateAsync(request, me, null, ct)) return ValidationProblem(ModelState);
         if (await db.Places.CountAsync(p => p.UserId == me, ct) >= PlaceLimits.MaxPerMember)
         {
             return Problem($"You can pin up to {PlaceLimits.MaxPerMember:N0} places.", statusCode: StatusCodes.Status400BadRequest);
@@ -51,11 +52,39 @@ public class PlacesController(PhotoWorldDbContext db, TimeProvider clock) : Cont
         if (User.GetUserId() is not { } me) return Unauthorized();
         var place = await db.Places.SingleOrDefaultAsync(p => p.Id == id && p.UserId == me, ct);
         if (place is null) return NotFound();
-        if (!Validate(request)) return ValidationProblem(ModelState);
+        if (!await ValidateAsync(request, me, id, ct)) return ValidationProblem(ModelState);
 
         Apply(place, request, clock.GetUtcNow());
         await db.SaveChangesAsync(ct);
         return ToDto(place);
+    }
+
+    /// <summary>
+    /// The next few days of golden hours at the place, rated from Open-Meteo's cloud and rain forecast. Only the
+    /// rounded coordinates go to the weather service.
+    /// </summary>
+    [HttpGet(ApiRoutes.PlaceForecast)]
+    public async Task<ActionResult<PlaceForecastDto>> Forecast(Guid id, CancellationToken ct)
+    {
+        if (User.GetUserId() is not { } me) return Unauthorized();
+        var place = await db.Places.AsNoTracking().Where(p => p.Id == id && p.UserId == me)
+            .Select(p => new { p.Latitude, p.Longitude }).SingleOrDefaultAsync(ct);
+        if (place is null) return NotFound();
+
+        IReadOnlyList<HourlyWeather> hours;
+        try
+        {
+            hours = await weather.HourlyAsync(place.Latitude, place.Longitude, ct);
+        }
+        catch (ForecastUnavailableException)
+        {
+            return Problem("The weather forecast isn't available right now. Try again later.",
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
+        var now = clock.GetUtcNow();
+        return new PlaceForecastDto(LightForecast.Windows(SunTimes.LocalDate(now, place.Longitude), LightForecast.DaysAhead,
+            place.Latitude, place.Longitude, hours, now));
     }
 
     [HttpDelete(ApiRoutes.Place)]
@@ -67,8 +96,14 @@ public class PlacesController(PhotoWorldDbContext db, TimeProvider clock) : Cont
     }
 
     /// <summary>Rules the data annotations can't express.</summary>
-    private bool Validate(SavePlaceRequest request)
+    private async Task<bool> ValidateAsync(SavePlaceRequest request, Guid me, Guid? id, CancellationToken ct)
     {
+        if (request.ForecastAlerts
+            && await db.Places.CountAsync(p => p.UserId == me && p.ForecastAlerts && p.Id != id, ct) >= PlaceLimits.MaxForecastAlerts)
+        {
+            ModelState.AddModelError(nameof(request.ForecastAlerts),
+                $"You can have light forecasts for up to {PlaceLimits.MaxForecastAlerts} places. Turn one off first.");
+        }
         if (string.IsNullOrWhiteSpace(request.Name)) ModelState.AddModelError(nameof(request.Name), "Give the place a name.");
         if (!double.IsFinite(request.Latitude) || !double.IsFinite(request.Longitude))
         {
@@ -90,9 +125,10 @@ public class PlacesController(PhotoWorldDbContext db, TimeProvider clock) : Cont
         place.Latitude = Math.Round(request.Latitude, 5);
         place.Longitude = Math.Round(request.Longitude, 5);
         place.VisitedOn = request.VisitedOn;
+        place.ForecastAlerts = request.ForecastAlerts;
         place.UpdatedAt = now;
     }
 
     private static PlaceDto ToDto(Place p) =>
-        new(p.Id, p.Name, p.Note, p.Latitude, p.Longitude, p.VisitedOn, p.CreatedAt);
+        new(p.Id, p.Name, p.Note, p.Latitude, p.Longitude, p.VisitedOn, p.CreatedAt, p.ForecastAlerts);
 }

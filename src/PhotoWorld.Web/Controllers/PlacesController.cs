@@ -15,6 +15,7 @@ public class PlacesController(IPhotoWorldApiClient api) : Controller
         ["latitude"] = nameof(PlaceFormViewModel.Latitude),
         ["longitude"] = nameof(PlaceFormViewModel.Longitude),
         ["visitedOn"] = nameof(PlaceFormViewModel.VisitedOn),
+        ["forecastAlerts"] = nameof(PlaceFormViewModel.ForecastAlerts),
     };
 
     [HttpGet]
@@ -31,7 +32,7 @@ public class PlacesController(IPhotoWorldApiClient api) : Controller
         }
         if (!ModelState.IsValid) return await IndexWithErrorsAsync(model, ct);
 
-        var request = new SavePlaceRequest(model.Name, model.Note, latitude, longitude, model.VisitedOn);
+        var request = new SavePlaceRequest(model.Name, model.Note, latitude, longitude, model.VisitedOn, model.ForecastAlerts);
         var result = model.Id is { } id
             ? await api.UpdatePlaceAsync(id, request, ct)
             : await api.CreatePlaceAsync(request, ct);
@@ -44,6 +45,11 @@ public class PlacesController(IPhotoWorldApiClient api) : Controller
         TempData["Flash"] = model.Id is null ? $"{result.Value!.Name} is on your map." : "Place updated.";
         return RedirectToAction(nameof(Index), new { focus = result.Value!.Id });
     }
+
+    /// <summary>The golden-hour forecast strip for one place, loaded by places.js when the place is opened.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Forecast(Guid id, CancellationToken ct) =>
+        PartialView("_Forecast", await api.GetPlaceForecastAsync(id, ct));
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)

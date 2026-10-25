@@ -29,9 +29,40 @@
                             AutoSize="TextChanges" MinimumHeightRequest="110" MaxLength="{Binding NoteMaxLength}" />
                 </Border>
 
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Tell me when the light looks good here" Style="{StaticResource Strong}" />
+                        <Label Text="{Binding ForecastAlertsHint}" Style="{StaticResource MutedText}" FontSize="14" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding ForecastAlerts}" VerticalOptions="Center" />
+                </Grid>
+
                 <Button Text="Save place" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
                 <Button Text="Remove from my map" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}"
                         IsVisible="{Binding IsExisting}" />
+
+                <!-- Saved places only: the next few days of golden hours, rated from Open-Meteo's forecast. -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding IsExisting}" Margin="0,12,0,0">
+                    <Label Text="Light forecast" Style="{StaticResource Strong}" />
+                    <Label Text="{Binding ForecastMessage}" Style="{StaticResource MutedText}"
+                           IsVisible="{Binding ForecastMessage, Converter={StaticResource HasValue}}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Forecast}" Spacing="6">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ForecastItem">
+                                <Border Style="{StaticResource Field}" Padding="12,8">
+                                    <VerticalStackLayout Spacing="1">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Text="{Binding When}" Style="{StaticResource MutedText}" FontSize="14" />
+                                            <Label Grid.Column="1" Text="{Binding Rating}" Style="{StaticResource Strong}" />
+                                        </Grid>
+                                        <Label Text="{Binding Detail}" FontSize="14" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Label Text="Weather data by Open-Meteo.com" Style="{StaticResource MutedText}" FontSize="12" />
+                </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />

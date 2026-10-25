@@ -12,7 +12,8 @@ public sealed record ActivityItem(ActivityDto Activity)
     public string? Snippet => Activity.Snippet is null ? null : $"“{Activity.Snippet}”";
     public string When => ActivityText.Ago(Activity.CreatedAt, DateTimeOffset.UtcNow);
     public string? AvatarUrl => Activity.Actor?.AvatarUrl;
-    public string Initial => Activity.Actor is { DisplayName.Length: > 0 } a ? a.DisplayName[..1] : "🏆";
+    public string Initial => Activity.Actor is { DisplayName.Length: > 0 } a ? a.DisplayName[..1]
+        : Activity.Type == ActivityTypes.LightForecast ? "🌅" : "🏆";
     public bool IsUnread => !Activity.IsRead;
 }
 
@@ -41,6 +42,7 @@ public partial class ActivityViewModel(PhotoWorldApi api) : PagedListViewModel<A
         { PostId: { } post } => Shell.Current.GoToAsync(Routes.Post, new ShellNavigationQueryParameters { ["id"] = post }),
         { ChallengeId: { } challenge } => Routes.OpenChallengeAsync(challenge),
         { WalkId: { } walk } => Routes.OpenWalkAsync(walk),
+        { Type: ActivityTypes.LightForecast } => Shell.Current.GoToAsync(Routes.Places),
         { Actor: { } actor } => Routes.OpenMemberAsync(actor.Id),
         _ => Task.CompletedTask,
     };

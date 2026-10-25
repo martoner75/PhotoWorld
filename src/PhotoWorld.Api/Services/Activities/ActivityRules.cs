@@ -25,6 +25,7 @@ public static class ActivityRules
             or ActivityTypes.PhotoApproved or ActivityTypes.PhotoRejected => true, // the answer the author is waiting for
         ActivityTypes.WalkNew or ActivityTypes.WalkJoined or ActivityTypes.WalkChanged or ActivityTypes.WalkCancelled
             or ActivityTypes.WalkReminder => settings.Walks,
+        ActivityTypes.LightForecast => settings.Forecasts,
         _ => settings.Challenges,
     };
 

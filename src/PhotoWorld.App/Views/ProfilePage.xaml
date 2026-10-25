@@ -85,6 +85,7 @@
                         <Grid ColumnDefinitions="*,Auto"><Label Text="New photos and posts from members you follow" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityFollowedPosts}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Photo challenges" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityChallenges}" /></Grid>
                         <Grid ColumnDefinitions="*,Auto"><Label Text="Photo walks" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityWalks}" /></Grid>
+                        <Grid ColumnDefinitions="*,Auto"><Label Text="Light forecasts for your places" VerticalOptions="Center" /><Switch Grid.Column="1" IsToggled="{Binding ActivityForecasts}" /></Grid>
                         <Button Text="Save activity settings" Command="{Binding SaveActivitySettingsCommand}" />
                     </VerticalStackLayout>
                 </Border>
