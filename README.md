@@ -681,7 +681,7 @@ from domains registered under *Services → Sign in with Apple for Email Communi
 
 ## App Store and Google Play badges
 
-The home page shows the official **Download on the App Store** and **Get it on Google Play** badges
+The home page's footer, above the copyright and social links, shows the official **Download on the App Store** and **Get it on Google Play** badges
 (`wwwroot/images/badges`, unaltered artwork from Apple and Google). Until the apps are published they aren't links
 and the page says "The apps are coming soon". Once they're live, set the store pages in the Web's configuration:
 ```bash

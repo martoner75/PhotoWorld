@@ -187,6 +187,11 @@
     </main>
 
     <footer class="site-footer">
+        @* A page can put a row above the copyright and social links (the home page: the app store badges). *@
+        @if (IsSectionDefined("FooterTop"))
+        {
+            <div class="container footer-top">@await RenderSectionAsync("FooterTop")</div>
+        }
         <div class="container footer-row">
             <div>
                 &copy; @DateTime.Now.Year PhotoWorld · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>

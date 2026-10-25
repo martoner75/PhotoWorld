@@ -173,6 +173,8 @@ a:hover { color: var(--pw-accent-hover); }
 .site-footer { border-top: 1px solid var(--pw-line); color: var(--pw-muted); padding: 1.5rem 0; font-size: .9rem; }
 .site-footer a { color: var(--pw-muted); }
 .footer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; }
+.footer-top { padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--pw-line); }
+.footer-top .store-badges { margin-top: 0; }
 .footer-social { display: flex; gap: .9rem; list-style: none; margin: 0; padding: 0; }
 .footer-social a { display: inline-flex; padding: .15rem; }
 .footer-social a:hover { color: var(--pw-accent); }
@@ -812,7 +814,7 @@ img.no-save { -webkit-touch-callout: none; -webkit-user-select: none; user-selec
 /* Theme picker (account settings). */
 [data-theme-picker] { background: var(--pw-ink-2); color: var(--pw-text); border: 1px solid var(--pw-line); border-radius: 8px; padding: .15rem .4rem; font-size: .85rem; }
 
-/* App Store and Google Play badges on the home page. The Google PNG has clear space built in, so it's drawn larger
+/* App Store and Google Play badges (in the home page's footer). The Google PNG has clear space built in, so it's drawn larger
    (and pulled in) to line up with Apple's 40px-high badge. */
 .store-badges { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; margin-top: 1.5rem; }
 .store-badge { display: inline-flex; align-items: center; }
