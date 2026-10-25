@@ -2,6 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:services="clr-namespace:PhotoWorld.App.Services"
+             xmlns:views="clr-namespace:PhotoWorld.App.Views"
              x:Class="PhotoWorld.App.Views.WalksPage"
              x:DataType="vm:WalksViewModel"
              Title="Photo walks">
@@ -54,7 +56,12 @@
                             <Label Grid.Column="1" Text="{Binding Badge}" Style="{StaticResource MutedText}"
                                    IsVisible="{Binding Badge, Converter={StaticResource HasValue}}" />
                             <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Walk.Title}" Style="{StaticResource Subheading}" FontSize="18" />
-                            <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Facts}" Style="{StaticResource MutedText}" />
+                            <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Spacing="2">
+                                <views:IconText Icon="{x:Static services:LineIconShapes.Pin}" Text="{Binding Where}" FontSize="13" />
+                                <views:IconText Icon="{x:Static services:LineIconShapes.People}" Text="{Binding Going}" FontSize="13" />
+                                <views:IconText Icon="{x:Static services:LineIconShapes.People}" Text="{Binding ClubOnly}" FontSize="13"
+                                                IsVisible="{Binding ClubOnly, Converter={StaticResource HasValue}}" />
+                            </VerticalStackLayout>
                         </Grid>
                     </Border>
                 </DataTemplate>

@@ -13,12 +13,11 @@ public sealed record ClubItem(ClubSummaryDto Club)
     /// <summary>Shown when the club has no photos for a cover yet.</summary>
     public string Initial => Club.Name.Length > 0 ? Club.Name[..1].ToUpperInvariant() : "📷";
 
-    public string Facts => string.Join(" · ", new[]
-    {
-        Club.City is null ? null : $"📍 {Club.City}" + (Club.DistanceKm is { } km ? $" ({km:0} km)" : ""),
-        $"{Club.MemberCount} {(Club.MemberCount == 1 ? "member" : "members")}",
-        Club.JoinPolicy == ClubJoinPolicy.Open ? "anyone can join" : "ask to join",
-    }.Where(s => s is not null));
+    /// <summary>"Bristol (12 km)", shown after the pin line icon; null without a city.</summary>
+    public string? City => Club.City is null ? null : Club.City + (Club.DistanceKm is { } km ? $" ({km:0} km)" : "");
+
+    public string Facts =>
+        $"{Club.MemberCount} {(Club.MemberCount == 1 ? "member" : "members")} · {(Club.JoinPolicy == ClubJoinPolicy.Open ? "anyone can join" : "ask to join")}";
 
     public string? Badge => Club.ReviewStatus switch
     {
@@ -131,7 +130,7 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     private Guid _id;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Title), nameof(Facts), nameof(JoinText), nameof(IsRequested), nameof(Notice), nameof(RequestsTitle),
+    [NotifyPropertyChangedFor(nameof(Title), nameof(City), nameof(Facts), nameof(JoinText), nameof(IsRequested), nameof(Notice), nameof(RequestsTitle),
         nameof(MembersTitle), nameof(IsMember), nameof(HasRequests))]
     public partial ClubDto? Club { get; set; }
 
@@ -152,6 +151,7 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
         : "";
 
     public string Title => Club?.Summary.Name ?? "Club";
+    public string? City => Club is { } c ? new ClubItem(c.Summary).City : null;
     public string Facts => Club is { } c ? new ClubItem(c.Summary).Facts + $"\nRun by {c.Owner.DisplayName}" : "";
     public string JoinText => Club?.Summary.JoinPolicy == ClubJoinPolicy.Open ? "Join the club" : "Ask to join";
     public bool IsRequested => Club?.Summary.MyStatus == ClubMemberStatus.Pending;

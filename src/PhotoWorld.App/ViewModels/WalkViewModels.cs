@@ -11,8 +11,10 @@ namespace PhotoWorld.App.ViewModels;
 public sealed record WalkItem(WalkSummaryDto Walk)
 {
     public string When => Walk.StartsAt.ToLocalTime().ToString("ddd d MMM, HH:mm");
-    public string Facts => $"📍 {Walk.MeetingPoint} · {Walk.AttendeeCount}{(Walk.MaxPeople is { } m ? $"/{m}" : "")} going"
-                           + (Walk.ClubName is { } club ? $"\n👥 {club} members only" : "");
+    // Shown after the pin and people line icons (IconText), as on the website.
+    public string Where => Walk.MeetingPoint;
+    public string Going => $"{Walk.AttendeeCount}{(Walk.MaxPeople is { } m ? $"/{m}" : "")} going";
+    public string? ClubOnly => Walk.ClubName is { } club ? $"{club} members only" : null;
     public string? Badge => Walk.IsCancelled ? "Cancelled" : Walk.IsOrganizer ? "Organising" : Walk.IsGoing ? "Going" : null;
 }
 
@@ -68,7 +70,7 @@ public partial class WalkViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     private Guid _id;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Title), nameof(When), nameof(Facts), nameof(TagHint), nameof(Light), nameof(CanLeave), nameof(CanCancel),
+    [NotifyPropertyChangedFor(nameof(Title), nameof(When), nameof(Where), nameof(Going), nameof(TagHint), nameof(Light), nameof(CanLeave), nameof(CanCancel),
         nameof(Location), nameof(Reason), nameof(PhotosTitle))]
     public partial WalkDto? Walk { get; set; }
 
@@ -77,8 +79,9 @@ public partial class WalkViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
 
     public string Title => Walk?.Walk.Title ?? "Photo walk";
     public string When => Walk?.Walk is { } w ? $"{w.StartsAt.ToLocalTime():dddd d MMMM, HH:mm} – {w.EndsAt.ToLocalTime():HH:mm}" : "";
-    public string Facts => Walk?.Walk is { } w
-        ? $"📍 {w.MeetingPoint}\n👥 {w.AttendeeCount} going{(w.MaxPeople is { } m ? $" (up to {m})" : "")} · organised by {w.Organizer.DisplayName}"
+    public string Where => Walk?.Walk.MeetingPoint ?? "";
+    public string Going => Walk?.Walk is { } w
+        ? $"{w.AttendeeCount} going{(w.MaxPeople is { } m ? $" (up to {m})" : "")} · organised by {w.Organizer.DisplayName}"
         : "";
     public string TagHint => Walk is null ? "" : $"Tag your photos #{Walk.Walk.Tag} to add them here.";
 

@@ -21,6 +21,18 @@ public static class LineIcons
         "M10 8.5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0Z " +
         "M5 21H7.5 M10.75 21H13.25 M16.5 21H19";
 
+    /// <summary>A map pin: a place, a meeting point, a club's city.</summary>
+    public const string Pin =
+        "M12 21S5.5 15.4 5.5 10a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21Z " +
+        "M9.6 10a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0Z";
+
+    /// <summary>People: who's going, members (the same figures as <see cref="Clubs"/>).</summary>
+    public const string People = Clubs;
+
+    /// <summary>The sun on the horizon: light forecasts.</summary>
+    public const string Sunrise =
+        "M3 18H21 M7 18A5 5 0 0 1 17 18 M12 6V9 M5.3 9.3L7.4 11.4 M18.7 9.3L16.6 11.4 M8 21.5H16";
+
     /// <summary>A trophy: challenges.</summary>
     public const string Challenges =
         "M7 3.5H17V9A5 5 0 0 1 7 9Z " +
