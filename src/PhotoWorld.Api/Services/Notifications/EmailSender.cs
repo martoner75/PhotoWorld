@@ -74,7 +74,7 @@ public sealed class PickupDirectoryEmailSender(IOptions<EmailOptions> options, I
         var dir = Path.Combine(env.ContentRootPath, o.PickupDirectory);
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, $"{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.eml");
-        await MimeMessages.Build(string.IsNullOrWhiteSpace(o.From) ? "PhotoWorld <notifications@localhost>" : o.From, message)
+        await MimeMessages.Build(string.IsNullOrWhiteSpace(o.From) ? "PhotoCommunity <notifications@localhost>" : o.From, message)
             .WriteToAsync(path, ct);
         logger.LogInformation("Email \"{Subject}\" to {To} written to {Path} (no SMTP host configured)", message.Subject, message.To, path);
     }

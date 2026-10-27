@@ -370,7 +370,7 @@ public sealed class PhotoWorldApi(HttpClient http)
         }
         catch (HttpRequestException)
         {
-            throw new ApiException("Can't reach PhotoWorld. Check your connection and try again.");
+            throw new ApiException("Can't reach PhotoCommunity. Check your connection and try again.");
         }
         if (response.IsSuccessStatusCode) return response;
 

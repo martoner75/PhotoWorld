@@ -5,7 +5,7 @@
 Please don't open a public issue for security problems. Report them privately instead:
 
 - **GitHub:** the repository's **Security** tab → **Report a vulnerability**, or
-- **Email:** rosario.martone@gmail.com, with "PhotoWorld security" in the subject.
+- **Email:** rosario.martone@gmail.com, with "PhotoCommunity security" in the subject.
 
 Include what's affected (API, Web or the app), the steps to reproduce it and the impact you expect. I'll reply within
 a few days and let you know when it's fixed. Please give me a reasonable time to fix it before you disclose it.

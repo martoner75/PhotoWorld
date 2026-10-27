@@ -1,4 +1,4 @@
-# PhotoWorld
+# PhotoCommunity
 
 A portal for sharing a passion for photography with people around the world.
 ASP.NET Core MVC on **.NET 10**, split into an API, a UI and a shared library, plus a .NET MAUI app for
@@ -18,13 +18,13 @@ PhotoWorld.slnx
 
 ## What it looks like
 
-PhotoWorld has a light look (Gallery White) and a soft dark one (Graphite). It follows the device's setting, and the
+PhotoCommunity has a light look (Gallery White) and a soft dark one (Graphite). It follows the device's setting, and the
 moon/sun icon switches it on the website and in the apps. These are the signed-out screens; everything else needs a
 member account.
 
 | Website, light | Website, dark |
 |---|---|
-| ![PhotoWorld home page, light](docs/images/web-home-light.png) | ![PhotoWorld home page, dark](docs/images/web-home-dark.png) |
+| ![PhotoCommunity home page, light](docs/images/web-home-light.png) | ![PhotoCommunity home page, dark](docs/images/web-home-dark.png) |
 | ![Sign-in page, light](docs/images/web-login-light.png) | ![Sign-in page, dark](docs/images/web-login-dark.png) |
 
 | iPhone, light | iPhone, dark | Android, light | Android, dark |
@@ -36,9 +36,9 @@ member account.
 1. The user clicks **Continue with Google** on `/Account/Login` (or `/Account/Register`).
 2. **Web** runs the OAuth flow with the provider and receives the provider's access token.
 3. **Web** sends it to **API** `POST /api/auth/external`. The API checks the token **directly with Google**
-   (`tokeninfo`), confirming it was issued to PhotoWorld.
+   (`tokeninfo`), confirming it was issued to PhotoCommunity.
 4. The API finds or **registers** the user (first sign-in = registration). An account with the same verified
-   email from another provider is linked, so it doesn't create a duplicate. It then returns a PhotoWorld JWT.
+   email from another provider is linked, so it doesn't create a duplicate. It then returns a PhotoCommunity JWT.
 5. **Web** signs the user in with a cookie that carries the JWT and attaches it to later API calls (`GET /api/users/me`).
 
 ## Supabase (database + logs)
@@ -127,7 +127,7 @@ server build is green, it applies any pending EF migrations to Supabase. It need
 
 ## Look and feel
 
-PhotoWorld uses **Gallery White** (white pages, amber accent) and **Graphite** (soft charcoal) for dark mode. Members
+PhotoCommunity uses **Gallery White** (white pages, amber accent) and **Graphite** (soft charcoal) for dark mode. Members
 choose **Automatic** (follow the device, the default), **Light** or **Dark**. On the website, signed-in members pick
 Light / Dark / Auto in the account menu under their avatar (signed out, a moon/sun icon in the header switches
 between light and dark in one click), and Settings → Appearance also offers all three (remembered in that browser); in the app, the same moon/sun icon is in the top bar of the Blogs, Places and Me tabs, and Me → Settings → Appearance offers all three (remembered on that device). Website: the colours are CSS variables at the top of `site.css` (`:root` and its `[data-theme="dark"]`
@@ -157,7 +157,7 @@ buttons are outline icons (`Resources/Images/icon_*.svg`).
 
 ## Cookies
 
-Every cookie PhotoWorld sets is essential (sign-in, form and sign-in protection, one-time messages); there are no
+Every cookie PhotoCommunity sets is essential (sign-in, form and sign-in protection, one-time messages); there are no
 analytics or advertising cookies. A message at the bottom of the website says so until the visitor chooses
 **Accept all**, **Essential only** or **Settings**; **Cookie settings** in every page's footer changes it later. The
 choice is kept for a year in the `PhotoWorld.Consent` cookie (`_CookieBanner.cshtml`, `site.js`). The only optional
@@ -244,7 +244,7 @@ expire after 30 days.
 ## Home-page slideshow
 
 The home page is the one public page with member content: a slideshow of photos their owners chose to feature.
-Members tick **Show on the PhotoWorld home page** when uploading or editing a photo (off by default). The
+Members tick **Show on the PhotoCommunity home page** when uploading or editing a photo (off by default). The
 public `GET api/showcase` endpoint returns the 12 newest featured photos (title, image and owner name),
 leaving out anything hidden by reports. The website caches it for 60 seconds.
 
@@ -341,7 +341,7 @@ transport. The website opens Google Maps' directions link (`google.com/maps/dir/
 no API key; it opens the Google Maps app on phones that have it), with a **View on OpenStreetMap** link too. The app
 asks for the mode and opens the phone's maps app (Apple Maps on iPhone and iPad, the default maps app on Android)
 straight into directions. Either way the maps service works out the route, distance and time from the device's
-location; PhotoWorld only passes the meeting point and never sees where the member is.
+location; PhotoCommunity only passes the meeting point and never sees where the member is.
 
 **Golden hour.** A walk's page (website and app) shows the light at the meeting point on the day: blue hour, golden
 hour, sunrise, sunset, golden hour, blue hour, and which of them the walk catches ("✨ The walk catches the evening
@@ -457,7 +457,7 @@ Admins see **Admin** in the website's account menu, under their avatar (after si
   owner only, with the reason, and they can delete it. Admins' own uploads skip the queue, and so do photos in a
   blog post waiting for approval: approving the post approves its photos. Editing an approved photo's details doesn't
   send it back. Photos from before approval existed count as approved. As with any photo, the image file itself is
-  at a public address: the approval controls where PhotoWorld shows it.
+  at a public address: the approval controls where PhotoCommunity shows it.
 - **Clubs to review**: members' new clubs waiting for approval, longest-waiting first, with **Approve** and
   **Reject** (optional reason, shown to the owner). See Camera clubs above.
 - **Posts to review**: members' blog posts waiting for approval, longest-waiting first (see Blogs above), with
@@ -528,7 +528,7 @@ off under *Activity* in their settings.
 **Privacy and limits.** Only coordinates rounded to two decimals (about 1 km) go to Open-Meteo: never a place's
 name or whose it is. Answers are cached for an hour per rounded location. Open-Meteo is free without a key for
 non-commercial use (up to about 10,000 calls a day); its data is CC BY 4.0, so the website and app credit it. A
-commercial PhotoWorld (selling prints, say) would need Open-Meteo's paid plan.
+commercial PhotoCommunity (selling prints, say) would need Open-Meteo's paid plan.
 
 ## Email notifications
 
@@ -552,7 +552,7 @@ tab): on/off, any address, and how often: **as soon as a post is published**, a 
 your sending domain with the provider (SPF/DKIM) so emails don't land in spam, then:
 
 ```bash
-dotnet user-secrets set "Email:From" "PhotoWorld <notifications@your-domain>" --project src/PhotoWorld.Api
+dotnet user-secrets set "Email:From" "PhotoCommunity <notifications@your-domain>" --project src/PhotoWorld.Api
 dotnet user-secrets set "Email:Smtp:Host" "smtp.your-provider.com" --project src/PhotoWorld.Api
 dotnet user-secrets set "Email:Smtp:Port" "587" --project src/PhotoWorld.Api        # 587 STARTTLS, or 465 TLS
 dotnet user-secrets set "Email:Smtp:Username" "<user>" --project src/PhotoWorld.Api
@@ -560,7 +560,7 @@ dotnet user-secrets set "Email:Smtp:Password" "<password or API key>" --project 
 ```
 
 **Resend:** host `smtp.resend.com`, username `resend`, password = your API key. `Email:From` must use a domain
-verified in Resend (Domains → Add domain, then the DNS records). Until then, `PhotoWorld <onboarding@resend.dev>`
+verified in Resend (Domains → Add domain, then the DNS records). Until then, `PhotoCommunity <onboarding@resend.dev>`
 works for testing but only delivers to your Resend account's own address.
 
 **Testing tips:** members never get emails about their **own** posts, so test with a post by another member. The
@@ -623,7 +623,7 @@ dotnet run --project src/PhotoWorld.Web --launch-profile https   # https://local
 In Rider / Visual Studio, use the **Web + API** launch profile (`PhotoWorld.slnLaunch`).
 
 In Development the API also serves its OpenAPI document at `/openapi/v1.json` and an interactive reference
-([Scalar](https://scalar.com)) at `https://localhost:7041/scalar`. Protected endpoints need a PhotoWorld JWT: get one
+([Scalar](https://scalar.com)) at `https://localhost:7041/scalar`. Protected endpoints need a PhotoCommunity JWT: get one
 from `POST api/auth/external` and paste it, without `Bearer `, into Scalar's authentication box (the document
 declares the `Bearer` scheme).
 
@@ -638,7 +638,7 @@ The login page works without provider credentials, but the buttons stay disabled
 ## Configure Google sign-in
 
 Credentials go in **user-secrets** (never in `appsettings.json`). Web needs ClientId + ClientSecret.
-The API needs the same ID to check that tokens were issued to PhotoWorld.
+The API needs the same ID to check that tokens were issued to PhotoCommunity.
 
 1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → Create OAuth client ID → *Web application*.
 2. Authorized redirect URI: `https://localhost:7211/signin-google`
@@ -651,7 +651,7 @@ dotnet user-secrets set "Authentication:Google:ClientId" "<id>" --project src/Ph
 ## Configure Sign in with Apple
 
 **Continue with Apple** (website and app) stays greyed out until it's configured. A member who signs in with
-Google or Apple using the same verified email gets one PhotoWorld account. The App Store requires it in an
+Google or Apple using the same verified email gets one PhotoCommunity account. The App Store requires it in an
 iPhone app that offers Google sign-in (guideline 4.8). It needs the **Apple Developer Program**.
 
 1. [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list):
@@ -693,7 +693,7 @@ dotnet user-secrets set "Apps:PlayStoreUrl" "https://play.google.com/store/apps/
 ## Mobile app (iPhone, iPad and Android)
 
 `src/PhotoWorld.App` is one .NET MAUI app (native XAML, CommunityToolkit.Mvvm) for iPhone, iPad and
-Android, in PhotoWorld's look (light, or dark with the device); only `Platforms/iOS` and `Platforms/Android` differ.
+Android, in PhotoCommunity's look (light, or dark with the device); only `Platforms/iOS` and `Platforms/Android` differ.
 Tabs: **Gallery** (photos, likes, comments, reporting, tags, feedback, saving to collections; Everyone / Following, the
 photo of the day, the current challenge, and top-bar buttons for **search & Explore**, **Activity**, **challenges**
 and the **Filter**), **Blogs** (read posts, comment; Everyone / Following),
@@ -708,7 +708,7 @@ The app opens `Web /Account/AppLogin` in the system's secure sign-in sheet (Appl
 sign-in the website parks the session under a one-time code (2 minutes, in memory) and redirects to
 `photoworld://auth?code=…`; the app redeems the code at `/Account/AppToken` with its verifier
 (`AppSignIn` in Shared, tested in `AppSignInTests`). An app that intercepts the redirect gets a useless code. The
-PhotoWorld token is kept in secure storage (iOS Keychain, Android Keystore; Android backups are off) and lasts as long as on the website (8 hours). Because codes live in
+PhotoCommunity token is kept in secure storage (iOS Keychain, Android Keystore; Android backups are off) and lasts as long as on the website (8 hours). Because codes live in
 memory, run a single Web instance or move them to a shared cache.
 
 **Run it on iOS.** Needs a Mac with Xcode and the MAUI workload (`dotnet workload install maui`). The iOS target is only
@@ -734,7 +734,7 @@ so muted label text uses the style `MutedText` and the colour `Muted`.
 Debug builds talk to `https://localhost:7041` / `:7211` and trust the dev certificate on localhost only. For the
 sign-in sheet, also trust it in the Simulator: `dotnet dev-certs https -ep ~/pw-dev.crt --format PEM`, then drag
 the file onto the Simulator and enable it under Settings → General → About → Certificate Trust Settings. On a
-real iPhone, point `AppConfig` at a deployed PhotoWorld.
+real iPhone, point `AppConfig` at a deployed PhotoCommunity.
 
 **Run it on Android.** Needs the Android SDK and JDK 21 (on this Mac: `brew install openjdk@21`, then
 `dotnet build src/PhotoWorld.App -t:InstallAndroidDependencies -f net10.0-android "-p:AndroidSdkDirectory=$HOME/Library/Android/sdk" -p:AcceptAndroidSDKLicenses=True`).
@@ -768,7 +768,7 @@ the registered `localhost` redirect. Chrome on the emulator doesn't trust the de
 Proceed* once, or install it under Settings → Security → Encryption & credentials → Install a certificate.
 
 **Google Maps key (Android Places map).** Without it the map stays blank; everything else works.
-1. [Google Cloud Console](https://console.cloud.google.com/) → the project that has PhotoWorld's OAuth client →
+1. [Google Cloud Console](https://console.cloud.google.com/) → the project that has PhotoCommunity's OAuth client →
    **Billing** linked (Maps requires it; small usage stays in the free tier).
 2. **APIs & Services → Library → Maps SDK for Android → Enable.**
 3. **APIs & Services → Credentials → Create credentials → API key.**
@@ -800,7 +800,7 @@ Privacy answers in App Store Connect to match the privacy policy.
 
 ## Licence
 
-PhotoWorld is released under the [MIT License](LICENSE): anyone may use, change and share the code, including
+PhotoCommunity is released under the [MIT License](LICENSE): anyone may use, change and share the code, including
 commercially, as long as the copyright notice is kept. It comes with no warranty.
 
 Third-party parts keep their own licences: the libraries in `src/PhotoWorld.Web/wwwroot/lib` (Bootstrap, jQuery,

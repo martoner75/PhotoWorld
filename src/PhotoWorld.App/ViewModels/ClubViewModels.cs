@@ -92,7 +92,7 @@ public partial class ClubsViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAt
         {
             if (await Permissions.RequestAsync<Permissions.LocationWhenInUse>() != PermissionStatus.Granted)
             {
-                await Ui.AlertAsync("Allow location for PhotoWorld in Settings to find clubs near you, or search by city.");
+                await Ui.AlertAsync("Allow location for PhotoCommunity in Settings to find clubs near you, or search by city.");
                 return;
             }
             _near = await Geolocation.Default.GetLastKnownLocationAsync()

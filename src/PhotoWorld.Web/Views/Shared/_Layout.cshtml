@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · PhotoWorld</title>
+    <title>@ViewData["Title"] · PhotoCommunity</title>
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#ffffff" />
     @* Light, dark or automatic (follow the device), remembered in this browser. Runs before the page paints, so there's
@@ -52,7 +52,7 @@
         <nav class="navbar navbar-expand-lg site-nav">
             <div class="container">
                 <a class="navbar-brand brand" asp-controller="Home" asp-action="Index">
-                    <span class="brand-mark" aria-hidden="true"></span> PhotoWorld
+                    <span class="brand-mark" aria-hidden="true"></span> PhotoCommunity
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
                         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@
                         <ul class="navbar-nav align-items-lg-center gap-lg-2">
                             <li class="nav-item">
                                 <form asp-controller="Search" asp-action="Index" method="get" class="nav-search" role="search">
-                                    <input name="q" maxlength="100" placeholder="Search" aria-label="Search PhotoWorld" />
+                                    <input name="q" maxlength="100" placeholder="Search" aria-label="Search PhotoCommunity" />
                                 </form>
                             </li>
                             @* Everything a member can start, in one place (the app's ＋ offers the same). *@
@@ -136,6 +136,7 @@
                                     <li><a class="dropdown-item" asp-controller="Members" asp-action="Insights">Insights</a></li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Settings">Settings</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Home" asp-action="Guide">User guide</a></li>
                                     @if (User.HasClaim(PhotoWorldClaimTypes.IsAdmin, "true"))
                                     {
                                         <li><a class="dropdown-item @Active("Admin")" aria-current="@Current("Admin")" asp-controller="Admin" asp-action="Users">Admin</a></li>
@@ -194,7 +195,7 @@
         }
         <div class="container footer-row">
             <div>
-                &copy; @DateTime.Now.Year PhotoWorld · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+                &copy; @DateTime.Now.Year PhotoCommunity · <a asp-controller="Home" asp-action="Guide">User guide</a> · <a asp-controller="Home" asp-action="Terms">Terms</a> · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
                 · <button type="button" class="link-button" data-cookie-settings>Cookie settings</button>
             </div>
             @* Each link shows only once its page URL is set (Site:Social in appsettings.json). *@
@@ -206,11 +207,11 @@
             }
             @if (!string.IsNullOrWhiteSpace(facebook) || !string.IsNullOrWhiteSpace(instagram) || !string.IsNullOrWhiteSpace(youtube))
             {
-                <ul class="footer-social" aria-label="PhotoWorld on social media">
+                <ul class="footer-social" aria-label="PhotoCommunity on social media">
                     @if (!string.IsNullOrWhiteSpace(facebook))
                     {
                         <li>
-                            <a href="@facebook" rel="noopener" target="_blank" aria-label="PhotoWorld on Facebook" title="Facebook">
+                            <a href="@facebook" rel="noopener" target="_blank" aria-label="PhotoCommunity on Facebook" title="Facebook">
                                 <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M24 12a12 12 0 1 0-13.9 11.9v-8.4h-3V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12Z" /></svg>
                             </a>
                         </li>
@@ -218,7 +219,7 @@
                     @if (!string.IsNullOrWhiteSpace(instagram))
                     {
                         <li>
-                            <a href="@instagram" rel="noopener" target="_blank" aria-label="PhotoWorld on Instagram" title="Instagram">
+                            <a href="@instagram" rel="noopener" target="_blank" aria-label="PhotoCommunity on Instagram" title="Instagram">
                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4.2" /><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" /></svg>
                             </a>
                         </li>
@@ -226,7 +227,7 @@
                     @if (!string.IsNullOrWhiteSpace(youtube))
                     {
                         <li>
-                            <a href="@youtube" rel="noopener" target="_blank" aria-label="PhotoWorld on YouTube" title="YouTube">
+                            <a href="@youtube" rel="noopener" target="_blank" aria-label="PhotoCommunity on YouTube" title="YouTube">
                                 <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z" /></svg>
                             </a>
                         </li>

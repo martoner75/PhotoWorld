@@ -135,6 +135,6 @@ public static class PushText
         if (activity.ClubId is { } club) data["clubId"] = club.ToString();
         if (activity.Actor is { } actor) data["memberId"] = actor.Id.ToString();
         var body = ActivityText.Describe(activity) + (activity.Snippet is { } s ? $": “{s}”" : "");
-        return new PushMessage("PhotoWorld", body, unread > 0 ? unread : null, data);
+        return new PushMessage("PhotoCommunity", body, unread > 0 ? unread : null, data);
     }
 }

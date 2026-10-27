@@ -52,7 +52,7 @@
 
                 <Border Padding="4">
                     <VerticalStackLayout>
-                        <Button Text="Open PhotoWorld on the web" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                        <Button Text="Open PhotoCommunity on the web" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenWebsiteCommand}" />
                         <Button Text="Terms of use" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
                                 Command="{Binding OpenTermsCommand}" />

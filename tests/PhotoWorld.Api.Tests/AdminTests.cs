@@ -48,8 +48,8 @@ public class AdminTests
     [Fact]
     public void Suspension_message_includes_the_reason()
     {
-        Assert.Equal("This PhotoWorld account has been suspended.", SessionCheck.SuspendedMessage(null));
-        Assert.Equal("This PhotoWorld account has been suspended: repeated spam.", SessionCheck.SuspendedMessage(" repeated spam. "));
+        Assert.Equal("This PhotoCommunity account has been suspended.", SessionCheck.SuspendedMessage(null));
+        Assert.Equal("This PhotoCommunity account has been suspended: repeated spam.", SessionCheck.SuspendedMessage(" repeated spam. "));
     }
 
     private static readonly DateTimeOffset Now = new(2026, 10, 21, 12, 0, 0, TimeSpan.Zero);

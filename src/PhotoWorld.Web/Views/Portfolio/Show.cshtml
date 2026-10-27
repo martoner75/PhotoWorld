@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = $"{Model.DisplayName}'s portfolio";
     var url = $"{Context.Request.Scheme}://{Context.Request.Host}/p/{Model.Slug}";
-    var summary = Model.Bio ?? $"Photography by {Model.DisplayName} on PhotoWorld.";
+    var summary = Model.Bio ?? $"Photography by {Model.DisplayName} on PhotoCommunity.";
     var cover = Model.Photos.FirstOrDefault();
 }
 
@@ -10,7 +10,7 @@
     @* Previews when the link is shared (WhatsApp, LinkedIn, Facebook, Slack…). *@
     <meta name="description" content="@summary" />
     <meta property="og:type" content="profile" />
-    <meta property="og:site_name" content="PhotoWorld" />
+    <meta property="og:site_name" content="PhotoCommunity" />
     <meta property="og:title" content="@Model.DisplayName · Photography" />
     <meta property="og:description" content="@summary" />
     <meta property="og:url" content="@url" />
@@ -89,6 +89,6 @@
     }
 
     <p class="portfolio-footer text-muted small">
-        © @Model.DisplayName. Shared on <a asp-controller="Home" asp-action="Index">PhotoWorld</a>, a home for photographers.
+        © @Model.DisplayName. Shared on <a asp-controller="Home" asp-action="Index">PhotoCommunity</a>, a home for photographers.
     </p>
 </section>

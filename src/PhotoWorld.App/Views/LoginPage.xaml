@@ -7,7 +7,7 @@
     <Grid RowDefinitions="*,Auto,Auto" Padding="28,0,28,24">
         <VerticalStackLayout Grid.Row="0" VerticalOptions="Center" Spacing="16" MaximumWidthRequest="460">
             <Image Source="brand_mark.png" HeightRequest="72" WidthRequest="72" HorizontalOptions="Start"
-                   SemanticProperties.Description="PhotoWorld" />
+                   SemanticProperties.Description="PhotoCommunity" />
             <Label Text="A HOME FOR PHOTOGRAPHERS EVERYWHERE" TextColor="{DynamicResource Accent}" FontSize="12"
                    FontFamily="OpenSansSemibold" CharacterSpacing="1.5" />
             <Label Text="Share the world through your lens." Style="{StaticResource Heading}" FontSize="38" />
@@ -26,7 +26,7 @@
                     BackgroundColor="{AppThemeBinding Light=Black, Dark=White}" TextColor="{AppThemeBinding Light=White, Dark=Black}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}" />
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label Text="New here? Signing in for the first time creates your PhotoWorld account."
+            <Label Text="New here? Signing in for the first time creates your PhotoCommunity account."
                    Style="{StaticResource MutedText}" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 

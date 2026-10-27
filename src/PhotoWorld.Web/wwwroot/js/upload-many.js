@@ -81,7 +81,7 @@
         if (response.ok) { item.done = true; item.status = "✓ Uploaded"; last = data.url; }
         else { item.status = data.error || "That photo couldn't be uploaded."; failed++; }
       } catch {
-        item.status = "Couldn't reach PhotoWorld. Try again."; failed++;
+        item.status = "Couldn't reach PhotoCommunity. Try again."; failed++;
       }
       render();
     }

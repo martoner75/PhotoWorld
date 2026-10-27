@@ -12,7 +12,7 @@ public static class SessionCheck
     public static readonly TimeSpan CacheFor = TimeSpan.FromSeconds(30);
 
     public static string SuspendedMessage(string? reason) =>
-        "This PhotoWorld account has been suspended" + (string.IsNullOrWhiteSpace(reason) ? "." : $": {reason.Trim().TrimEnd('.')}.");
+        "This PhotoCommunity account has been suspended" + (string.IsNullOrWhiteSpace(reason) ? "." : $": {reason.Trim().TrimEnd('.')}.");
 
     public static async Task ValidateAsync(TokenValidatedContext context)
     {

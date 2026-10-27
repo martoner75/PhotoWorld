@@ -13,7 +13,7 @@
         <p class="hero-eyebrow">A home for photographers everywhere</p>
         <h1>Share the world<br />through your lens.</h1>
         <p class="hero-lead">
-            PhotoWorld is a place to show your best shots, follow photographers from every corner
+            PhotoCommunity is a place to show your best shots, follow photographers from every corner
             of the globe and talk light, gear and places with people who love it as much as you do.
         </p>
         @if (User.Identity?.IsAuthenticated == true)
@@ -26,7 +26,7 @@
         else
         {
             <div class="hero-actions">
-                <a class="btn btn-accent btn-lg" asp-controller="Account" asp-action="Register">Join PhotoWorld</a>
+                <a class="btn btn-accent btn-lg" asp-controller="Account" asp-action="Register">Join PhotoCommunity</a>
                 <a class="btn btn-ghost btn-lg" asp-controller="Account" asp-action="Login">Sign in</a>
             </div>
         }

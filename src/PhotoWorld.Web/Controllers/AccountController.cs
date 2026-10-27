@@ -23,7 +23,7 @@ public class AccountController(
     [HttpGet]
     public Task<IActionResult> Login(string? returnUrl, string? error) => ShowLogin(isRegister: false, returnUrl, error);
 
-    /// <summary>Same flow as Login: the first sign-in with a provider creates the PhotoWorld account.</summary>
+    /// <summary>Same flow as Login: the first sign-in with a provider creates the PhotoCommunity account.</summary>
     [AllowAnonymous]
     [HttpGet]
     public Task<IActionResult> Register(string? returnUrl, string? error) => ShowLogin(isRegister: true, returnUrl, error);
@@ -77,7 +77,7 @@ public class AccountController(
             user.Id, provider, session.IsNewUser);
 
         TempData["Flash"] = session.IsNewUser
-            ? $"Welcome to PhotoWorld, {user.DisplayName}! Your account is ready."
+            ? $"Welcome to PhotoCommunity, {user.DisplayName}! Your account is ready."
             : $"Welcome back, {user.DisplayName}!";
 
         return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
@@ -143,7 +143,7 @@ public class AccountController(
 
     private sealed record PendingAppSignIn(AuthResponse Session, string Challenge);
 
-    /// <summary>Reads the provider's result and exchanges its token for a PhotoWorld session with the API.</summary>
+    /// <summary>Reads the provider's result and exchanges its token for a PhotoCommunity session with the API.</summary>
     private async Task<(AuthResponse? Session, string? Provider, string? Error)> CompleteExternalSignInAsync(
         CancellationToken ct, AuthenticateResult? external = null)
     {

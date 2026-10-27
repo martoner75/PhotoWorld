@@ -4,7 +4,7 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:views="clr-namespace:PhotoWorld.App.Views"
        FlyoutBehavior="Disabled"
-       Title="PhotoWorld">
+       Title="PhotoCommunity">
 
     <!-- Shown until the member signs in; AppShell switches to the tabs once a session exists. -->
     <ShellContent Route="login" ContentTemplate="{DataTemplate views:LoginPage}" Shell.NavBarIsVisible="False" />

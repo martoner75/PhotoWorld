@@ -8,7 +8,7 @@
     <Grid>
         <ScrollView>
             <VerticalStackLayout Padding="18" Spacing="12" MaximumWidthRequest="640">
-                <Label Text="A page of your best photos that anyone can open, even without a PhotoWorld account: share it with clients, editors and friends."
+                <Label Text="A page of your best photos that anyone can open, even without a PhotoCommunity account: share it with clients, editors and friends."
                        Style="{StaticResource MutedText}" FontSize="14" />
 
                 <!-- Sharing: once it's saved as public. -->

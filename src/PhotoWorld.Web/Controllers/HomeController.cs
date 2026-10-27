@@ -41,6 +41,9 @@ public class HomeController(IPhotoWorldApiClient api, IMemoryCache cache, ILogge
 
     public IActionResult Terms() => View();
 
+    /// <summary>The user guide: every feature explained, open to everyone so visitors can see what PhotoWorld offers.</summary>
+    public IActionResult Guide() => View();
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

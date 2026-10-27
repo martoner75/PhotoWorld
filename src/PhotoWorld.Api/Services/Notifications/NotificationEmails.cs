@@ -30,7 +30,7 @@ public sealed class NotificationEmails(string webBaseUrl)
         var url = ConfirmUrl(token);
         var html = Layout($"""
             <h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 12px">Confirm your email</h1>
-            <p>You asked PhotoWorld to email you about new blog posts at <strong>{E(to)}</strong>.
+            <p>You asked PhotoCommunity to email you about new blog posts at <strong>{E(to)}</strong>.
                Confirm it's you to start receiving them.</p>
             <p style="margin:24px 0">{Button(url, "Confirm my email")}</p>
             <p style="color:#6b6d75;font-size:13px">This link works for {NotificationRules.ConfirmLinkLifetime.TotalDays:0} days.
@@ -39,12 +39,12 @@ public sealed class NotificationEmails(string webBaseUrl)
         var text = $"""
             Confirm your email
 
-            You asked PhotoWorld to email you about new blog posts at {to}. Confirm it's you to start receiving them:
+            You asked PhotoCommunity to email you about new blog posts at {to}. Confirm it's you to start receiving them:
             {url}
 
             This link works for {NotificationRules.ConfirmLinkLifetime.TotalDays:0} days. If you didn't ask for this, ignore this email.
             """;
-        return new EmailMessage(to, "Confirm your PhotoWorld notifications", html, text);
+        return new EmailMessage(to, "Confirm your PhotoCommunity notifications", html, text);
     }
 
     /// <param name="moreCount">Posts beyond <paramref name="posts"/> in this period, summed up with a link.</param>
@@ -53,15 +53,15 @@ public sealed class NotificationEmails(string webBaseUrl)
         var total = posts.Count + moreCount;
         var subject = (frequency, total) switch
         {
-            (NotificationFrequency.Daily, _) => $"Your PhotoWorld daily digest: {Count(total)}",
-            (NotificationFrequency.Weekly, _) => $"Your PhotoWorld weekly digest: {Count(total)}",
-            (_, 1) => $"New on PhotoWorld: {posts[0].Title}",
-            _ => $"{Count(total)} on PhotoWorld",
+            (NotificationFrequency.Daily, _) => $"Your PhotoCommunity daily digest: {Count(total)}",
+            (NotificationFrequency.Weekly, _) => $"Your PhotoCommunity weekly digest: {Count(total)}",
+            (_, 1) => $"New on PhotoCommunity: {posts[0].Title}",
+            _ => $"{Count(total)} on PhotoCommunity",
         };
         var unsubscribe = UnsubscribeUrl(unsubscribeToken);
 
-        var html = new StringBuilder($"""<h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 20px">{E(Count(total))} on PhotoWorld</h1>""");
-        var text = new StringBuilder($"{Count(total)} on PhotoWorld\n\n");
+        var html = new StringBuilder($"""<h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 20px">{E(Count(total))} on PhotoCommunity</h1>""");
+        var text = new StringBuilder($"{Count(total)} on PhotoCommunity\n\n");
         foreach (var post in posts)
         {
             var url = PostUrl(post.Id);
@@ -83,11 +83,11 @@ public sealed class NotificationEmails(string webBaseUrl)
         }
 
         var footer = $"""
-            You're getting this because you subscribed to new blog posts on PhotoWorld with {E(to)}.
+            You're getting this because you subscribed to new blog posts on PhotoCommunity with {E(to)}.
             <a href="{E(ManageUrl)}" style="color:#6b6d75">Change how often</a> ·
             <a href="{E(unsubscribe)}" style="color:#6b6d75">Unsubscribe</a>
             """;
-        text.Append($"You're getting this because you subscribed to new blog posts on PhotoWorld with {to}.\n" +
+        text.Append($"You're getting this because you subscribed to new blog posts on PhotoCommunity with {to}.\n" +
                     $"Change how often: {ManageUrl}\nUnsubscribe: {unsubscribe}\n");
 
         // RFC 8058 one-click unsubscribe: email apps show an Unsubscribe button that POSTs to this address.
@@ -112,10 +112,10 @@ public sealed class NotificationEmails(string webBaseUrl)
             (stats.NewFollowers, "new follower", "new followers"),
         ];
         var lines = rows.Where(r => r.N > 0).Select(r => $"{r.N:N0} {(r.N == 1 ? r.One : r.Many)}").ToList();
-        var subject = lines.Count > 0 ? $"Your week on PhotoWorld: {lines[0]}" : "Your week on PhotoWorld";
+        var subject = lines.Count > 0 ? $"Your week on PhotoCommunity: {lines[0]}" : "Your week on PhotoCommunity";
 
-        var html = new StringBuilder($"""<h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 16px">Your week on PhotoWorld</h1>""");
-        var text = new StringBuilder($"Your week on PhotoWorld\n\nHi {name},\n\n");
+        var html = new StringBuilder($"""<h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 16px">Your week on PhotoCommunity</h1>""");
+        var text = new StringBuilder($"Your week on PhotoCommunity\n\nHi {name},\n\n");
         html.Append($"""<p style="margin:0 0 14px">Hi {E(name)},</p>""");
         if (lines.Count > 0)
         {
@@ -140,12 +140,12 @@ public sealed class NotificationEmails(string webBaseUrl)
         text.Append($"See your insights: {InsightsUrl}\n\n");
 
         var footer = $"""
-            You're getting this because you turned on the weekly summary on PhotoWorld for {E(to)}.
+            You're getting this because you turned on the weekly summary on PhotoCommunity for {E(to)}.
             <a href="{E(ManageUrl)}" style="color:#6b6d75">Email settings</a> ·
-            <a href="{E(unsubscribe)}" style="color:#6b6d75">Unsubscribe from all PhotoWorld emails</a>
+            <a href="{E(unsubscribe)}" style="color:#6b6d75">Unsubscribe from all PhotoCommunity emails</a>
             """;
-        text.Append($"You're getting this because you turned on the weekly summary on PhotoWorld for {to}.\n" +
-                    $"Email settings: {ManageUrl}\nUnsubscribe from all PhotoWorld emails: {unsubscribe}\n");
+        text.Append($"You're getting this because you turned on the weekly summary on PhotoCommunity for {to}.\n" +
+                    $"Email settings: {ManageUrl}\nUnsubscribe from all PhotoCommunity emails: {unsubscribe}\n");
         var headers = new Dictionary<string, string>
         {
             ["List-Unsubscribe"] = $"<{unsubscribe}>",
@@ -170,7 +170,7 @@ public sealed class NotificationEmails(string webBaseUrl)
         <html><body style="margin:0;background:#f4f4f1;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:#1a1a1a">
           <div style="max-width:560px;margin:0 auto;padding:28px 20px">
             <p style="margin:0 0 20px;font-family:Georgia,serif;font-weight:700;font-size:18px">
-              <a href="{E(_web)}" style="color:#1a1a1a;text-decoration:none"><span style="color:#f2a541">&#9673;</span> PhotoWorld</a>
+              <a href="{E(_web)}" style="color:#1a1a1a;text-decoration:none"><span style="color:#f2a541">&#9673;</span> PhotoCommunity</a>
             </p>
             <div style="background:#ffffff;border-radius:14px;padding:28px 24px">{content}</div>
             <p style="color:#6b6d75;font-size:12px;margin:18px 4px 0">{footer}</p>

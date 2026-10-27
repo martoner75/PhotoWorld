@@ -12,8 +12,8 @@ public static class AppConfig
     public static readonly Uri WebBaseUrl = new("https://localhost:7211/");
 #else
     // Set these to the deployed API and website before publishing.
-    public static readonly Uri ApiBaseUrl = new("https://api.photoworld.example/");
-    public static readonly Uri WebBaseUrl = new("https://photoworld.example/");
+    public static readonly Uri ApiBaseUrl = new("https://api.photocommunity.co.uk/");
+    public static readonly Uri WebBaseUrl = new("https://photocommunity.co.uk/");
 #endif
 
     public static Uri PrivacyUrl => new(WebBaseUrl, "Home/Privacy");

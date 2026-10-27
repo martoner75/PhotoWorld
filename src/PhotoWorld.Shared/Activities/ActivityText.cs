@@ -46,7 +46,7 @@ public static class ActivityText
                 { } place => $"You placed #{place} in the {challenge} challenge",
                 _ => $"The results of the {challenge} challenge are in",
             },
-            _ => "Something happened on PhotoWorld",
+            _ => "Something happened on PhotoCommunity",
         };
     }
 
@@ -62,7 +62,7 @@ public static class ActivityText
         [nameof(ActivitySettingsDto.Forecasts)] = "Light forecasts: good golden hours at places you asked about",
         [nameof(ActivitySettingsDto.Clubs)] = "Clubs: requests to join clubs you run, and your requests being accepted",
         [nameof(ActivitySettingsDto.ClubPhotos)] = "New photos shared in your clubs (at most one alert per club a day)",
-        [nameof(ActivitySettingsDto.Push)] = "Also send them to my phone (in the PhotoWorld app)",
+        [nameof(ActivitySettingsDto.Push)] = "Also send them to my phone (in the PhotoCommunity app)",
     };
 
     /// <summary>

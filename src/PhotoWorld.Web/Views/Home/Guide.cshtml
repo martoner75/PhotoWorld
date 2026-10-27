@@ -1,0 +1,342 @@
+@{
+    ViewData["Title"] = "User guide";
+    // The sections, in the order of the site's own groups (Gallery, Blogs, Community, Places, your own), for the contents list.
+    var sections = new (string Id, string Title)[]
+    {
+        ("getting-started", "Getting started"),
+        ("photos", "Sharing photos"),
+        ("gallery", "Gallery, Explore and search"),
+        ("collections", "Collections"),
+        ("blogs", "Blogs"),
+        ("challenges", "Photo challenges"),
+        ("walks", "Photo walks"),
+        ("clubs", "Camera clubs"),
+        ("places", "Places and light"),
+        ("profile", "Your profile and portfolio"),
+        ("insights", "Insights"),
+        ("activity", "Activity and emails"),
+        ("settings", "Settings and appearance"),
+        ("safety", "Reporting and blocking"),
+        ("app", "The app"),
+    };
+}
+
+<div class="container guide">
+    <header class="guide-header">
+        <h1>User guide</h1>
+        <p class="guide-lead">
+            Everything you can do on PhotoCommunity, on the website and in the app, and where to find it. Most of it needs a
+            free member account; this guide is open to everyone.
+        </p>
+    </header>
+
+    <nav class="guide-toc" aria-labelledby="guide-toc-title">
+        <h2 id="guide-toc-title">Contents</h2>
+        <ol>
+            @foreach (var (id, title) in sections)
+            {
+                <li><a href="#@id">@title</a></li>
+            }
+        </ol>
+    </nav>
+
+    <article class="legal guide-body">
+        <section id="getting-started">
+            <h2>Getting started</h2>
+            <p>
+                <strong>Join</strong> with your Google or Apple account. There's no separate password: signing in for the
+                first time creates your account, and you must be at least 13. Everything apart from the home page, this
+                guide, your public portfolio and the legal pages is for signed-in members.
+            </p>
+            <p>The website and the app are organised the same way, so every feature has one home on both:</p>
+            <ul>
+                <li><strong>Gallery</strong> and <strong>Explore</strong>: members' photos, and what's popular.</li>
+                <li><strong>Blogs</strong>: members' blog posts.</li>
+                <li><strong>Community</strong>: clubs, photo walks and challenges.</li>
+                <li><strong>Places</strong>: your private map of places you've been.</li>
+                <li><strong>＋ Create</strong>: upload photos, write a post, organise a walk, start a club or a collection.</li>
+                <li>
+                    <strong>Your own things</strong>: on the website, the menu under your picture (profile, collections,
+                    clubs, portfolio, Insights, Settings); in the app, the <strong>Me</strong> tab.
+                </li>
+            </ul>
+        </section>
+
+        <section id="photos">
+            <h2>Sharing photos</h2>
+            <h3>Uploading</h3>
+            <p>
+                Choose <strong>＋ Create → Upload a photo</strong>. PhotoCommunity takes JPEG, PNG, WebP and iPhone HEIC files
+                up to 25 MB. Give it a title, and if you like a description, tags and the place it was taken.
+                <strong>Upload several photos</strong> takes up to 20 at once, each with its own title and sharing the rest;
+                in the app, just pick several.
+            </p>
+            <p>
+                The camera, lens, focal length, aperture and ISO are read from the photo and shown on its page. Location
+                data is always removed from the file, so nobody can see where a photo was taken unless you choose a place.
+            </p>
+            <p>
+                A new photo appears in the gallery once a moderator has approved it. Until then you'll see it marked
+                <em>Waiting for approval</em>. If it's turned down, you'll see the reason and can delete it.
+            </p>
+            <h3>Choices when uploading</h3>
+            <ul>
+                <li><strong>Add my name as a watermark</strong> puts "© your name" in the corner. It becomes part of the image, so decide when uploading: it can't be added or removed later.</li>
+                <li><strong>Allow downloads</strong> (on by default). Turn it off and other members don't get the full-size link, and saving the image is blocked.</li>
+                <li><strong>Ask for feedback</strong> invites other members to rate the photo (see below).</li>
+                <li><strong>Show on the PhotoCommunity home page</strong> adds it to the public slideshow on the home page.</li>
+                <li><strong>Share to clubs</strong> adds it to the photo feed of clubs you're in.</li>
+            </ul>
+            <h3>Tags</h3>
+            <p>
+                Add up to 10 tags, such as <em>fog wildlife london</em>. <em>#hashtags</em> in the description count too.
+                Tags show under the photo; click one to see every photo with it.
+            </p>
+            <h3>Where it was taken</h3>
+            <p>
+                Pick one of your <a href="#places">places</a> and the photo shows "📍 place name" and appears on the
+                <strong>Spots</strong> map (the button on the Gallery). Only that place's name and position are shared;
+                its notes and your other places stay private.
+            </p>
+            <h3>Before &amp; after</h3>
+            <p>
+                On a photo's <strong>Edit</strong> page you can add the unedited shot. The photo page then has a slider:
+                drag across the photo to compare the two (or use the arrow keys). In the app, a button swaps between them.
+            </p>
+            <h3>Feedback</h3>
+            <p>
+                On a photo that asks for feedback, other members rate <strong>composition, light and focus</strong> from 1
+                to 5 and can add a comment. Feedback is private: the photographer sees all of it with the averages, you see
+                your own, and everyone else only how many people gave feedback. The Gallery can show just the photos asking
+                for feedback.
+            </p>
+            <h3>Likes, comments and editing</h3>
+            <p>
+                Like and comment on any photo you can see. On your own photos, <strong>Edit</strong> changes the title,
+                description, tags, place and choices above, and <strong>Delete</strong> removes the photo for good.
+            </p>
+        </section>
+
+        <section id="gallery">
+            <h2>Gallery, Explore and search</h2>
+            <p>
+                The <strong>Gallery</strong> shows members' newest photos. Switch between <strong>Everyone</strong> and
+                <strong>Following</strong> (just the people you follow), and use <strong>Filter by camera settings</strong>
+                to narrow it by camera, lens, focal length, aperture or ISO. On a photo's page, the camera details are links
+                to every photo taken with the same.
+            </p>
+            <p>
+                <strong>Explore</strong> shows the week's trending tags, popular photos by people you don't follow yet, and
+                photographers you might like. Each day a moderator picks a <strong>⭐ Photo of the day</strong>, shown at the
+                top of the Gallery and Explore.
+            </p>
+            <p>
+                <strong>Search</strong> (the box at the top of the website, or the search icon in the app) finds members,
+                photos, tags and blog posts. Type <em>#fog</em> to go straight to a tag.
+            </p>
+            <p>
+                <strong>Follow</strong> members from their page to see their photos and posts under Following and to hear
+                when they share something new.
+            </p>
+        </section>
+
+        <section id="collections">
+            <h2>Collections</h2>
+            <p>
+                Save any photo you can see, yours or someone else's, to a collection with <strong>Save to a
+                collection</strong> on its page (<strong>＋ Save</strong> in the app). Collections are private unless you make
+                them public, in which case they're listed on your member page. You can have up to 100 collections of up to
+                1,000 photos each. Deleting a collection leaves the photos alone.
+            </p>
+        </section>
+
+        <section id="blogs">
+            <h2>Blogs</h2>
+            <p>
+                Every member has a blog. Give it a title and an introduction under <strong>Blog settings</strong>, then
+                choose <strong>＋ Create → Write a blog post</strong> (on the website). The editor has headings, bold,
+                italic, lists, quotes, links and a <strong>photo</strong> button that adds photos from your gallery or
+                uploads new ones.
+            </p>
+            <ul>
+                <li><strong>Cover photo</strong>: the photo on the post's tile. Without a choice, it's the first photo in the post.</li>
+                <li><strong>PDF attachments</strong>: attach up to 5 PDFs (20 MB each), such as guides or maps, for readers to download.</li>
+                <li><strong>Drafts</strong> are visible only to you until you're ready.</li>
+                <li>
+                    <strong>Submit for approval</strong> sends the post to the moderators. Once approved it's published and
+                    your followers hear about it. If it's sent back, you'll see the reason; edit it and submit again.
+                    Editing a published post doesn't send it back.
+                </li>
+            </ul>
+            <p>Members comment on published posts, and both the comment's author and the post's author can delete a comment.</p>
+        </section>
+
+        <section id="challenges">
+            <h2>Photo challenges</h2>
+            <p>
+                <strong>Community → Challenges</strong> are themes to shoot for. While a challenge is open, enter up to 3
+                of your own photos; you can withdraw them until it ends.
+            </p>
+            <p>
+                <strong>Votes are likes</strong>: a like from another member counts if it's given between the moment the
+                photo was entered and the end of the challenge. The entry with the most votes wins (on a tie, the one
+                entered first), and the winner gets a trophy on their member page. Clubs can run their own challenges for
+                their members, too.
+            </p>
+        </section>
+
+        <section id="walks">
+            <h2>Photo walks</h2>
+            <p>
+                Walks are meetups to shoot together. Choose <strong>＋ Create → Organise a photo walk</strong>, give it a
+                title, a plan, a start time and length (up to 12 hours), an optional limit on people, and a meeting point on
+                the map. Walks can be for everyone or just for one of your clubs.
+            </p>
+            <p>
+                Members <strong>join</strong> and leave until it starts, and everyone going gets a reminder in the day before
+                it starts and hears about any changes. <strong>Directions</strong> opens your maps app with the route to the meeting
+                point, on foot, by car or by public transport. Each walk page also shows the light on the day (golden and
+                blue hours, sunrise and sunset) and which of them the walk catches.
+            </p>
+            <p>
+                Each walk has its own tag, such as <em>walk-1a2b3c4d</em>. Tag your photos from the walk with it and they
+                appear on the walk's page.
+            </p>
+        </section>
+
+        <section id="clubs">
+            <h2>Camera clubs</h2>
+            <p>
+                <strong>Community → Clubs</strong> lists local camera clubs, biggest first. Search by name or city, or
+                sort by distance from one of your places (in the app, <strong>Near me</strong> uses your approximate
+                location). <strong>My clubs</strong> lists the ones you own, run, belong to or asked to join.
+            </p>
+            <ul>
+                <li><strong>Joining.</strong> Some clubs let anyone join; others ask you to request, and the club's admins let you in.</li>
+                <li><strong>Photo feed.</strong> Share your photos to clubs you're in with <strong>Share to clubs</strong> on a photo's page. Members hear about new club photos at most once a day.</li>
+                <li><strong>Club walks and challenges</strong> are seen and joined by the club's members only.</li>
+                <li>
+                    <strong>Starting a club.</strong> Choose <strong>＋ Create → Start a club</strong> (up to 3): a name,
+                    the city where you meet, an optional area, a description and how people join. A new club is checked by
+                    the moderators before it's listed.
+                </li>
+                <li>
+                    <strong>Running one.</strong> The owner and the club's admins edit the club, let people in and remove
+                    members, and can pick the club's cover photo. Only the owner makes admins, hands the club over or
+                    deletes it.
+                </li>
+            </ul>
+        </section>
+
+        <section id="places">
+            <h2>Places and light</h2>
+            <p>
+                <strong>Places</strong> is your private map of the places you've been or want to go. Search for a place or
+                click the map to drop a pin, then add a name, a visit date and notes. Nobody else can see your places, apart
+                from a place you link to a photo (just its name and position).
+            </p>
+            <h3>Light forecasts</h3>
+            <p>
+                Open a place to see its next three days of morning and evening golden hours, each rated from the weather
+                forecast:
+            </p>
+            <ul>
+                <li><strong>☀️ Clear</strong>: little cloud and little chance of rain.</li>
+                <li><strong>🌅 Dramatic</strong>: a clear horizon with higher cloud to catch the light.</li>
+                <li><strong>☁️ Poor</strong>: low cloud, a grey sky or likely rain.</li>
+            </ul>
+            <p>
+                Tick <strong>Tell me when the light looks good here</strong> on up to 10 places, and you'll get a message
+                in the evening when tomorrow's golden hour there looks clear or dramatic. A photo linked to a place also
+                shows a <strong>Golden hour here today</strong> panel.
+            </p>
+        </section>
+
+        <section id="profile">
+            <h2>Your profile and portfolio</h2>
+            <p>
+                Your <strong>member page</strong> shows your photos, your public collections, your blog, any challenge
+                trophies, and how many people follow you and you follow.
+            </p>
+            <p>
+                <strong>My portfolio</strong> is a page about you that <em>anyone</em> can open, without signing in, at an
+                address of your choosing such as <em>/p/ana-silva</em>: your name, picture, a short bio, optional website,
+                Instagram and contact email, and up to 24 of your photos in the order you choose. It's off until you switch
+                it on, and only approved photos can be shown. It's a good link to share elsewhere.
+            </p>
+        </section>
+
+        <section id="insights">
+            <h2>Insights</h2>
+            <p>
+                <strong>Insights</strong> (in the menu under your picture, or the app's Me tab) compares your last 30 days
+                with the 30 before: views, likes, new followers and comments, a chart of views and likes per day, your top
+                photos and the tags that get the most likes. A view is another signed-in member opening a photo's page;
+                your own views don't count, and PhotoCommunity never records who viewed.
+            </p>
+        </section>
+
+        <section id="activity">
+            <h2>Activity and emails</h2>
+            <p>
+                <strong>Activity</strong> (the inbox icon at the top of the website, or in the app) tells you when someone
+                likes or comments on your photos, comments on your posts or follows you; when people you follow share
+                photos, posts or walks; about challenges, clubs and walks you're part of; and about good light at your
+                places. Choose which kinds you get in <strong>Settings</strong>, where the app can also send them to your
+                phone.
+            </p>
+            <p>
+                <strong>Emails</strong> are optional. In Settings you can get new blog posts by email, as they're published
+                or as a daily or weekly digest, and a <strong>weekly summary</strong> of how your photos did. A new email
+                address is confirmed first, and every email has an unsubscribe link.
+            </p>
+        </section>
+
+        <section id="settings">
+            <h2>Settings and appearance</h2>
+            <p>
+                <strong>Settings</strong> (under your picture on the website, Me → Settings in the app) has the same
+                sections on both: Appearance, Activity, email notifications, blocked members and your account.
+            </p>
+            <ul>
+                <li>
+                    <strong>Appearance</strong>: Light, Dark or Automatic (follows your device). The moon and sun icon
+                    switches quickly, and on the website the menu under your picture has the same choice.
+                </li>
+                <li>
+                    <strong>Deleting your account</strong>: at the bottom of Settings, by typing DELETE to confirm.
+                    Everything you shared is deleted with it, and it can't be undone.
+                </li>
+                <li><strong>Cookie settings</strong> is in every page's footer. PhotoCommunity uses no advertising or tracking cookies.</li>
+            </ul>
+        </section>
+
+        <section id="safety">
+            <h2>Reporting and blocking</h2>
+            <p>
+                Use <strong>Report</strong> on any photo, comment, blog post, blog comment or club that breaks the
+                <a asp-action="Terms">Terms of Use</a>. Content reported by several members is hidden while the moderators
+                look at it, usually within 24 hours.
+            </p>
+            <p>
+                <strong>Block</strong> a member from their page and you stop seeing their photos, posts and comments, and
+                they can't follow you or comment on your things. They aren't told. Unblock them from Settings at any time.
+            </p>
+        </section>
+
+        <section id="app">
+            <h2>The app</h2>
+            <p>
+                PhotoCommunity has an app for iPhone, iPad and Android with the same account. Its tabs follow the website:
+                <strong>Gallery</strong> (with Explore, search, Activity and ＋), <strong>Blogs</strong>,
+                <strong>Community</strong> (your next walks and the open challenges), <strong>Places</strong> and
+                <strong>Me</strong>. You can upload straight from the camera. Writing blog posts and creating challenges
+                are on the website only.
+            </p>
+            <p>
+                Questions about your data are answered in the <a asp-action="Privacy">Privacy Policy</a>, and the rules of
+                the community in the <a asp-action="Terms">Terms of Use</a>.
+            </p>
+        </section>
+    </article>
+</div>

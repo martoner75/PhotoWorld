@@ -1,13 +1,13 @@
 @model LoginViewModel
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @{
-    ViewData["Title"] = Model.IsRegister ? "Join PhotoWorld" : "Sign in";
+    ViewData["Title"] = Model.IsRegister ? "Join PhotoCommunity" : "Sign in";
 }
 
 <section class="auth">
     <div class="auth-card">
         <div class="auth-aperture" aria-hidden="true"></div>
-        <h1>@(Model.IsRegister ? "Join PhotoWorld" : "Welcome back")</h1>
+        <h1>@(Model.IsRegister ? "Join PhotoCommunity" : "Welcome back")</h1>
         <p class="auth-lead">
             @(Model.IsRegister
                 ? "Share your photography with people around the world. Create your account in one click."
@@ -48,7 +48,7 @@
             }
             else
             {
-                <text>New to PhotoWorld? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a></text>
+                <text>New to PhotoCommunity? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a></text>
             }
         </p>
         <p class="auth-legal">

@@ -112,7 +112,7 @@ public partial class PortfolioViewModel(PhotoWorldApi api) : ViewModelBase
 
     [RelayCommand]
     private Task ShareAsync() => Link is not { } link ? Task.CompletedTask
-        : Share.Default.RequestAsync(new ShareTextRequest { Uri = link.ToString(), Title = "My PhotoWorld portfolio" });
+        : Share.Default.RequestAsync(new ShareTextRequest { Uri = link.ToString(), Title = "My PhotoCommunity portfolio" });
 
     [RelayCommand]
     private Task OpenAsync() => Link is not { } link ? Task.CompletedTask : Ui.OpenInBrowserAsync(link);

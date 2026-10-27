@@ -174,7 +174,8 @@ a:hover { color: var(--pw-accent-hover); }
 .site-footer a { color: var(--pw-muted); }
 .footer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; }
 .footer-top { padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--pw-line); }
-.footer-top .store-badges { margin-top: 0; }
+.footer-top .store-badges { margin-top: 0; justify-content: center; }
+.footer-top .store-badges-note { text-align: center; }
 .footer-social { display: flex; gap: .9rem; list-style: none; margin: 0; padding: 0; }
 .footer-social a { display: inline-flex; padding: .15rem; }
 .footer-social a:hover { color: var(--pw-accent); }
@@ -187,6 +188,25 @@ a:hover { color: var(--pw-accent-hover); }
 .legal h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.25rem; }
 .legal p, .legal li { color: var(--pw-text-soft); }
 .legal-updated { color: var(--pw-muted) !important; font-size: .9rem; }
+
+/* ---------- User guide (a legal-style article, with its contents beside it on wide screens) ---------- */
+.guide { display: grid; gap: 0 3rem; grid-template-areas: "head" "toc" "body"; }
+.guide-header { grid-area: head; padding-top: 3.5rem; }
+.guide-header h1 { font-family: var(--pw-serif); font-size: 2.4rem; }
+.guide-lead { font-size: 1.1rem; color: var(--pw-text-soft); line-height: 1.65; margin: 0; }
+.guide-body { grid-area: body; padding: 1rem 0 4rem; }
+.guide-body section { scroll-margin-top: 1.5rem; }
+.guide-toc { grid-area: toc; margin-top: 2rem; padding: 1.25rem 1.5rem; border: 1px solid var(--pw-line); border-radius: var(--pw-radius); background: var(--pw-ink-2); }
+.guide-toc h2 { font-size: .8rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--pw-muted); margin: 0 0 .75rem; }
+.guide-toc ol { margin: 0; padding-left: 1.25rem; columns: 2 12rem; column-gap: 2rem; }
+.guide-toc li { padding: .15rem 0; break-inside: avoid; }
+.guide-toc a { color: var(--pw-link); text-decoration: none; }
+.guide-toc a:hover { text-decoration: underline; }
+@media (min-width: 992px) {
+  .guide { grid-template-columns: 15rem minmax(0, 760px); grid-template-areas: ". head" "toc body"; justify-content: center; }
+  .guide-toc { position: sticky; top: 1.5rem; align-self: start; margin-top: 2.25rem; }
+  .guide-toc ol { columns: 1; }
+}
 
 /* ---------- Pages & forms ---------- */
 .page { padding-top: 2.5rem; padding-bottom: 4rem; }

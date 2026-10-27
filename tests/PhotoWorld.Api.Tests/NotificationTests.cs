@@ -69,14 +69,14 @@ public class NotificationEmailsTests
     public void One_instant_post_is_named_in_the_subject()
     {
         var email = _emails.NewPosts("me@example.com", NotificationFrequency.Instant, [Post()], 0, "unsub-token");
-        Assert.Equal("New on PhotoWorld: Golden hour", email.Subject);
+        Assert.Equal("New on PhotoCommunity: Golden hour", email.Subject);
         Assert.Contains("https://photoworld.example/Blogs/Post/11111111-1111-1111-1111-111111111111", email.HtmlBody);
     }
 
     [Theory]
-    [InlineData(NotificationFrequency.Daily, "Your PhotoWorld daily digest: 3 new blog posts")]
-    [InlineData(NotificationFrequency.Weekly, "Your PhotoWorld weekly digest: 3 new blog posts")]
-    [InlineData(NotificationFrequency.Instant, "3 new blog posts on PhotoWorld")]
+    [InlineData(NotificationFrequency.Daily, "Your PhotoCommunity daily digest: 3 new blog posts")]
+    [InlineData(NotificationFrequency.Weekly, "Your PhotoCommunity weekly digest: 3 new blog posts")]
+    [InlineData(NotificationFrequency.Instant, "3 new blog posts on PhotoCommunity")]
     public void Digests_and_batches_count_every_post_including_the_ones_not_listed(string frequency, string subject)
     {
         var email = _emails.NewPosts("me@example.com", frequency, [Post(), Post("Fog")], 1, "unsub-token");
@@ -124,7 +124,7 @@ public class WeeklySummaryEmailTests
     {
         var email = _emails.WeeklySummary("me@example.com", "Ana", new WeeklyStats(1240, 1, 0, 0, 3, 0, 0), "unsub-token");
 
-        Assert.Equal("Your week on PhotoWorld: 1,240 views of your photos", email.Subject);
+        Assert.Equal("Your week on PhotoCommunity: 1,240 views of your photos", email.Subject);
         Assert.Contains("1 like", email.TextBody);
         Assert.Contains("3 new followers", email.TextBody);
         Assert.DoesNotContain("comment", email.TextBody);
@@ -137,11 +137,11 @@ public class WeeklySummaryEmailTests
     {
         var email = _emails.WeeklySummary("me@example.com", "Ana <b>", new WeeklyStats(0, 0, 0, 0, 0, 2, 1), "unsub-token");
 
-        Assert.Equal("Your week on PhotoWorld", email.Subject);
+        Assert.Equal("Your week on PhotoCommunity", email.Subject);
         Assert.Contains("2 photo walks by people you follow", email.TextBody);
         Assert.Contains("1 photo challenge is open", email.TextBody);
         Assert.Contains("Ana &lt;b&gt;", email.HtmlBody);
-        Assert.Contains("Unsubscribe from all PhotoWorld emails", email.HtmlBody);
+        Assert.Contains("Unsubscribe from all PhotoCommunity emails", email.HtmlBody);
         Assert.Equal("<https://photoworld.example/Notifications/Unsubscribe?token=unsub-token>", email.Headers!["List-Unsubscribe"]);
     }
 

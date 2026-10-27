@@ -28,7 +28,7 @@
     <Nullable>enable</Nullable>
     <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
 
-    <ApplicationTitle>PhotoWorld</ApplicationTitle>
+    <ApplicationTitle>PhotoCommunity</ApplicationTitle>
     <!-- Change to your own reverse-DNS id before signing with your Apple developer account. -->
     <ApplicationId>com.photoworld.app</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>

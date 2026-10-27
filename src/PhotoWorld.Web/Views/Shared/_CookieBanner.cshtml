@@ -1,5 +1,5 @@
 @* The cookie message (until the visitor chooses) and the Cookie settings dialog (footer link, any time).
-   PhotoWorld's cookies are all essential; the only optional item is remembering the light/dark choice.
+   PhotoCommunity's cookies are all essential; the only optional item is remembering the light/dark choice.
    site.js saves the choice in the PhotoWorld.Consent cookie ("essential" or "preferences"), for a year. *@
 @{
     var consent = Context.Request.Cookies["PhotoWorld.Consent"];
@@ -9,7 +9,7 @@
     <div class="cookie-banner" role="region" aria-label="Cookie message" data-cookie-banner>
         <div class="container cookie-banner-inner">
             <p class="mb-0">
-                PhotoWorld uses <strong>essential cookies</strong> to keep you signed in and secure. With your OK, we also
+                PhotoCommunity uses <strong>essential cookies</strong> to keep you signed in and secure. With your OK, we also
                 remember your light or dark theme in this browser. No analytics or advertising cookies.
                 <a asp-controller="Home" asp-action="Privacy" asp-fragment="cookies">More about cookies</a>
             </p>

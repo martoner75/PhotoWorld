@@ -68,7 +68,7 @@ public static class Routes
 /// <summary>Alerts and pickers shown over the current page.</summary>
 public static class Ui
 {
-    public static Task AlertAsync(string message, string title = "PhotoWorld") =>
+    public static Task AlertAsync(string message, string title = "PhotoCommunity") =>
         Shell.Current.DisplayAlertAsync(title, message, "OK");
 
     public static Task<bool> ConfirmAsync(string title, string message, string accept) =>

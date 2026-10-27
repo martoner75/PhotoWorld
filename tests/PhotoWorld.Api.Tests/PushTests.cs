@@ -9,7 +9,7 @@ namespace PhotoWorld.Api.Tests;
 
 public class PushTests
 {
-    private static readonly PushMessage Message = new("PhotoWorld", "Anna liked your photo “Fog”", 3,
+    private static readonly PushMessage Message = new("PhotoCommunity", "Anna liked your photo “Fog”", 3,
         new Dictionary<string, string> { ["photoId"] = "p1", ["type"] = "like" });
 
     [Fact]
@@ -29,7 +29,7 @@ public class PushTests
         using var json = JsonDocument.Parse(PushFormats.FcmPayload("tok", Message));
         var message = json.RootElement.GetProperty("message");
         Assert.Equal("tok", message.GetProperty("token").GetString());
-        Assert.Equal("PhotoWorld", message.GetProperty("notification").GetProperty("title").GetString());
+        Assert.Equal("PhotoCommunity", message.GetProperty("notification").GetProperty("title").GetString());
         Assert.Equal("like", message.GetProperty("data").GetProperty("type").GetString());
         Assert.Equal("high", message.GetProperty("android").GetProperty("priority").GetString());
     }

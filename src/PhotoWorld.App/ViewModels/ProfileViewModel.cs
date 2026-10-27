@@ -204,7 +204,7 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     [RelayCommand]
     private async Task SignOutAsync()
     {
-        if (await Ui.ConfirmAsync("Sign out", "Sign out of PhotoWorld on this device?", "Sign out")) auth.SignOut();
+        if (await Ui.ConfirmAsync("Sign out", "Sign out of PhotoCommunity on this device?", "Sign out")) auth.SignOut();
     }
 
     /// <summary>Same rule as the website: type DELETE to confirm. Required in-app for App Store apps with accounts.</summary>
