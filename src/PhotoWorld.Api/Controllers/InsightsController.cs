@@ -65,12 +65,18 @@ public class InsightsController(PhotoWorldDbContext db, SupabaseStorage storage,
         var summaries = (await db.Photos.AsNoTracking().Where(p => ids.Contains(p.Id)).ToSummariesAsync(me, storage, ct)).ToDictionary(p => p.Id);
         var topPhotos = top.Where(t => summaries.ContainsKey(t.Id)).Select(t => new InsightPhotoDto(summaries[t.Id], t.Views, t.Likes)).ToList();
 
-        // Tags that earn the most likes (all time), on the member's photos.
-        var topTags = await db.PhotoTags.Where(t => t.Photo.OwnerId == me)
-            .GroupBy(t => t.Name)
-            .Select(g => new InsightTagDto(g.Key, g.Sum(t => t.Photo.Likes.Count(l => l.UserId != me)), g.Count()))
+        // Tags that earn the most likes (all time), on the member's photos. One row per tag and like, grouped by tag;
+        // the DTO is built after the query, as EF can't translate a record constructor over a group.
+        var tagStats = await (
+                from t in db.PhotoTags.Where(t => t.Photo.OwnerId == me)
+                join l in db.PhotoLikes.Where(l => l.UserId != me) on t.PhotoId equals l.PhotoId into tagLikes
+                from l in tagLikes.DefaultIfEmpty()
+                select new { t.Name, t.PhotoId, Liker = (Guid?)l.UserId })
+            .GroupBy(x => x.Name)
+            .Select(g => new { Tag = g.Key, Likes = g.Count(x => x.Liker != null), Photos = g.Select(x => x.PhotoId).Distinct().Count() })
             .OrderByDescending(t => t.Likes).ThenBy(t => t.Tag).Take(8)
             .ToListAsync(ct);
+        var topTags = tagStats.Select(t => new InsightTagDto(t.Tag, t.Likes, t.Photos)).ToList();
 
         return new InsightsDto(viewStat, likeStat, followStat, commentStat,
             await follows.CountAsync(ct), await db.Photos.CountAsync(p => p.OwnerId == me, ct), days, topPhotos, topTags);
