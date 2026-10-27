@@ -1,0 +1,10 @@
+@* The user guide, open to everyone: an icon in the header, with its name beside it in the collapsed mobile menu. *@
+@{
+    var current = ViewContext.RouteData.Values["controller"] as string == "Home" && ViewContext.RouteData.Values["action"] as string == "Guide";
+}
+<li class="nav-item">
+    <a class="nav-link nav-guide @(current ? "active" : null)" aria-current="@(current ? "page" : null)" asp-controller="Home" asp-action="Guide"
+       aria-label="User guide" title="User guide">
+        <partial name="_LineIcon" model="LineIcons.Guide" /><span class="nav-guide-label" aria-hidden="true">User guide</span>
+    </a>
+</li>

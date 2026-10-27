@@ -33,6 +33,11 @@ public static class LineIcons
     public const string Sunrise =
         "M3 18H21 M7 18A5 5 0 0 1 17 18 M12 6V9 M5.3 9.3L7.4 11.4 M18.7 9.3L16.6 11.4 M8 21.5H16";
 
+    /// <summary>An open book: the user guide.</summary>
+    public const string Guide =
+        "M12 6.5C10.2 5.1 7.5 4.5 3.5 4.8V18.3C7.5 18 10.2 18.6 12 20C13.8 18.6 16.5 18 20.5 18.3V4.8C16.5 4.5 13.8 5.1 12 6.5Z " +
+        "M12 6.5V20";
+
     /// <summary>A trophy: challenges.</summary>
     public const string Challenges =
         "M7 3.5H17V9A5 5 0 0 1 7 9Z " +

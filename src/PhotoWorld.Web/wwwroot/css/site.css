@@ -195,7 +195,25 @@ a:hover { color: var(--pw-accent-hover); }
 .guide-header h1 { font-family: var(--pw-serif); font-size: 2.4rem; }
 .guide-lead { font-size: 1.1rem; color: var(--pw-text-soft); line-height: 1.65; margin: 0; }
 .guide-body { grid-area: body; padding: 1rem 0 4rem; }
-.guide-body section { scroll-margin-top: 1.5rem; }
+.guide-tools { display: flex; justify-content: flex-end; gap: .5rem; margin: 1rem 0 .75rem; }
+/* Each topic is a <details>: its title is the row you click, with a chevron that turns when it's open. */
+.guide-section { border-bottom: 1px solid var(--pw-line); scroll-margin-top: 1.5rem; }
+.guide-section:first-of-type { border-top: 1px solid var(--pw-line); }
+.guide-section > summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 0; cursor: pointer; list-style: none; }
+.guide-section > summary::-webkit-details-marker { display: none; }
+.guide-section > summary h2 { margin: 0; font-size: 1.3rem; transition: color .15s; }
+.guide-section > summary:hover h2 { color: var(--pw-accent); }
+.guide-section > summary:focus-visible { outline: 2px solid var(--pw-accent); outline-offset: 2px; border-radius: 4px; }
+.guide-section > summary::after { content: ""; flex: none; width: .55rem; height: .55rem; margin-right: .3rem;
+  border-right: 2px solid var(--pw-muted); border-bottom: 2px solid var(--pw-muted); transform: translateY(-25%) rotate(45deg); transition: transform .2s; }
+.guide-section[open] > summary::after { transform: translateY(25%) rotate(-135deg); }
+.guide-section-body { padding-bottom: 1.5rem; }
+.guide-section-body > :first-child { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) { .guide-section > summary::after, .guide-section > summary h2 { transition: none; } }
+.guide-shot { margin: 1.5rem 0; }
+.guide-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--pw-line); border-radius: var(--pw-radius); background: var(--pw-photo-bg); }
+.guide-shot figcaption { margin-top: .5rem; color: var(--pw-muted); font-size: .85rem; text-align: center; }
+.guide-shot-phone img { max-width: 300px; margin: 0 auto; border-radius: 24px; }
 .guide-toc { grid-area: toc; margin-top: 2rem; padding: 1.25rem 1.5rem; border: 1px solid var(--pw-line); border-radius: var(--pw-radius); background: var(--pw-ink-2); }
 .guide-toc h2 { font-size: .8rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--pw-muted); margin: 0 0 .75rem; }
 .guide-toc ol { margin: 0; padding-left: 1.25rem; columns: 2 12rem; column-gap: 2rem; }
@@ -675,6 +693,10 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 /* ---------- Activity ---------- */
 .nav-bell { position: relative; display: inline-flex; align-items: center; }
 .nav-bell-icon { display: block; }
+/* The user guide's book, sized like the bell and the theme icon; its name shows only in the collapsed mobile menu. */
+.nav-guide { display: inline-flex; align-items: center; gap: .6rem; }
+.nav-guide .line-icon { width: 22px; height: 22px; }
+@media (min-width: 992px) { .nav-guide-label { display: none; } }
 .line-icon { flex: none; display: inline-block; vertical-align: -.25em; }
 .community-menu .dropdown-item { display: flex; align-items: center; gap: .6rem; }
 .community-menu .line-icon { color: var(--pw-accent); }
