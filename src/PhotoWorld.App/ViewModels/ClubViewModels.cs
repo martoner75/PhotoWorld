@@ -139,6 +139,7 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
 
     /// <summary>Upcoming club walks (members only, so empty for anyone else) and the club's challenges.</summary>
     public ObservableCollection<WalkItem> Walks { get; } = [];
+    public ObservableCollection<WorkshopItem> Workshops { get; } = [];
     public ObservableCollection<Shared.Challenges.ChallengeSummaryDto> Challenges { get; } = [];
     public bool IsActiveMember => Club?.Summary is { MyStatus: ClubMemberStatus.Active, ReviewStatus: ClubReviewStatus.Approved };
     public bool CanRunChallenges => Club is { CanManageMembers: true, Summary.ReviewStatus: ClubReviewStatus.Approved };
@@ -189,9 +190,13 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
         Photos.Clear();
         foreach (var p in photos.Items) Photos.Add(p);
         PhotosTitle = photos.TotalCount == 0 ? "Photos" : $"Photos ({photos.TotalCount})";
-        var walks = club.Summary.MyStatus == ClubMemberStatus.Active ? await api.GetClubWalksAsync(_id) : [];
+        var isMember = club.Summary.MyStatus == ClubMemberStatus.Active;
+        var walks = isMember ? await api.GetClubWalksAsync(_id) : [];
         Walks.Clear();
         foreach (var w in walks) Walks.Add(new WalkItem(w));
+        var workshops = isMember ? await api.GetClubWorkshopsAsync(_id) : [];
+        Workshops.Clear();
+        foreach (var w in workshops) Workshops.Add(new WorkshopItem(w));
         Challenges.Clear();
         foreach (var c in await api.GetClubChallengesAsync(_id)) Challenges.Add(c);
         Club = club;
@@ -206,6 +211,13 @@ public partial class ClubViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     [RelayCommand]
     private Task OrganiseWalkAsync() =>
         Shell.Current.GoToAsync(Routes.WalkEditor, new ShellNavigationQueryParameters { ["clubId"] = _id });
+
+    [RelayCommand]
+    private Task OpenWorkshopAsync(WorkshopItem item) => Routes.OpenWorkshopAsync(item.Workshop.Id);
+
+    [RelayCommand]
+    private Task HostWorkshopAsync() =>
+        Shell.Current.GoToAsync(Routes.WorkshopEditor, new ShellNavigationQueryParameters { ["clubId"] = _id });
 
     [RelayCommand]
     private Task OpenChallengeAsync(Shared.Challenges.ChallengeSummaryDto challenge) => Routes.OpenChallengeAsync(challenge.Id);

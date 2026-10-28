@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.WorkshopEditorPage"
+             x:DataType="vm:WorkshopEditorViewModel"
+             Title="{Binding PageTitle}">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="10" MaximumWidthRequest="640">
+                <Label Text="Topic" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}"><Entry Text="{Binding Title}" Placeholder="Editing night skies in Lightroom" MaxLength="100" /></Border>
+                <Label Text="What it's about (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Description}" Placeholder="What you'll cover, who it's for, anything to have ready…" AutoSize="TextChanges"
+                            MinimumHeightRequest="80" MaxLength="2000" />
+                </Border>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Date" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}"><DatePicker Date="{Binding Date}" MinimumDate="{Binding MinDate}" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="Starts" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}"><TimePicker Time="{Binding Time}" TextColor="{DynamicResource Text}" /></Border>
+                    </VerticalStackLayout>
+                </Grid>
+                <Label Text="Lasts" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Picker ItemsSource="{Binding DurationOptions}" SelectedIndex="{Binding DurationIndex}" Title="How long" TextColor="{DynamicResource Text}" />
+                </Border>
+
+                <Label Text="Video call link (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding VideoLink}" Placeholder="https://meet.google.com/…" Keyboard="Url" MaxLength="500" />
+                </Border>
+                <Label Text="A Zoom, Google Meet or Teams link. Only you and people going see it. Without one, the workshop happens in its chat."
+                       Style="{StaticResource MutedText}" FontSize="13" />
+
+                <Label Text="Group size limit (optional, including you)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}"><Entry Text="{Binding MaxPeople}" Placeholder="No limit" Keyboard="Numeric" /></Border>
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding HasClubs}">
+                    <Label Text="Who it's for" Style="{StaticResource Strong}" />
+                    <Border Style="{StaticResource Field}">
+                        <Picker ItemsSource="{Binding ClubOptions}" SelectedIndex="{Binding ClubIndex}" Title="Who it's for" TextColor="{DynamicResource Text}" />
+                    </Border>
+                    <Label Text="A club workshop is shown only to the club's members." Style="{StaticResource MutedText}" FontSize="13" />
+                </VerticalStackLayout>
+
+                <Button Text="Save workshop" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+                <Label Text="Followers hear about new workshops; people going hear about changes and get a reminder the day before. The chat stays open until a day after it ends."
+                       Style="{StaticResource MutedText}" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

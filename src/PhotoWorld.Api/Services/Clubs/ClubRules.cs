@@ -85,6 +85,12 @@ public static class ClubRules
         : !clubApproved ? "The club has to be approved first."
         : null;
 
+    /// <summary>Any active member can host a workshop for an approved club.</summary>
+    public static string? CannotHostWorkshop(bool isActiveMember, bool clubApproved) =>
+        !isActiveMember ? "Only the club's members can host a workshop for it."
+        : !clubApproved ? "The club has to be approved first."
+        : null;
+
     /// <summary>The club's owner and admins run its challenges (create, change, delete) once the club is approved.</summary>
     public static string? CannotRunChallenge(string? role, bool clubApproved) =>
         !CanManage(role) ? "Only the club's owner and admins can run its challenges."

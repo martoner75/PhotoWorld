@@ -2169,3 +2169,153 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    ALTER TABLE photoworld.activities DROP CONSTRAINT ck_activities_type;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    ALTER TABLE photoworld.activity_settings ADD workshops boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    ALTER TABLE photoworld.activities ADD workshop_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE TABLE photoworld.workshops (
+        id uuid NOT NULL,
+        host_id uuid NOT NULL,
+        title character varying(100) NOT NULL,
+        description character varying(2000),
+        starts_at timestamp with time zone NOT NULL,
+        ends_at timestamp with time zone NOT NULL,
+        video_link character varying(500),
+        max_people integer,
+        club_id uuid,
+        cancelled_at timestamp with time zone,
+        reminder_sent_at timestamp with time zone,
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_workshops PRIMARY KEY (id),
+        CONSTRAINT ck_workshops_times CHECK (ends_at > starts_at),
+        CONSTRAINT fk_workshops_clubs_club_id FOREIGN KEY (club_id) REFERENCES photoworld.clubs (id) ON DELETE CASCADE,
+        CONSTRAINT fk_workshops_users_host_id FOREIGN KEY (host_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE TABLE photoworld.workshop_attendees (
+        workshop_id uuid NOT NULL,
+        user_id uuid NOT NULL,
+        joined_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_workshop_attendees PRIMARY KEY (workshop_id, user_id),
+        CONSTRAINT fk_workshop_attendees_users_user_id FOREIGN KEY (user_id) REFERENCES photoworld.users (id) ON DELETE CASCADE,
+        CONSTRAINT fk_workshop_attendees_workshops_workshop_id FOREIGN KEY (workshop_id) REFERENCES photoworld.workshops (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE TABLE photoworld.workshop_messages (
+        id bigint GENERATED ALWAYS AS IDENTITY,
+        workshop_id uuid NOT NULL,
+        author_id uuid NOT NULL,
+        body character varying(1000) NOT NULL,
+        created_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_workshop_messages PRIMARY KEY (id),
+        CONSTRAINT fk_workshop_messages_users_author_id FOREIGN KEY (author_id) REFERENCES photoworld.users (id) ON DELETE CASCADE,
+        CONSTRAINT fk_workshop_messages_workshops_workshop_id FOREIGN KEY (workshop_id) REFERENCES photoworld.workshops (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE INDEX ix_activities_workshop_id ON photoworld.activities (workshop_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT ck_activities_type CHECK (type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo', 'workshop_new', 'workshop_joined', 'workshop_changed', 'workshop_cancelled', 'workshop_reminder'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE INDEX ix_workshop_attendees_user_id ON photoworld.workshop_attendees (user_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE INDEX ix_workshop_messages_author_id ON photoworld.workshop_messages (author_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE INDEX ix_workshop_messages_workshop_id_id ON photoworld.workshop_messages (workshop_id, id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE INDEX ix_workshops_club_id ON photoworld.workshops (club_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE INDEX ix_workshops_host_id ON photoworld.workshops (host_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    CREATE INDEX ix_workshops_starts_at ON photoworld.workshops (starts_at);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT fk_activities_workshops_workshop_id FOREIGN KEY (workshop_id) REFERENCES photoworld.workshops (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261028140801_AddWorkshops') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261028140801_AddWorkshops', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

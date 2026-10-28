@@ -21,6 +21,12 @@ public static class LineIcons
         "M10 8.5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0Z " +
         "M5 21H7.5 M10.75 21H13.25 M16.5 21H19";
 
+    /// <summary>A screen with a speech bubble on it: online workshops.</summary>
+    public const string Workshops =
+        "M3.5 5.5H20.5V16.5H3.5Z " +
+        "M8 9H16V12.5H11L9 14.2V12.5H8Z " +
+        "M9 20H15 M12 16.5V20";
+
     /// <summary>A map pin: a place, a meeting point, a club's city.</summary>
     public const string Pin =
         "M12 21S5.5 15.4 5.5 10a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21Z " +

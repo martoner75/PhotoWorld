@@ -12,6 +12,7 @@ public static class ActivityText
         var challenge = Quote(a.ChallengeTitle);
         var walk = Quote(a.WalkTitle);
         var club = Quote(a.ClubName);
+        var workshop = Quote(a.WorkshopTitle);
         return a.Type switch
         {
             ActivityTypes.Like => $"{who} liked your photo {photo}",
@@ -25,6 +26,11 @@ public static class ActivityText
             ActivityTypes.WalkChanged => $"The photo walk {walk} has changed: check the time and meeting point",
             ActivityTypes.WalkCancelled => $"The photo walk {walk} was cancelled",
             ActivityTypes.WalkReminder => $"Reminder: the photo walk {walk} is tomorrow",
+            ActivityTypes.WorkshopNew => $"{who} is hosting an online workshop: {workshop}",
+            ActivityTypes.WorkshopJoined => $"{who} joined your workshop {workshop}",
+            ActivityTypes.WorkshopChanged => $"The workshop {workshop} has changed: check the time and video link",
+            ActivityTypes.WorkshopCancelled => $"The workshop {workshop} was cancelled",
+            ActivityTypes.WorkshopReminder => $"Reminder: the workshop {workshop} starts within a day",
             ActivityTypes.Feedback => $"{who} gave feedback on your photo {photo}",
             ActivityTypes.PhotoOfTheDay => $"Your photo {photo} is today's photo of the day! ⭐",
             ActivityTypes.PostApproved => $"Your post {post} was approved and is now published",
@@ -59,6 +65,7 @@ public static class ActivityText
         [nameof(ActivitySettingsDto.FollowedPosts)] = "New photos and posts from members you follow",
         [nameof(ActivitySettingsDto.Challenges)] = "Photo challenges: new ones, closing soon, results",
         [nameof(ActivitySettingsDto.Walks)] = "Photo walks: new ones by members you follow, people joining yours, changes and reminders",
+        [nameof(ActivitySettingsDto.Workshops)] = "Online workshops: new ones by members you follow, people joining yours, changes and reminders",
         [nameof(ActivitySettingsDto.Forecasts)] = "Light forecasts: good golden hours at places you asked about",
         [nameof(ActivitySettingsDto.Clubs)] = "Clubs: requests to join clubs you run, and your requests being accepted",
         [nameof(ActivitySettingsDto.ClubPhotos)] = "New photos shared in your clubs (at most one alert per club a day)",
@@ -73,7 +80,7 @@ public static class ActivityText
     [
         ("Your photos and posts", [nameof(ActivitySettingsDto.Likes), nameof(ActivitySettingsDto.Comments)]),
         ("People", [nameof(ActivitySettingsDto.Follows), nameof(ActivitySettingsDto.FollowedPosts)]),
-        ("Community", [nameof(ActivitySettingsDto.Challenges), nameof(ActivitySettingsDto.Walks),
+        ("Community", [nameof(ActivitySettingsDto.Challenges), nameof(ActivitySettingsDto.Walks), nameof(ActivitySettingsDto.Workshops),
             nameof(ActivitySettingsDto.Clubs), nameof(ActivitySettingsDto.ClubPhotos)]),
         ("Places", [nameof(ActivitySettingsDto.Forecasts)]),
         ("Delivery", [nameof(ActivitySettingsDto.Push)]),

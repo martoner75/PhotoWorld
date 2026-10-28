@@ -23,6 +23,8 @@ public class Activity
     public Walk? Walk { get; set; }
     public Guid? ClubId { get; set; }
     public Club? Club { get; set; }
+    public Guid? WorkshopId { get; set; }
+    public Workshop? Workshop { get; set; }
 
     /// <summary>Challenge results: 1 = won, 2 or 3 = placed; null = took part.</summary>
     public int? Place { get; set; }
@@ -52,6 +54,7 @@ public class ActivitySettings
     public bool Forecasts { get; set; } = true;
     public bool Clubs { get; set; } = true;
     public bool ClubPhotos { get; set; } = true;
+    public bool Workshops { get; set; } = true;
 }
 
 /// <summary>A member's phone that receives push notifications. Goes with the account; dead tokens are removed when sending.</summary>

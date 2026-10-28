@@ -15,6 +15,7 @@ using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
+using PhotoWorld.Shared.Workshops;
 
 namespace PhotoWorld.App.Services;
 
@@ -197,6 +198,39 @@ public sealed class PhotoWorldApi(HttpClient http)
 
     public Task SetWalkAttendanceAsync(Guid id, bool going, CancellationToken ct = default) =>
         SendAsync(going ? HttpMethod.Put : HttpMethod.Delete, WithId(ApiRoutes.WalkAttendance, id), null, ct);
+
+    // ----- Online workshops -----
+    public Task<List<WorkshopSummaryDto>> GetWorkshopsAsync(string list, CancellationToken ct = default) =>
+        GetAsync<List<WorkshopSummaryDto>>($"{ApiRoutes.Workshops}?list={list}", ct);
+
+    public Task<List<WorkshopSummaryDto>> GetClubWorkshopsAsync(Guid clubId, CancellationToken ct = default) =>
+        GetAsync<List<WorkshopSummaryDto>>($"{ApiRoutes.Workshops}?list={WorkshopLists.Upcoming}&clubId={clubId}", ct);
+
+    public Task<WorkshopDto> GetWorkshopAsync(Guid id, CancellationToken ct = default) => GetAsync<WorkshopDto>(WithId(ApiRoutes.Workshop, id), ct);
+
+    public Task<WorkshopSummaryDto> CreateWorkshopAsync(SaveWorkshopRequest request, CancellationToken ct = default) =>
+        SendAsync<WorkshopSummaryDto>(HttpMethod.Post, ApiRoutes.Workshops, JsonContent.Create(request, options: Json), ct);
+
+    public Task<WorkshopSummaryDto> UpdateWorkshopAsync(Guid id, SaveWorkshopRequest request, CancellationToken ct = default) =>
+        SendAsync<WorkshopSummaryDto>(HttpMethod.Put, WithId(ApiRoutes.Workshop, id), JsonContent.Create(request, options: Json), ct);
+
+    public Task CancelWorkshopAsync(Guid id, CancellationToken ct = default) => SendAsync(HttpMethod.Post, WithId(ApiRoutes.WorkshopCancel, id), null, ct);
+
+    public Task DeleteWorkshopAsync(Guid id, CancellationToken ct = default) => SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Workshop, id), null, ct);
+
+    public Task SetWorkshopAttendanceAsync(Guid id, bool going, CancellationToken ct = default) =>
+        SendAsync(going ? HttpMethod.Put : HttpMethod.Delete, WithId(ApiRoutes.WorkshopAttendance, id), null, ct);
+
+    /// <summary>The chat, oldest first: the newest messages, or with <paramref name="after"/> only the ones since.</summary>
+    public Task<List<WorkshopMessageDto>> GetWorkshopMessagesAsync(Guid id, long? after = null, CancellationToken ct = default) =>
+        GetAsync<List<WorkshopMessageDto>>(WithId(ApiRoutes.WorkshopMessages, id) + (after is { } since ? $"?after={since}" : ""), ct);
+
+    public Task<WorkshopMessageDto> PostWorkshopMessageAsync(Guid id, string body, CancellationToken ct = default) =>
+        SendAsync<WorkshopMessageDto>(HttpMethod.Post, WithId(ApiRoutes.WorkshopMessages, id),
+            JsonContent.Create(new PostWorkshopMessageRequest(body), options: Json), ct);
+
+    public Task DeleteWorkshopMessageAsync(Guid id, long messageId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, ApiRoutes.Format(ApiRoutes.WorkshopMessage, ("id", id), ("messageId", messageId)), null, ct);
 
     // ----- Collections -----
     public Task<List<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>

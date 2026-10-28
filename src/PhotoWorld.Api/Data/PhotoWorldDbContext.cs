@@ -11,6 +11,7 @@ using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Walks;
+using PhotoWorld.Shared.Workshops;
 
 namespace PhotoWorld.Api.Data;
 
@@ -44,6 +45,9 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Collection> Collections => Set<Collection>();
     public DbSet<Walk> Walks => Set<Walk>();
     public DbSet<WalkAttendee> WalkAttendees => Set<WalkAttendee>();
+    public DbSet<Workshop> Workshops => Set<Workshop>();
+    public DbSet<WorkshopAttendee> WorkshopAttendees => Set<WorkshopAttendee>();
+    public DbSet<WorkshopMessage> WorkshopMessages => Set<WorkshopMessage>();
     public DbSet<CollectionPhoto> CollectionPhotos => Set<CollectionPhoto>();
     public DbSet<ActivitySettings> ActivitySettings => Set<ActivitySettings>();
     public DbSet<DeviceRegistration> Devices => Set<DeviceRegistration>();
@@ -398,6 +402,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(a => a.Challenge).WithMany().HasForeignKey(a => a.ChallengeId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Walk).WithMany().HasForeignKey(a => a.WalkId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Club).WithMany().HasForeignKey(a => a.ClubId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Workshop).WithMany().HasForeignKey(a => a.WorkshopId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(a => new { a.RecipientId, a.CreatedAt }).IsDescending(false, true);
             e.HasIndex(a => new { a.RecipientId, a.ReadAt });
             e.HasIndex(a => a.CreatedAt);
@@ -429,6 +434,39 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(a => a.Walk).WithMany(w => w.Attendees).HasForeignKey(a => a.WalkId);
             e.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId);
             e.HasIndex(a => a.UserId);
+        });
+
+        modelBuilder.Entity<Workshop>(e =>
+        {
+            e.ToTable(t => t.HasCheckConstraint("ck_workshops_times", "ends_at > starts_at"));
+            e.Property(w => w.Title).HasMaxLength(WorkshopLimits.TitleMax);
+            e.Property(w => w.Description).HasMaxLength(WorkshopLimits.DescriptionMax);
+            e.Property(w => w.VideoLink).HasMaxLength(WorkshopLimits.VideoLinkMax);
+            e.HasOne(w => w.Host).WithMany().HasForeignKey(w => w.HostId);
+            // A club workshop goes with its club, like a club walk.
+            e.HasOne(w => w.Club).WithMany().HasForeignKey(w => w.ClubId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(w => w.ClubId);
+            e.HasIndex(w => w.StartsAt);
+            e.HasIndex(w => w.HostId);
+        });
+
+        modelBuilder.Entity<WorkshopAttendee>(e =>
+        {
+            e.HasKey(a => new { a.WorkshopId, a.UserId });
+            e.HasOne(a => a.Workshop).WithMany(w => w.Attendees).HasForeignKey(a => a.WorkshopId);
+            e.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId);
+            e.HasIndex(a => a.UserId);
+        });
+
+        modelBuilder.Entity<WorkshopMessage>(e =>
+        {
+            e.Property(m => m.Id).UseIdentityAlwaysColumn();
+            e.Property(m => m.Body).HasMaxLength(WorkshopLimits.MessageMax);
+            e.HasOne(m => m.Workshop).WithMany(w => w.Messages).HasForeignKey(m => m.WorkshopId);
+            e.HasOne(m => m.Author).WithMany().HasForeignKey(m => m.AuthorId);
+            // The chat is read as "the messages after id N" in one workshop.
+            e.HasIndex(m => new { m.WorkshopId, m.Id });
+            e.HasIndex(m => m.AuthorId);
         });
 
         modelBuilder.Entity<Collection>(e =>
@@ -468,6 +506,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(s => s.Forecasts).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.Clubs).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.ClubPhotos).HasDefaultValue(true).HasSentinel(true);
+            e.Property(s => s.Workshops).HasDefaultValue(true).HasSentinel(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 

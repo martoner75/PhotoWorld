@@ -1,0 +1,158 @@
+@model WorkshopPageViewModel
+@{
+    var d = Model.Workshop;
+    var w = d.Workshop;
+    ViewData["Title"] = w.Title;
+}
+
+<section class="container page">
+    @if (w.IsCancelled)
+    {
+        <div class="alert moderation-banner" role="status"><strong>Cancelled.</strong> This workshop isn't happening.</div>
+    }
+    <div class="walk-layout">
+        <div>
+            <p class="hero-eyebrow">
+                @if (w.ClubId is { } clubId)
+                {
+                    @:Club workshop · for members of <a asp-controller="Clubs" asp-action="Details" asp-route-id="@clubId">@w.ClubName</a>
+                }
+                else
+                {
+                    @:Online workshop
+                }
+            </p>
+            <h1 class="walk-title">@w.Title</h1>
+            <p class="walk-facts">
+                🗓 <time datetime="@w.StartsAt.ToString("O")" data-local-time="full">@w.StartsAt.ToString("dddd d MMMM, HH:mm") UTC</time>
+                – <time datetime="@w.EndsAt.ToString("O")" data-local-time="time">@w.EndsAt.ToString("HH:mm")</time><br />
+                💬 Chat on PhotoCommunity@(w.HasVideoLink ? ", plus a video call" : "")<br />
+                👥 @w.AttendeeCount going@(w.MaxPeople is { } max ? $" (up to {max})" : "") · hosted by
+                <a asp-controller="Members" asp-action="Details" asp-route-id="@w.Host.Id">@w.Host.DisplayName</a>
+            </p>
+
+            @if (!w.IsCancelled)
+            {
+                <div class="member-actions walk-actions">
+                    @if (w.IsGoing)
+                    {
+                        <form asp-action="Attend" asp-route-id="@w.Id" method="post" data-confirm="Not going any more? You'll leave the chat.">
+                            <input type="hidden" name="going" value="false" />
+                            <button type="submit" class="btn btn-ghost">Going ✓ · Leave</button>
+                        </form>
+                    }
+                    else if (d.CanJoin)
+                    {
+                        <form asp-action="Attend" asp-route-id="@w.Id" method="post">
+                            <input type="hidden" name="going" value="true" />
+                            <button type="submit" class="btn btn-accent">Join the workshop</button>
+                        </form>
+                    }
+                    else if (d.CannotJoinReason is { } reason)
+                    {
+                        <span class="text-muted">@reason</span>
+                    }
+                    @if (d.VideoLink is { } link)
+                    {
+                        @* Only the host and people going get the link. noreferrer keeps the workshop's address out of the call service. *@
+                        <a class="btn btn-ghost" href="@link" target="_blank" rel="noopener noreferrer">🎥 Join the video call</a>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(d.Description))
+            {
+                <p class="blog-intro walk-plan">@d.Description</p>
+            }
+
+            @if (d.CanEdit)
+            {
+                <div class="owner-actions">
+                    <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@w.Id">Edit</a>
+                    @if (!w.IsCancelled)
+                    {
+                        <form asp-action="Cancel" asp-route-id="@w.Id" method="post" data-confirm="Cancel this workshop? Everyone going will be told, and the chat closes.">
+                            <button type="submit" class="btn btn-ghost btn-sm">Cancel workshop</button>
+                        </form>
+                    }
+                    <form asp-action="Delete" asp-route-id="@w.Id" method="post" data-confirm="Delete this workshop for good, its chat included?">
+                        <button type="submit" class="btn btn-danger-ghost btn-sm">Delete</button>
+                    </form>
+                </div>
+            }
+
+            <section class="comments workshop-chat mt-4" id="chat" aria-labelledby="chat-heading">
+                <h2 id="chat-heading">Chat</h2>
+                @if (!d.CanReadChat)
+                {
+                    <p class="text-muted">@(d.CannotJoinReason is null ? "Join the workshop to read and take part in its chat." : "The chat is for the host and people going.")</p>
+                }
+                else
+                {
+                    <div class="chat-log" data-chat-log aria-live="polite"
+                         data-messages-url="@Url.Action("Messages", new { id = w.Id })"
+                         data-delete-url="@Url.Action("DeleteMessage", new { id = w.Id })"
+                         data-member-url="@Url.Action("Details", "Members", new { id = Guid.Empty })"
+                         data-refresh-ms="@((int)WorkshopLimits.ChatRefresh.TotalMilliseconds)"
+                         data-last-id="@(Model.Messages.Count > 0 ? Model.Messages[^1].Id : 0)">
+                        <p class="text-muted chat-empty" data-chat-empty hidden="@(Model.Messages.Count > 0)">No messages yet. Say hello and share what you'd like to cover.</p>
+                        <ul class="chat-messages" data-chat-messages>
+                            @foreach (var m in Model.Messages)
+                            {
+                                <li class="chat-message @(m.IsHost ? "is-host" : "")" data-message-id="@m.Id">
+                                    <partial name="_Avatar" model="m.Author" />
+                                    <div class="comment-body">
+                                        <div class="comment-head">
+                                            <a asp-controller="Members" asp-action="Details" asp-route-id="@m.Author.Id">@m.Author.DisplayName</a>
+                                            @if (m.IsHost) { <span class="chat-host-badge">host</span> }
+                                            <time datetime="@m.CreatedAt.ToString("O")" data-local-time="full">@m.CreatedAt.ToString("d MMM, HH:mm") UTC</time>
+                                            @if (m.CanDelete)
+                                            {
+                                                <form asp-action="DeleteMessage" asp-route-id="@w.Id" asp-route-messageId="@m.Id" method="post" class="comment-delete" data-chat-delete>
+                                                    <button type="submit" class="btn-link-muted" aria-label="Delete message">Delete</button>
+                                                </form>
+                                            }
+                                        </div>
+                                        <p>@m.Body</p>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                    @if (d.CanChat)
+                    {
+                        <form asp-action="Post" asp-route-id="@w.Id" method="post" class="comment-form" data-chat-form>
+                            <label for="chat-body" class="visually-hidden">Your message</label>
+                            <textarea id="chat-body" name="body" rows="2" maxlength="@WorkshopLimits.MessageMax" required
+                                      placeholder="Ask a question or share a tip…"></textarea>
+                            <span class="field-error" data-chat-error></span>
+                            <button type="submit" class="btn btn-accent btn-sm">Send</button>
+                        </form>
+                    }
+                    else if (d.CannotChatReason is { } chatReason)
+                    {
+                        <p class="text-muted small">@chatReason</p>
+                    }
+                }
+            </section>
+        </div>
+        <aside>
+            <h2 class="section-heading">Going</h2>
+            <ul class="member-results">
+                @foreach (var person in d.Attendees)
+                {
+                    <li class="member-result">
+                        <a asp-controller="Members" asp-action="Details" asp-route-id="@person.Id" class="photo-card-owner">
+                            <partial name="_Avatar" model="person" /> <strong>@person.DisplayName</strong>
+                            @if (person.Id == w.Host.Id) { <span class="text-muted small">host</span> }
+                        </a>
+                    </li>
+                }
+            </ul>
+        </aside>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/workshops.js" asp-append-version="true"></script>
+}

@@ -100,6 +100,19 @@ public sealed class ScheduledActivitySender(IServiceScopeFactory scopes, TimePro
             await feed.NotifyWalkAsync([w.OrganizerId, .. w.Attendees], null, w.OrganizerId, w.Id, ActivityTypes.WalkReminder, ct);
         }
 
+        // Online workshops starting within a day: remind attendees and the host once, the same way.
+        var workshops = await db.Workshops.AsNoTracking()
+            .Where(w => w.CancelledAt == null && w.ReminderSentAt == null && w.StartsAt > now && w.StartsAt <= soon)
+            .Select(w => new { w.Id, w.HostId, Attendees = w.Attendees.Select(a => a.UserId).ToList() })
+            .ToListAsync(ct);
+        foreach (var w in workshops)
+        {
+            if (await db.Workshops.Where(x => x.Id == w.Id && x.ReminderSentAt == null)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReminderSentAt, now), ct) != 1) continue;
+            var feed = scope.ServiceProvider.GetRequiredService<ActivityFeed>();
+            await feed.NotifyWorkshopAsync([w.HostId, .. w.Attendees], null, w.HostId, w.Id, ActivityTypes.WorkshopReminder, ct);
+        }
+
         var purged = await db.Activities.Where(a => a.CreatedAt < now - ActivityRules.KeepFor).ExecuteDeleteAsync(ct);
         if (purged > 0) logger.LogInformation("Deleted {Count} old activity items", purged);
     }

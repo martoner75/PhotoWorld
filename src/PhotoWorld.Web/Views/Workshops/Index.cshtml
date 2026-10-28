@@ -1,0 +1,44 @@
+@model WorkshopsPageViewModel
+@{
+    ViewData["Title"] = "Online workshops";
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Online workshops</h1>
+            <p class="text-muted">Join a session on a topic, from editing to gear to how to find the light, and talk it through with other members in the workshop's chat.</p>
+        </div>
+        <a class="btn btn-accent" asp-action="New">Host a workshop</a>
+    </header>
+
+    <nav class="feed-tabs" aria-label="Which workshops">
+        @foreach (var (key, label) in new[] { (WorkshopLists.Upcoming, "Upcoming"), (WorkshopLists.Mine, "Mine"), (WorkshopLists.Past, "Past") })
+        {
+            <a asp-action="Index" asp-route-list="@(key == WorkshopLists.Upcoming ? null : key)" class="@(Model.List == key ? "active" : "")"
+               aria-current="@(Model.List == key ? "page" : null)">@label</a>
+        }
+    </nav>
+
+    @if (Model.Workshops.Count == 0)
+    {
+        <div class="empty-state">
+            <p>@(Model.List switch
+            {
+                WorkshopLists.Mine => "You're not hosting or going to any workshops yet.",
+                WorkshopLists.Past => "No past workshops yet.",
+                _ => "No workshops coming up. Why not host the first one?",
+            })</p>
+            <a class="btn btn-accent" asp-action="New">Host a workshop</a>
+        </div>
+    }
+    else
+    {
+        <div class="post-grid">
+            @foreach (var w in Model.Workshops)
+            {
+                <partial name="_WorkshopCard" model="w" />
+            }
+        </div>
+    }
+</section>

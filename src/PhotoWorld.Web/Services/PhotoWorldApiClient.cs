@@ -15,6 +15,7 @@ using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
+using PhotoWorld.Shared.Workshops;
 
 namespace PhotoWorld.Web.Services;
 
@@ -370,6 +371,64 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         using var res = going ? await http.PutAsync(url, null, ct) : await http.DeleteAsync(url, ct);
         if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
         return IsSuccess(res) ? null : "That walk no longer exists.";
+    }
+
+    public async Task<IReadOnlyList<WorkshopSummaryDto>> GetWorkshopsAsync(string list, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<WorkshopSummaryDto>>($"{ApiRoutes.Workshops}?list={Uri.EscapeDataString(list)}", ct) ?? [];
+
+    public async Task<IReadOnlyList<WorkshopSummaryDto>> GetClubWorkshopsAsync(Guid clubId, CancellationToken ct = default) =>
+        await GetOrNullAsync<List<WorkshopSummaryDto>>($"{ApiRoutes.Workshops}?list={WorkshopLists.Upcoming}&clubId={clubId}", ct) ?? [];
+
+    public Task<WorkshopDto?> GetWorkshopAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<WorkshopDto>(ApiRoutes.Format(ApiRoutes.Workshop, ("id", id)), ct);
+
+    public async Task<ApiResult<WorkshopSummaryDto>> CreateWorkshopAsync(SaveWorkshopRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Workshops, request, ct);
+        return await ReadResultAsync<WorkshopSummaryDto>(res, ct, "We couldn't create that workshop.");
+    }
+
+    public async Task<ApiResult<WorkshopSummaryDto>> UpdateWorkshopAsync(Guid id, SaveWorkshopRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Workshop, ("id", id)), request, ct);
+        return await ReadResultAsync<WorkshopSummaryDto>(res, ct, "That workshop no longer exists, or you can't change it.");
+    }
+
+    public async Task<bool> CancelWorkshopAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.WorkshopCancel, ("id", id)), null, ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<bool> DeleteWorkshopAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Workshop, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<string?> SetWorkshopAttendanceAsync(Guid id, bool going, CancellationToken ct = default)
+    {
+        var url = ApiRoutes.Format(ApiRoutes.WorkshopAttendance, ("id", id));
+        using var res = going ? await http.PutAsync(url, null, ct) : await http.DeleteAsync(url, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That workshop no longer exists.";
+    }
+
+    public Task<IReadOnlyList<WorkshopMessageDto>?> GetWorkshopMessagesAsync(Guid id, long? after, CancellationToken ct = default) =>
+        GetOrNullAsync<IReadOnlyList<WorkshopMessageDto>>(
+            ApiRoutes.Format(ApiRoutes.WorkshopMessages, ("id", id)) + (after is { } since ? $"?after={since}" : ""), ct);
+
+    public async Task<ApiResult<WorkshopMessageDto>> PostWorkshopMessageAsync(Guid id, string body, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.WorkshopMessages, ("id", id)),
+            new PostWorkshopMessageRequest(body), ct);
+        return await ReadResultAsync<WorkshopMessageDto>(res, ct, "That workshop no longer exists.");
+    }
+
+    public async Task<bool> DeleteWorkshopMessageAsync(Guid id, long messageId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.WorkshopMessage, ("id", id), ("messageId", messageId)), ct);
+        return IsSuccess(res);
     }
 
     public async Task<IReadOnlyList<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>

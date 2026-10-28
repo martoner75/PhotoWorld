@@ -85,6 +85,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("walk_id");
 
+                    b.Property<Guid?>("WorkshopId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("workshop_id");
+
                     b.HasKey("Id")
                         .HasName("pk_activities");
 
@@ -112,6 +116,9 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasIndex("WalkId")
                         .HasDatabaseName("ix_activities_walk_id");
 
+                    b.HasIndex("WorkshopId")
+                        .HasDatabaseName("ix_activities_workshop_id");
+
                     b.HasIndex("RecipientId", "CreatedAt")
                         .IsDescending(false, true)
                         .HasDatabaseName("ix_activities_recipient_id_created_at");
@@ -121,7 +128,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo', 'workshop_new', 'workshop_joined', 'workshop_changed', 'workshop_cancelled', 'workshop_reminder')");
                         });
                 });
 
@@ -180,6 +187,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("walks");
+
+                    b.Property<bool>("Workshops")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("workshops");
 
                     b.HasKey("UserId")
                         .HasName("pk_activity_settings");
@@ -1828,6 +1841,145 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.ToTable("walk_attendees", "photoworld");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Workshop", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid?>("ClubId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("club_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<Guid>("HostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("host_id");
+
+                    b.Property<int?>("MaxPeople")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_people");
+
+                    b.Property<DateTimeOffset?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reminder_sent_at");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("VideoLink")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("video_link");
+
+                    b.HasKey("Id")
+                        .HasName("pk_workshops");
+
+                    b.HasIndex("ClubId")
+                        .HasDatabaseName("ix_workshops_club_id");
+
+                    b.HasIndex("HostId")
+                        .HasDatabaseName("ix_workshops_host_id");
+
+                    b.HasIndex("StartsAt")
+                        .HasDatabaseName("ix_workshops_starts_at");
+
+                    b.ToTable("workshops", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_workshops_times", "ends_at > starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.WorkshopAttendee", b =>
+                {
+                    b.Property<Guid>("WorkshopId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("workshop_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("JoinedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("joined_at");
+
+                    b.HasKey("WorkshopId", "UserId")
+                        .HasName("pk_workshop_attendees");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_workshop_attendees_user_id");
+
+                    b.ToTable("workshop_attendees", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.WorkshopMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("WorkshopId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("workshop_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_workshop_messages");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_workshop_messages_author_id");
+
+                    b.HasIndex("WorkshopId", "Id")
+                        .HasDatabaseName("ix_workshop_messages_workshop_id_id");
+
+                    b.ToTable("workshop_messages", "photoworld");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.Activity", b =>
                 {
                     b.HasOne("PhotoWorld.Api.Data.User", "Actor")
@@ -1873,6 +2025,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_activities_walks_walk_id");
 
+                    b.HasOne("PhotoWorld.Api.Data.Workshop", "Workshop")
+                        .WithMany()
+                        .HasForeignKey("WorkshopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_activities_workshops_workshop_id");
+
                     b.Navigation("Actor");
 
                     b.Navigation("Challenge");
@@ -1886,6 +2044,8 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Recipient");
 
                     b.Navigation("Walk");
+
+                    b.Navigation("Workshop");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.ActivitySettings", b =>
@@ -2468,6 +2628,68 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Walk");
                 });
 
+            modelBuilder.Entity("PhotoWorld.Api.Data.Workshop", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Club", "Club")
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_workshops_clubs_club_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.User", "Host")
+                        .WithMany()
+                        .HasForeignKey("HostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_workshops_users_host_id");
+
+                    b.Navigation("Club");
+
+                    b.Navigation("Host");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.WorkshopAttendee", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_workshop_attendees_users_user_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Workshop", "Workshop")
+                        .WithMany("Attendees")
+                        .HasForeignKey("WorkshopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_workshop_attendees_workshops_workshop_id");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Workshop");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.WorkshopMessage", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_workshop_messages_users_author_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Workshop", "Workshop")
+                        .WithMany("Messages")
+                        .HasForeignKey("WorkshopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_workshop_messages_workshops_workshop_id");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Workshop");
+                });
+
             modelBuilder.Entity("PhotoWorld.Api.Data.BlogComment", b =>
                 {
                     b.Navigation("Reports");
@@ -2534,6 +2756,13 @@ namespace PhotoWorld.Api.Data.Migrations
             modelBuilder.Entity("PhotoWorld.Api.Data.Walk", b =>
                 {
                     b.Navigation("Attendees");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Workshop", b =>
+                {
+                    b.Navigation("Attendees");
+
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

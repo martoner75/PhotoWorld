@@ -28,6 +28,8 @@ public static class ActivityRules
             or ActivityTypes.PhotoApproved or ActivityTypes.PhotoRejected => true, // the answer the author is waiting for
         ActivityTypes.WalkNew or ActivityTypes.WalkJoined or ActivityTypes.WalkChanged or ActivityTypes.WalkCancelled
             or ActivityTypes.WalkReminder => settings.Walks,
+        ActivityTypes.WorkshopNew or ActivityTypes.WorkshopJoined or ActivityTypes.WorkshopChanged or ActivityTypes.WorkshopCancelled
+            or ActivityTypes.WorkshopReminder => settings.Workshops,
         ActivityTypes.LightForecast => settings.Forecasts,
         ActivityTypes.ClubRequest or ActivityTypes.ClubAccepted => settings.Clubs,
         ActivityTypes.ClubPhoto => settings.ClubPhotos,

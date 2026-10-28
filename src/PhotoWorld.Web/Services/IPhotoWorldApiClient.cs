@@ -11,6 +11,7 @@ using PhotoWorld.Shared.Places;
 using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
+using PhotoWorld.Shared.Workshops;
 
 namespace PhotoWorld.Web.Services;
 
@@ -114,6 +115,21 @@ public interface IPhotoWorldApiClient
     Task<bool> DeleteWalkAsync(Guid id, CancellationToken ct = default);
     /// <summary>Null on success, otherwise a message for the member.</summary>
     Task<string?> SetWalkAttendanceAsync(Guid id, bool going, CancellationToken ct = default);
+
+    // Online workshops
+    Task<IReadOnlyList<WorkshopSummaryDto>> GetWorkshopsAsync(string list, CancellationToken ct = default);
+    Task<IReadOnlyList<WorkshopSummaryDto>> GetClubWorkshopsAsync(Guid clubId, CancellationToken ct = default);
+    Task<WorkshopDto?> GetWorkshopAsync(Guid id, CancellationToken ct = default);
+    Task<ApiResult<WorkshopSummaryDto>> CreateWorkshopAsync(SaveWorkshopRequest request, CancellationToken ct = default);
+    Task<ApiResult<WorkshopSummaryDto>> UpdateWorkshopAsync(Guid id, SaveWorkshopRequest request, CancellationToken ct = default);
+    Task<bool> CancelWorkshopAsync(Guid id, CancellationToken ct = default);
+    Task<bool> DeleteWorkshopAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Null on success, otherwise a message for the member.</summary>
+    Task<string?> SetWorkshopAttendanceAsync(Guid id, bool going, CancellationToken ct = default);
+    /// <summary>The chat (the newest messages, or with <paramref name="after"/> the ones since); null if the member can't read it.</summary>
+    Task<IReadOnlyList<WorkshopMessageDto>?> GetWorkshopMessagesAsync(Guid id, long? after, CancellationToken ct = default);
+    Task<ApiResult<WorkshopMessageDto>> PostWorkshopMessageAsync(Guid id, string body, CancellationToken ct = default);
+    Task<bool> DeleteWorkshopMessageAsync(Guid id, long messageId, CancellationToken ct = default);
 
     // Collections
     /// <summary>The caller's own collections, or <paramref name="ownerId"/>'s public ones.</summary>

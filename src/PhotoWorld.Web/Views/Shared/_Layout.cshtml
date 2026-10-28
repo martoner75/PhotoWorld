@@ -66,8 +66,8 @@
                         // The section being viewed is highlighted, for sighted members and screen readers alike.
                         string? Active(string section) => controller == section ? "active" : null;
                         string? Current(string section) => controller == section ? "page" : null;
-                        // Clubs, walks and challenges are one "Community" section, the same group as the app's Community tab.
-                        var inCommunity = controller is "Clubs" or "Walks" or "Challenges";
+                        // Clubs, walks, workshops and challenges are one "Community" section, the same group as the app's Community tab.
+                        var inCommunity = controller is "Clubs" or "Walks" or "Workshops" or "Challenges";
                         @* Site sections on the left; search, create, activity and the member's own menu on the right.
                            The same groups as the app: Gallery (with Explore), Blogs, Community, Places, and the member's own. *@
                         <ul class="navbar-nav me-auto ms-lg-3 gap-lg-1">
@@ -80,6 +80,7 @@
                                 <ul class="dropdown-menu community-menu">
                                     <li><a class="dropdown-item @Active("Clubs")" aria-current="@Current("Clubs")" asp-controller="Clubs" asp-action="Index"><partial name="_LineIcon" model="LineIcons.Clubs" />Clubs</a></li>
                                     <li><a class="dropdown-item @Active("Walks")" aria-current="@Current("Walks")" asp-controller="Walks" asp-action="Index"><partial name="_LineIcon" model="LineIcons.Walks" />Photo walks</a></li>
+                                    <li><a class="dropdown-item @Active("Workshops")" aria-current="@Current("Workshops")" asp-controller="Workshops" asp-action="Index"><partial name="_LineIcon" model="LineIcons.Workshops" />Online workshops</a></li>
                                     <li><a class="dropdown-item @Active("Challenges")" aria-current="@Current("Challenges")" asp-controller="Challenges" asp-action="Index"><partial name="_LineIcon" model="LineIcons.Challenges" />Challenges</a></li>
                                 </ul>
                             </li>
@@ -100,6 +101,7 @@
                                     <li><a class="dropdown-item" asp-controller="Blogs" asp-action="New">Write a blog post</a></li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li><a class="dropdown-item" asp-controller="Walks" asp-action="New">Organise a photo walk</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Workshops" asp-action="New">Host an online workshop</a></li>
                                     <li><a class="dropdown-item" asp-controller="Clubs" asp-action="New">Start a club</a></li>
                                     <li><a class="dropdown-item" asp-controller="Collections" asp-action="New">New collection</a></li>
                                 </ul>

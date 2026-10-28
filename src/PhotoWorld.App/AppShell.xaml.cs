@@ -35,6 +35,9 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Club, typeof(ClubPage));
         Routing.RegisterRoute(Routes.ClubEditor, typeof(ClubEditorPage));
         Routing.RegisterRoute(Routes.WalkEditor, typeof(WalkEditorPage));
+        Routing.RegisterRoute(Routes.Workshops, typeof(WorkshopsPage));
+        Routing.RegisterRoute(Routes.Workshop, typeof(WorkshopPage));
+        Routing.RegisterRoute(Routes.WorkshopEditor, typeof(WorkshopEditorPage));
         Routing.RegisterRoute(Routes.Insights, typeof(InsightsPage));
         Routing.RegisterRoute(Routes.PhotoEditor, typeof(PhotoEditorPage));
         Routing.RegisterRoute(Routes.CollectionEditor, typeof(CollectionEditorPage));

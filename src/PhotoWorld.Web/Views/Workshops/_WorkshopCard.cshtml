@@ -1,0 +1,27 @@
+@model WorkshopSummaryDto
+<article class="post-card walk-card workshop-card @(Model.IsCancelled ? "is-cancelled" : "")">
+    <a asp-controller="Workshops" asp-action="Details" asp-route-id="@Model.Id" class="post-card-cover workshop-cover" tabindex="-1" aria-hidden="true">
+        <span class="post-card-cover-empty workshop-cover-empty"><partial name="_LineIcon" model="LineIcons.Workshops" /></span>
+        @if (Model.IsCancelled)
+        {
+            <span class="moderation-badge photo-card-badge">Cancelled</span>
+        }
+        else if (Model.IsGoing || Model.IsHost)
+        {
+            <span class="moderation-badge photo-card-badge draft-badge">@(Model.IsHost ? "Hosting" : "Going")</span>
+        }
+    </a>
+    <div class="post-card-body">
+        <p class="walk-when"><time datetime="@Model.StartsAt.ToString("O")" data-local-time="full">@Model.StartsAt.ToString("ddd d MMM, HH:mm") UTC</time></p>
+        <h3><a asp-controller="Workshops" asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></h3>
+        <p class="text-muted small mb-0">💬 Chat@(Model.HasVideoLink ? " and video call" : "") · @((int)(Model.EndsAt - Model.StartsAt).TotalMinutes) min</p>
+        @if (Model.ClubName is not null)
+        {
+            <p class="text-muted small mb-0">👥 @Model.ClubName members only</p>
+        }
+        <div class="post-card-meta">
+            <span class="photo-card-owner"><partial name="_Avatar" model="Model.Host" /> @Model.Host.DisplayName</span>
+            <span>@Model.AttendeeCount@(Model.MaxPeople is { } max ? $" / {max}" : "") going</span>
+        </div>
+    </div>
+</article>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:services="clr-namespace:PhotoWorld.App.Services"
+             xmlns:views="clr-namespace:PhotoWorld.App.Views"
+             x:Class="PhotoWorld.App.Views.WorkshopsPage"
+             x:DataType="vm:WorkshopsViewModel"
+             Title="Online workshops">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Host" Command="{Binding NewCommand}" />
+    </ContentPage.ToolbarItems>
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="8" Padding="0,0,0,8">
+                    <Label Text="Join a session on a topic and talk it through with other members in the workshop's chat."
+                           Style="{StaticResource MutedText}" FontSize="14" />
+                    <Border Padding="3" StrokeShape="RoundRectangle 10">
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="3">
+                            <Button Text="Upcoming" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="upcoming">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding List}" Value="upcoming">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="1" Text="Mine" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="mine">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding List}" Value="mine">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="2" Text="Past" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="past">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding List}" Value="past">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.EmptyView>
+                <Label Text="{Binding EmptyMessage}" Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center"
+                       Margin="32,60" IsVisible="{Binding IsEmpty}" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:WorkshopItem">
+                    <Border Padding="14,12">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:WorkshopsViewModel}}, x:DataType=vm:WorkshopsViewModel}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+                            <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="13" />
+                            <Label Grid.Column="1" Text="{Binding Badge}" Style="{StaticResource MutedText}"
+                                   IsVisible="{Binding Badge, Converter={StaticResource HasValue}}" />
+                            <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Workshop.Title}" Style="{StaticResource Subheading}" FontSize="18" />
+                            <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Spacing="2">
+                                <views:IconText Icon="{x:Static services:LineIconShapes.Workshops}" Text="{Binding Format}" FontSize="13" />
+                                <views:IconText Icon="{x:Static services:LineIconShapes.People}" Text="{Binding Going}" FontSize="13" />
+                                <views:IconText Icon="{x:Static services:LineIconShapes.People}" Text="{Binding ClubOnly}" FontSize="13"
+                                                IsVisible="{Binding ClubOnly, Converter={StaticResource HasValue}}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

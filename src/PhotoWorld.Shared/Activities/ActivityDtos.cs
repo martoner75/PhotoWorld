@@ -21,6 +21,11 @@ public static class ActivityTypes
     public const string WalkChanged = "walk_changed";
     public const string WalkCancelled = "walk_cancelled";
     public const string WalkReminder = "walk_reminder";
+    public const string WorkshopNew = "workshop_new";
+    public const string WorkshopJoined = "workshop_joined";
+    public const string WorkshopChanged = "workshop_changed";
+    public const string WorkshopCancelled = "workshop_cancelled";
+    public const string WorkshopReminder = "workshop_reminder";
     /// <summary>An admin approved the member's post (now published) or sent it back (the snippet is their reason).</summary>
     public const string PostApproved = "post_approved";
     public const string PostRejected = "post_rejected";
@@ -42,7 +47,8 @@ public static class ActivityTypes
     public static readonly IReadOnlyList<string> All =
         [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback,
          WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected, LightForecast,
-         ClubRequest, ClubAccepted, ClubApproved, ClubRejected, ClubPhoto];
+         ClubRequest, ClubAccepted, ClubApproved, ClubRejected, ClubPhoto,
+         WorkshopNew, WorkshopJoined, WorkshopChanged, WorkshopCancelled, WorkshopReminder];
 }
 
 /// <summary>
@@ -67,21 +73,23 @@ public sealed record ActivityDto(
     Guid? WalkId = null,
     string? WalkTitle = null,
     Guid? ClubId = null,
-    string? ClubName = null);
+    string? ClubName = null,
+    Guid? WorkshopId = null,
+    string? WorkshopTitle = null);
 
 /// <summary>Which kinds of activity a member wants. Everything is on until they change it.</summary>
 /// <param name="Push">Also send them to the member's phones (where the app is allowed to show notifications).</param>
 public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows, bool FollowedPosts, bool Challenges, bool Push = true,
-    bool Walks = true, bool Forecasts = true, bool Clubs = true, bool ClubPhotos = true)
+    bool Walks = true, bool Forecasts = true, bool Clubs = true, bool ClubPhotos = true, bool Workshops = true)
 {
-    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true, true);
+    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true, true, true);
 
     /// <summary>One switch by its name (see <see cref="ActivityText.SettingGroups"/>), so forms can list them in order.</summary>
     public bool Get(string name) => name switch
     {
         nameof(Likes) => Likes, nameof(Comments) => Comments, nameof(Follows) => Follows, nameof(FollowedPosts) => FollowedPosts,
         nameof(Challenges) => Challenges, nameof(Push) => Push, nameof(Walks) => Walks, nameof(Forecasts) => Forecasts,
-        nameof(Clubs) => Clubs, nameof(ClubPhotos) => ClubPhotos,
+        nameof(Clubs) => Clubs, nameof(ClubPhotos) => ClubPhotos, nameof(Workshops) => Workshops,
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Not an activity setting."),
     };
 
@@ -93,6 +101,7 @@ public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows
         nameof(Challenges) => this with { Challenges = on }, nameof(Push) => this with { Push = on },
         nameof(Walks) => this with { Walks = on }, nameof(Forecasts) => this with { Forecasts = on },
         nameof(Clubs) => this with { Clubs = on }, nameof(ClubPhotos) => this with { ClubPhotos = on },
+        nameof(Workshops) => this with { Workshops = on },
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Not an activity setting."),
     };
 }

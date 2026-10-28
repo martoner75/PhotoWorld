@@ -37,10 +37,12 @@ public class ClubsController(IPhotoWorldApiClient api) : Controller
         if (club is null) return NotFound();
         var members = await api.GetClubMembersAsync(id, pending: false, ct);
         var requests = club.CanManageMembers ? await api.GetClubMembersAsync(id, pending: true, ct) : [];
-        // Walks are for members only, so the API returns none to anyone else.
-        var walks = club.Summary.MyStatus == ClubMemberStatus.Active ? await api.GetClubWalksAsync(id, ct) : [];
+        // Walks and workshops are for members only, so the API returns none to anyone else.
+        var isMember = club.Summary.MyStatus == ClubMemberStatus.Active;
+        var walks = isMember ? await api.GetClubWalksAsync(id, ct) : [];
+        var workshops = isMember ? await api.GetClubWorkshopsAsync(id, ct) : [];
         return View(new ClubPageViewModel(club, members, requests, await api.GetClubPhotosAsync(id, Math.Max(1, page), ct), walks,
-            await api.GetClubChallengesAsync(id, ct)));
+            await api.GetClubChallengesAsync(id, ct), workshops));
     }
 
     /// <summary>Choose which of your clubs one of your photos is shared to.</summary>
