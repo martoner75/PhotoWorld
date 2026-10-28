@@ -135,6 +135,26 @@
                 </div>
             }
         </section>
+
+        <section class="club-section" id="workshops">
+            <header class="club-section-header">
+                <h2>Online workshops <span class="text-muted">@Model.Workshops.Count</span></h2>
+                <a class="btn btn-ghost btn-sm" asp-controller="Workshops" asp-action="New" asp-route-clubId="@s.Id">Host a club workshop</a>
+            </header>
+            @if (Model.Workshops.Count == 0)
+            {
+                <p class="text-muted">No club workshops coming up. Club workshops are shown to members only.</p>
+            }
+            else
+            {
+                <div class="post-grid">
+                    @foreach (var w in Model.Workshops)
+                    {
+                        <partial name="~/Views/Workshops/_WorkshopCard.cshtml" model="w" />
+                    }
+                </div>
+            }
+        </section>
     }
 
     <section class="club-section" id="challenges">

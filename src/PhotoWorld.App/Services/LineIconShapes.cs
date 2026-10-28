@@ -13,6 +13,7 @@ public static class LineIconShapes
 
     public static Geometry Clubs => Parse(LineIcons.Clubs);
     public static Geometry Walks => Parse(LineIcons.Walks);
+    public static Geometry Workshops => Parse(LineIcons.Workshops);
     public static Geometry Challenges => Parse(LineIcons.Challenges);
     public static Geometry Pin => Parse(LineIcons.Pin);
     public static Geometry People => Parse(LineIcons.People);

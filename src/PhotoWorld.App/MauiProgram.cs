@@ -63,6 +63,9 @@ public static class MauiProgram
         services.AddTransient<ClubEditorPage>().AddTransient<ClubEditorViewModel>();
         services.AddTransient<WalkPage>().AddTransient<WalkViewModel>();
         services.AddTransient<WalkEditorPage>().AddTransient<WalkEditorViewModel>();
+        services.AddTransient<WorkshopsPage>().AddTransient<WorkshopsViewModel>();
+        services.AddTransient<WorkshopPage>().AddTransient<WorkshopViewModel>();
+        services.AddTransient<WorkshopEditorPage>().AddTransient<WorkshopEditorViewModel>();
         services.AddTransient<InsightsPage>().AddTransient<InsightsViewModel>();
         services.AddTransient<PhotoEditorPage>().AddTransient<PhotoEditorViewModel>();
         services.AddTransient<CollectionEditorPage>().AddTransient<CollectionEditorViewModel>();

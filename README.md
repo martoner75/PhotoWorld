@@ -59,6 +59,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.photo_tags` | API (EF Core) | Tags on photos (normalised, without `#`) |
 | `photoworld.photos_of_the_day` | API (EF Core) | The admins' photo of the day, one per UTC date |
 | `photoworld.photo_feedback` | API (EF Core) | Members' ratings and comments on photos that ask for feedback (private to the owner) |
+| `photoworld.workshops`, `workshop_attendees`, `workshop_messages` | API (EF Core) | Online workshops, who's going, and their chat messages |
 | `photoworld.devices` | API (EF Core) | Phones registered for push notifications (APNs / FCM tokens) |
 | `photoworld.challenges`, `challenge_entries` | You (Supabase dashboard) / API | Photo challenge themes and dates, and the photos entered in each |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
@@ -349,6 +350,24 @@ golden hour"). A photo linked to a place has a **Golden hour here today** panel.
 the position and date, within a few minutes (golden hour: sun from 4° below to 6° above the horizon; blue hour: 6° to
 4° below); no outside service is asked. Times show in the viewer's time zone; the day is picked from the place's
 longitude. Near the poles, days without sunrise say so.
+
+## Online workshops
+
+**Workshops** (Community in the menu; the app's Community tab) are online sessions on a topic: a title, description,
+start and length (up to 8 hours), an optional limit on people and an optional video call link (Zoom, Meet, Teams;
+`https://` only). Members can join until it ends, since it's online. The host edits, cancels or deletes it. Followers
+hear about a new workshop (or, for a club workshop, the club's members), the host hears when people join, those going
+hear about changes to the time or link and cancellations, and everyone going gets a reminder within the last day.
+These follow the member's **Workshops** activity switch. Club workshops work like club walks: only the club's active
+members see, hear about or join them. Blocking and suspensions hide workshops the same way as walks.
+
+**Chat.** Each workshop has a text chat (`workshop_messages`) for the host and the people going. They can post from
+joining until a day after it ends (`WorkshopLimits.ChatOpenAfter`); then, or once it's cancelled, it's read-only.
+Site admins can read any chat to moderate it. Message ids are a growing `bigint` identity, so the website
+(`workshops.js`) and the app ask for `GET api/workshops/{id}/messages?after={lastId}` every 5 seconds while the chat is
+on screen; there's no WebSocket. Authors delete their own messages, and the host or a site admin can delete any.
+Messages by suspended members, or members the viewer blocked, are left out. The video link is shown only to the
+host and people going.
 
 ## Camera clubs
 

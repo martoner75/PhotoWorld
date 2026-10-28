@@ -14,7 +14,7 @@
     <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
         <ScrollView>
             <VerticalStackLayout Padding="16,12" Spacing="12" MaximumWidthRequest="640">
-                <Label Text="Meet other photographers: join a club, go on a walk, enter a challenge." Style="{StaticResource MutedText}" FontSize="14" />
+                <Label Text="Meet other photographers: join a club, go on a walk or a workshop, enter a challenge." Style="{StaticResource MutedText}" FontSize="14" />
 
                 <!-- The three sections, each a card with its line icon (LineIcons, as in the website's Community menu). -->
                 <Border Padding="14,12">
@@ -38,6 +38,18 @@
                         <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                             <Label Text="Photo walks" Style="{StaticResource Subheading}" FontSize="18" />
                             <Label Text="Meet up and shoot together, with the light and directions to the meeting point." Style="{StaticResource MutedText}" FontSize="14" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+                <Border Padding="14,12">
+                    <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding OpenWorkshopsCommand}" /></Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Style="{StaticResource LineIconBadge}">
+                            <Path Data="{x:Static services:LineIconShapes.Workshops}" Style="{StaticResource LineIcon}" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Online workshops" Style="{StaticResource Subheading}" FontSize="18" />
+                            <Label Text="Sessions on a topic, with a chat for everyone going and an optional video call." Style="{StaticResource MutedText}" FontSize="14" />
                         </VerticalStackLayout>
                     </Grid>
                 </Border>

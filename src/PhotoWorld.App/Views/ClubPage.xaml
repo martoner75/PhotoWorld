@@ -79,6 +79,32 @@
                     </VerticalStackLayout>
                 </VerticalStackLayout>
 
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsActiveMember}">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                        <Label Text="Club workshops" Style="{StaticResource Subheading}" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Host" Style="{StaticResource GhostButton}" Padding="12,4" Command="{Binding HostWorkshopCommand}" />
+                    </Grid>
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Workshops}" Spacing="6">
+                        <BindableLayout.EmptyView>
+                            <Label Text="No club workshops coming up. Only members see them." Style="{StaticResource MutedText}" FontSize="14" />
+                        </BindableLayout.EmptyView>
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WorkshopItem">
+                                <Border Padding="12,8">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                            Command="{Binding OpenWorkshopCommand, Source={RelativeSource AncestorType={x:Type vm:ClubViewModel}}, x:DataType=vm:ClubViewModel}" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="1">
+                                        <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="13" />
+                                        <Label Text="{Binding Workshop.Title}" Style="{StaticResource Strong}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
                 <Label Text="Club challenges" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Challenges}" Spacing="6">
                     <BindableLayout.EmptyView>

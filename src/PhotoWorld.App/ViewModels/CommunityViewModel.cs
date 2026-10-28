@@ -53,6 +53,9 @@ public partial class CommunityViewModel(PhotoWorldApi api) : ViewModelBase
     private Task OpenWalksAsync() => Shell.Current.GoToAsync(Routes.Walks);
 
     [RelayCommand]
+    private Task OpenWorkshopsAsync() => Shell.Current.GoToAsync(Routes.Workshops);
+
+    [RelayCommand]
     private Task OpenChallengesAsync() => Shell.Current.GoToAsync(Routes.Challenges);
 
     [RelayCommand]

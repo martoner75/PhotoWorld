@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:services="clr-namespace:PhotoWorld.App.Services"
+             xmlns:views="clr-namespace:PhotoWorld.App.Views"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             x:Class="PhotoWorld.App.Views.WorkshopPage"
+             x:DataType="vm:WorkshopViewModel"
+             Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem x:Name="EditItem" Text="Edit" Command="{Binding EditCommand}" />
+    </ContentPage.ToolbarItems>
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView x:Name="Scroller">
+            <VerticalStackLayout Padding="18,12" Spacing="10">
+                <Border Padding="12,8" BackgroundColor="{DynamicResource DangerSoft}" Stroke="{DynamicResource DangerLine}"
+                        IsVisible="{Binding Workshop.Workshop.IsCancelled}">
+                    <Label Text="Cancelled: this workshop isn't happening." FontSize="14" />
+                </Border>
+                <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" />
+                <Label Text="{Binding Title}" Style="{StaticResource Heading}" />
+                <views:IconText Icon="{x:Static services:LineIconShapes.Workshops}" Text="{Binding Format}" FontSize="15" ColorKey="Text" />
+                <views:IconText Icon="{x:Static services:LineIconShapes.People}" Text="{Binding Going}" FontSize="15" ColorKey="Text" />
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Button Text="Join the workshop" Command="{Binding JoinCommand}" IsVisible="{Binding Workshop.CanJoin}" />
+                    <Button Text="Going ✓ · Leave" Style="{StaticResource GhostButton}" Command="{Binding LeaveCommand}" IsVisible="{Binding CanLeave}" />
+                    <Button Grid.Column="1" Text="🎥 Video call" Style="{StaticResource GhostButton}" Command="{Binding OpenVideoCallCommand}"
+                            IsVisible="{Binding HasVideoLink}" SemanticProperties.Description="Join the video call" />
+                </Grid>
+                <Label Text="{Binding Reason}" Style="{StaticResource MutedText}" IsVisible="{Binding Reason, Converter={StaticResource HasValue}}" />
+                <Label Text="{Binding Workshop.Description}" FontSize="16" IsVisible="{Binding Workshop.Description, Converter={StaticResource HasValue}}" />
+                <Button Text="Cancel workshop" Style="{StaticResource DangerButton}" Command="{Binding CancelWorkshopCommand}" IsVisible="{Binding CanCancel}" />
+
+                <Label Text="Going" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                <FlexLayout BindableLayout.ItemsSource="{Binding Attendees}" Wrap="Wrap">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="dto:UserSummaryDto">
+                            <Button Text="{Binding DisplayName}" Style="{StaticResource ChipButton}" CommandParameter="{Binding .}"
+                                    Command="{Binding OpenMemberCommand, Source={RelativeSource AncestorType={x:Type vm:WorkshopViewModel}}, x:DataType=vm:WorkshopViewModel}" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+
+                <Label Text="Chat" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Messages}" Spacing="8" IsVisible="{Binding CanReadChat}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ChatMessageItem">
+                            <Border Padding="12,8">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Message.IsHost}" Value="True">
+                                        <Setter Property="Stroke" Value="{DynamicResource Accent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding MessageOptionsCommand, Source={RelativeSource AncestorType={x:Type vm:WorkshopViewModel}}, x:DataType=vm:WorkshopViewModel}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <Label Text="{Binding Author}" Style="{StaticResource Strong}" FontSize="13" />
+                                        <Label Grid.Column="1" Text="{Binding When}" Style="{StaticResource MutedText}" FontSize="12" />
+                                    </Grid>
+                                    <Label Text="{Binding Message.Body}" FontSize="15" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <Label Text="{Binding ChatHint}" Style="{StaticResource MutedText}" IsVisible="{Binding ChatHint, Converter={StaticResource HasValue}}" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="1" StrokeShape="Rectangle" StrokeThickness="0" Padding="14,10" IsVisible="{Binding CanChat}">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Draft}" Placeholder="Ask a question or share a tip…" AutoSize="TextChanges"
+                            MaxLength="1000" MinimumHeightRequest="44" />
+                </Border>
+                <Button Grid.Column="1" Text="Send" Command="{Binding SendCommand}" VerticalOptions="End" />
+            </Grid>
+        </Border>
+        <ActivityIndicator Grid.RowSpan="2" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

@@ -110,6 +110,16 @@ public static class ApiRoutes
     /// <summary>PUT: I'm going; DELETE: not any more.</summary>
     public const string WalkAttendance = "api/walks/{id:guid}/attendance";
 
+    public const string Workshops = "api/workshops";
+    public const string Workshop = "api/workshops/{id:guid}";
+    public const string WorkshopCancel = "api/workshops/{id:guid}/cancel";
+    /// <summary>PUT: I'm going; DELETE: not any more.</summary>
+    public const string WorkshopAttendance = "api/workshops/{id:guid}/attendance";
+    /// <summary>GET the chat (?after=id for the newer ones); POST a message.</summary>
+    public const string WorkshopMessages = "api/workshops/{id:guid}/messages";
+    /// <summary>DELETE: its author, the host or a site admin takes a message down.</summary>
+    public const string WorkshopMessage = "api/workshops/{id:guid}/messages/{messageId:long}";
+
     public const string Challenges = "api/challenges";
     public const string Challenge = "api/challenges/{id:guid}";
     public const string ChallengeEntries = "api/challenges/{id:guid}/entries";

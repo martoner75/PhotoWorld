@@ -12,7 +12,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
 {
     /// <summary>Tells one member that <paramref name="actorId"/> did something.</summary>
     public Task NotifyAsync(Guid recipientId, Guid actorId, string type, Guid? photoId = null, Guid? postId = null,
-        string? snippet = null, Guid? walkId = null, Guid? clubId = null, CancellationToken ct = default) =>
+        string? snippet = null, Guid? walkId = null, Guid? clubId = null, Guid? workshopId = null, CancellationToken ct = default) =>
         SafelyAsync(type, async () =>
         {
             if (recipientId == actorId) return;
@@ -24,7 +24,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
             db.Activities.Add(new Activity
             {
                 RecipientId = recipientId, ActorId = actorId, Type = type, PhotoId = photoId, PostId = postId, WalkId = walkId, ClubId = clubId,
-                Snippet = ActivityRules.Snippet(snippet), CreatedAt = clock.GetUtcNow(),
+                WorkshopId = workshopId, Snippet = ActivityRules.Snippet(snippet), CreatedAt = clock.GetUtcNow(),
             });
             await db.SaveChangesAsync(ct);
         });
@@ -74,6 +74,28 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
         });
 
     /// <summary>
+    /// Tells several members about a workshop (attendees about a change, followers or club members about a new one),
+    /// skipping the actor, members who switched workshops off, and members who blocked the host.
+    /// </summary>
+    public Task NotifyWorkshopAsync(IReadOnlyCollection<Guid> recipients, Guid? actorId, Guid hostId, Guid workshopId, string type,
+        CancellationToken ct = default) =>
+        SafelyAsync(type, async () =>
+        {
+            var ids = await db.Users
+                .Where(u => recipients.Contains(u.Id) && u.Id != actorId && u.SuspendedAt == null)
+                .Where(u => !db.ActivitySettings.Any(s => s.UserId == u.Id && !s.Workshops))
+                .Where(u => !db.Blocks.Any(b => b.BlockerId == u.Id && b.BlockedId == hostId))
+                .Select(u => u.Id).ToListAsync(ct);
+            if (ids.Count == 0) return;
+            var now = clock.GetUtcNow();
+            db.Activities.AddRange(ids.Select(id => new Activity
+            {
+                RecipientId = id, ActorId = actorId, Type = type, WorkshopId = workshopId, CreatedAt = now,
+            }));
+            await db.SaveChangesAsync(ct);
+        });
+
+    /// <summary>
     /// Tells a club's other active members that <paramref name="actorId"/> shared a photo there. Grouped: nobody hears
     /// about the same club more than once per <see cref="ActivityRules.ClubPhotoQuietFor"/>. Skips members who switched
     /// club photos off or blocked the sharer.
@@ -108,7 +130,7 @@ public sealed class ActivityFeed(PhotoWorldDbContext db, TimeProvider clock, ILo
     public async Task<ActivitySettingsDto> SettingsAsync(Guid userId, CancellationToken ct) =>
         await db.ActivitySettings.AsNoTracking().Where(s => s.UserId == userId)
             .Select(s => new ActivitySettingsDto(s.Likes, s.Comments, s.Follows, s.FollowedPosts, s.Challenges, s.Push, s.Walks, s.Forecasts, s.Clubs,
-                s.ClubPhotos))
+                s.ClubPhotos, s.Workshops))
             .SingleOrDefaultAsync(ct) ?? ActivitySettingsDto.AllOn;
 
     private async Task SafelyAsync(string type, Func<Task> work)

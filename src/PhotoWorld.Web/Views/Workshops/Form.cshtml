@@ -1,0 +1,86 @@
+@model WorkshopFormViewModel
+@{
+    var isNew = Model.Id is null;
+    ViewData["Title"] = isNew ? "Host an online workshop" : "Edit workshop";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<section class="container page narrow">
+    <h1>@ViewData["Title"]</h1>
+
+    <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" class="form-card" data-workshop-form>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="field">
+            <label asp-for="Title">Topic</label>
+            <input asp-for="Title" maxlength="@WorkshopLimits.TitleMax" placeholder="Editing night skies in Lightroom" />
+            <span asp-validation-for="Title" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Description">What it's about <span class="text-muted">(optional)</span></label>
+            <textarea asp-for="Description" rows="4" maxlength="@WorkshopLimits.DescriptionMax"
+                      placeholder="What you'll cover, who it's for, anything to have ready…"></textarea>
+        </div>
+        <div class="challenge-dates">
+            <div class="field">
+                <label for="starts-local">Starts (your time)</label>
+                <input id="starts-local" name="StartsLocal" type="datetime-local" required
+                       value="@Model.StartsLocal?.ToString("yyyy-MM-ddTHH:mm", inv)" data-starts-utc="@Model.StartsAtUtc?.ToString("O")" />
+                <span asp-validation-for="StartsLocal" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="DurationMinutes">Lasts</label>
+                <select asp-for="DurationMinutes" class="field-select">
+                    @foreach (var minutes in new[] { 30, 45, 60, 90, 120, 180, 240, 360, 480 })
+                    {
+                        <option value="@minutes">@(minutes < 120 ? $"{minutes} minutes" : $"{minutes / 60.0:0.#} hours")</option>
+                    }
+                </select>
+                <span asp-validation-for="DurationMinutes" class="field-error"></span>
+            </div>
+        </div>
+        <input type="hidden" asp-for="UtcOffsetMinutes" data-utc-offset />
+
+        <div class="field">
+            <label asp-for="VideoLink">Video call link <span class="text-muted">(optional)</span></label>
+            <input asp-for="VideoLink" type="url" maxlength="@WorkshopLimits.VideoLinkMax" placeholder="https://meet.google.com/…" />
+            <span asp-validation-for="VideoLink" class="field-error"></span>
+            <span class="text-muted small">A Zoom, Google Meet or Teams link. Only you and people going see it. Without one, the workshop happens in its chat.</span>
+        </div>
+
+        <div class="field">
+            <label asp-for="MaxPeople">Group size limit <span class="text-muted">(optional, including you)</span></label>
+            <input asp-for="MaxPeople" type="number" min="2" max="@WorkshopLimits.MaxPeopleLimit" placeholder="No limit" />
+            <span asp-validation-for="MaxPeople" class="field-error"></span>
+        </div>
+
+        @if (isNew && Model.Clubs.Count > 0)
+        {
+            <div class="field">
+                <label asp-for="ClubId">Who it's for</label>
+                <select asp-for="ClubId" class="field-select">
+                    <option value="">Everyone (public workshop)</option>
+                    @foreach (var club in Model.Clubs)
+                    {
+                        <option value="@club.Id" selected="@(club.Id == Model.ClubId)">Members of @club.Name</option>
+                    }
+                </select>
+                <span class="text-muted small">A club workshop is shown only to the club's members.</span>
+            </div>
+        }
+        else if (!isNew && Model.ClubName is not null)
+        {
+            <p class="text-muted small">A workshop for members of <strong>@Model.ClubName</strong>.</p>
+        }
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" asp-action="@(isNew ? "Index" : "Details")" asp-route-id="@Model.Id">Cancel</a>
+            <button type="submit" class="btn btn-accent">@(isNew ? "Host workshop" : "Save changes")</button>
+        </div>
+        <p class="text-muted small mb-0">Followers hear about new public workshops, and club members about club workshops; people going hear when you change the time or link, and get a reminder the day before. The chat opens to people as they join and stays open until a day after it ends.</p>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/workshops.js" asp-append-version="true"></script>
+}

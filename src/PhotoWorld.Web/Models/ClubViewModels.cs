@@ -18,7 +18,8 @@ public sealed record ClubsPageViewModel(
 public sealed record ClubPageViewModel(ClubDto Club, IReadOnlyList<ClubMemberDto> Members, IReadOnlyList<ClubMemberDto> Requests,
     PagedResult<PhotoSummaryDto> Photos,
     IReadOnlyList<PhotoWorld.Shared.Walks.WalkSummaryDto> Walks,
-    IReadOnlyList<PhotoWorld.Shared.Challenges.ChallengeSummaryDto> Challenges);
+    IReadOnlyList<PhotoWorld.Shared.Challenges.ChallengeSummaryDto> Challenges,
+    IReadOnlyList<PhotoWorld.Shared.Workshops.WorkshopSummaryDto> Workshops);
 
 /// <summary>"Share to clubs" for one of the member's photos: the approved clubs they're in.</summary>
 public sealed record ShareToClubsViewModel(PhotoDetailDto Photo, IReadOnlyList<ClubShareChoiceDto> Choices);
