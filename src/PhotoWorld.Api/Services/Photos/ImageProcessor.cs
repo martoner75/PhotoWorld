@@ -161,7 +161,8 @@ public sealed class ImageProcessor
             case SKEncodedOrigin.RightBottom: canvas.Translate(h, w); canvas.RotateDegrees(90); canvas.Scale(-1, 1); break;
             case SKEncodedOrigin.LeftBottom: canvas.Translate(0, w); canvas.RotateDegrees(270); break;
         }
-        canvas.DrawBitmap(source, 0, 0);
+        using var image = SKImage.FromBitmap(source);
+        canvas.DrawImage(image, 0, 0, SKSamplingOptions.Default);
         return target;
     }
 
