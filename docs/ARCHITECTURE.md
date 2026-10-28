@@ -107,7 +107,7 @@ flowchart TB
 
 | Project | Key folders |
 |---|---|
-| Api | `Controllers/` (Auth, Users, Photos, Feedback, Search, PhotoOfTheDay, Spots, Collections, Showcase, Blogs, BlogPosts, Places, Clubs, Challenges, Walks, Activity, Devices, AdminUsers), `Data/` (EF entities, `PhotoWorldDbContext`, migrations), `Services/` (Identity, Photos, Blogs, Challenges, Clubs, Places, Activities, Push, Moderation, Notifications, JWT) |
+| Api | `Controllers/` (Auth, Users, Photos, Feedback, Search, PhotoOfTheDay, Spots, Collections, Showcase, Blogs, BlogPosts, Places, Clubs, Challenges, Walks, Workshops, Activity, Devices, AdminUsers), `Data/` (EF entities, `PhotoWorldDbContext`, migrations), `Services/` (Identity, Photos, Blogs, Challenges, Clubs, Places, Activities, Push, Moderation, Notifications, JWT) |
 | Web | `Controllers/`, `Views/`, `Services/PhotoWorldApiClient` (typed API client), `Authentication/`, `wwwroot/` (Bootstrap, Quill, Leaflet) |
 | App | `Views/` (XAML pages), `ViewModels/` (CommunityToolkit.Mvvm), `Services/` (`AuthService`, `PhotoWorldApi`), `Platforms/iOS`, `Platforms/Android` |
 
@@ -334,6 +334,11 @@ erDiagram
     users ||--o{ walks : organises
     walks ||--o{ walk_attendees : "joined by"
     users ||--o{ walk_attendees : joins
+    users ||--o{ workshops : hosts
+    workshops ||--o{ workshop_attendees : "joined by"
+    users ||--o{ workshop_attendees : joins
+    workshops ||--o{ workshop_messages : "chat of"
+    users ||--o{ workshop_messages : writes
     photo_comments ||--o{ reports : "reported in"
     blog_posts ||--o{ reports : "reported in"
     blog_comments ||--o{ reports : "reported in"
@@ -344,6 +349,7 @@ erDiagram
     clubs ||--o{ club_photos : "feed of"
     photos ||--o{ club_photos : "shared to"
     clubs |o--o{ walks : "members-only"
+    clubs |o--o{ workshops : "members-only"
     clubs |o--o{ challenges : runs
     clubs ||--o{ reports : "reported in"
 
@@ -452,6 +458,29 @@ erDiagram
         uuid walk_id PK
         uuid user_id PK
         timestamptz joined_at
+    }
+    workshops {
+        uuid id PK
+        uuid host_id FK
+        text title
+        timestamptz starts_at
+        timestamptz ends_at
+        text video_link
+        int max_people
+        timestamptz cancelled_at
+        uuid club_id FK
+    }
+    workshop_attendees {
+        uuid workshop_id PK
+        uuid user_id PK
+        timestamptz joined_at
+    }
+    workshop_messages {
+        bigint id PK
+        uuid workshop_id FK
+        uuid author_id FK
+        text body
+        timestamptz created_at
     }
     photo_likes {
         uuid photo_id PK
@@ -676,9 +705,9 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
 - **Activity.** Controllers call `ActivityFeed` after likes, comments, feedback, follows, first publication and
   an admin's review of a photo, post or club, and club events; `ScheduledActivitySender` adds challenge news and the
   photo-of-the-day notice, and `ForecastSender` light forecasts. Rows in `activities` cascade with their recipient,
-  actor, photo, post, challenge, walk or club; reading filters them through the same visibility rule, so hidden or
-  blocked content never shows. `activity_settings` has a switch per kind (likes, comments, follows, followed posts,
-  challenges, walks, light forecasts, clubs, club photos, push).
+  actor, photo, post, challenge, walk, workshop or club; reading filters them through the same visibility rule, so
+  hidden or blocked content never shows. `activity_settings` has a switch per kind (likes, comments, follows, followed
+  posts, challenges, walks, workshops, light forecasts, clubs, club photos, push).
 - **Collections** (`collections`, `collection_photos`) hold any visible photos; `Moderation.CollectionVisibleTo`
   shows a member their own and others' public ones (not suspended or blocked owners), and photos inside go through
   `PhotoVisibleTo`. **Spots**: `photos.place_id` links a photo to one of its owner's places (see Places and maps).
@@ -704,6 +733,18 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   location for this. A walk with `club_id` is a
   **club walk**: `Visible` keeps it, meeting point included, to the club's active members and its organiser,
   `walk_new` goes to the members instead of followers, and the club can't change after creation.
+- **Online workshops.** `workshops` (host, topic, description, time, optional video link and people limit,
+  `cancelled_at`), `workshop_attendees` and `workshop_messages`. `WorkshopRules` holds the checks (length ≤ 8 h, an
+  `https` video link, joining until the end rather than the start, not full, not blocked) and who may chat: the host
+  and people going, from joining until a day after the end (`WorkshopLimits.ChatOpenAfter`); afterwards the chat is
+  read-only. `WorkshopsController.Visible` applies suspension and blocks both ways, like walks, and messages from
+  suspended or blocked authors are left out. The video link goes only to the host and people going. A message's id
+  is a `bigint` identity, so clients poll `GET api/workshops/{id}/messages?after={lastId}` every 5 seconds while the
+  page is open (the website from `workshops.js`, the app with an `IDispatcherTimer` stopped when the page goes); the
+  author, the host or a site admin can delete one. Followers get `workshop_new`, the host `workshop_joined`,
+  attendees `workshop_changed`/`workshop_cancelled`, and `ScheduledActivitySender` sends `workshop_reminder` within
+  24 h of the start. A workshop with `club_id` is a **club workshop**, kept to the club's active members exactly like
+  a club walk (`ClubRules.CannotHostWorkshop`).
 - **Clubs.** `clubs` (owner, name, city, optional area, `join_policy` open or approval, `review_status`) and
   `club_members` (role owner, admin or member; status active or pending). `ClubRules` (pure, tested) holds who may do
   what: the owner and admins edit, let people in and remove members; only the owner changes roles, hands over
@@ -742,7 +783,7 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   top 5 photos and the top 8 tags by likes. The website draws two SVG column charts (one measure each, never two
   scales on one plot); the app draws the same with `GraphicsView`.
 - **Navigation** follows the same groups on both clients: Photos (Gallery, Explore), Blogs, Community (Clubs, Walks,
-  Challenges), Places, Create and the member's own things. The website has Gallery · Explore · Blogs · Community ▾ ·
+  Workshops, Challenges), Places, Create and the member's own things. The website has Gallery · Explore · Blogs · Community ▾ ·
   Places, a **＋ Create ▾** menu and the avatar menu; the app has five tabs (Gallery · Blogs · Community · Places ·
   Me, iOS's limit) with creating behind **＋** on the Gallery and Community toolbars (`Routes.CreateAsync`), and
   Settings as its own screen sharing the Me tab's view model (a singleton). The activity switches come in sections
@@ -755,8 +796,9 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   editor (name, description, public), portfolio settings with a share link, golden hour on photos with a place
   (`LightText` over `SunTimes`) and approval badges on their tiles (`ReviewBadgeConverter`). Editors announce changes
   with `PhotoChangedMessage` / `CollectionChangedMessage`, so open pages and lists refresh. Clubs (directory with
-  Near me, club page with walks, challenges, photos and members, the club editor), sharing photos to clubs from the
-  upload and photo editor screens, and the light forecast on a place are in the app too. Writing blog posts,
+  Near me, club page with walks, workshops, challenges, photos and members, the club editor), online workshops (list,
+  workshop page with its chat, editor), sharing photos to clubs from the upload and photo editor screens, and the
+  light forecast on a place are in the app too. Writing blog posts,
   creating challenges and the admin pages stay on the website.
 
 ## 10. Email notifications
@@ -917,6 +959,7 @@ production, a git-ignored `Local.props` for the app.
 | Golden hour computed locally, not from a weather or astronomy API | No key, no cost, works offline in the app, and no place a member plans to visit is sent to anyone. |
 | Light forecasts from Open-Meteo, with rounded coordinates, through the API | The weather does need a service: the API sends only ~1 km coordinates (never names or members), caches them hourly, and keeps clients free of a second weather integration. |
 | Club photos stay public; club walks are members-only | Photos are already public, and a club only groups them. A meeting point at a set time is personal, so a club walk is hidden from non-members by the visibility rule. |
+| Workshop chat polls every 5 seconds instead of using WebSockets or Supabase Realtime | No extra service, connection handling or IIS setup for a chat of tens of people; a growing message id makes each poll one indexed query, and a 5-second delay is fine for a conversation. |
 | Club photo alerts grouped to one a day per club | A busy club would otherwise flood its members; the feed shows everything, the alert just says there's something new. |
 | Image transforms behind a setting, off by default | Supabase's Free plan has none; with it on, uploads store one image and every stored path stays valid if it's switched off again. |
 | A before image sends an approved photo back for approval | It's a new image: approving the photo shouldn't approve whatever is added later. |
