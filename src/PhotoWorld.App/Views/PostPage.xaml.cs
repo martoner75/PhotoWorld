@@ -19,10 +19,19 @@ public partial class PostPage : ContentPage
         };
     }
 
-    /// <summary>The post renders in place; any link the member taps opens in the browser instead.</summary>
+    /// <summary>
+    /// The post renders in place; the author links open app pages, and any other link the member taps opens in the
+    /// browser instead.
+    /// </summary>
     private async void OnNavigating(object? sender, WebNavigatingEventArgs e)
     {
-        if (!Uri.TryCreate(e.Url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https" or "mailto")) return;
+        if (!Uri.TryCreate(e.Url, UriKind.Absolute, out var uri)) return;
+        if (((PostViewModel)BindingContext).TryOpenAppLink(uri))
+        {
+            e.Cancel = true;
+            return;
+        }
+        if (uri.Scheme is not ("http" or "https" or "mailto")) return;
         e.Cancel = true;
         if (uri.Scheme == "mailto") await Launcher.Default.OpenAsync(uri);
         else await Ui.OpenInBrowserAsync(uri);

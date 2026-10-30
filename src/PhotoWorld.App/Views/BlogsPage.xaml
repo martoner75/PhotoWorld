@@ -6,7 +6,7 @@
              xmlns:dto="clr-namespace:PhotoWorld.Shared.Blogs"
              x:Class="PhotoWorld.App.Views.BlogsPage"
              x:DataType="vm:BlogsViewModel"
-             Title="Blogs">
+             Title="{Binding Title}">
     <ContentPage.ToolbarItems>
         <views:ThemeToolbarItem />
     </ContentPage.ToolbarItems>
@@ -18,7 +18,9 @@
                                  HorizontalItemSpacing="12" VerticalItemSpacing="12" />
             </CollectionView.ItemsLayout>
             <CollectionView.Header>
-                <Border Padding="3" StrokeShape="RoundRectangle 10" Margin="0,0,0,10">
+                <!-- Everyone / Following: the Blogs tab only, not one member's posts. -->
+                <Border Padding="3" StrokeShape="RoundRectangle 10" Margin="0,0,0,10"
+                        IsVisible="{Binding IsAuthorView, Converter={StaticResource Not}}">
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
                         <Button Text="Everyone" Style="{StaticResource SegmentButton}"
                                 Command="{Binding ShowFollowingCommand}" CommandParameter="everyone">

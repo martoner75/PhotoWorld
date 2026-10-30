@@ -153,8 +153,10 @@ public sealed class PhotoWorldApi(HttpClient http)
             : ApiRoutes.Format(ApiRoutes.CommentReports, ("id", id), ("commentId", commentId)), JsonContent.Create(request, options: Json), ct);
 
     // ----- Blogs -----
-    public Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, bool following = false, CancellationToken ct = default) =>
-        GetAsync<PagedResult<BlogPostSummaryDto>>($"{ApiRoutes.BlogPosts}?page={page}" + (following ? "&following=true" : ""), ct);
+    /// <param name="authorId">Only this member's posts.</param>
+    public Task<PagedResult<BlogPostSummaryDto>> GetPostsAsync(int page, bool following = false, Guid? authorId = null, CancellationToken ct = default) =>
+        GetAsync<PagedResult<BlogPostSummaryDto>>($"{ApiRoutes.BlogPosts}?page={page}" + (following ? "&following=true" : "")
+                                                  + (authorId is { } id ? $"&authorId={id}" : ""), ct);
 
     public Task<BlogPostDto> GetPostAsync(Guid id, CancellationToken ct = default) =>
         GetAsync<BlogPostDto>(WithId(ApiRoutes.BlogPost, id), ct);

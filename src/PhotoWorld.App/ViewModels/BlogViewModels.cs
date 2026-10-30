@@ -8,18 +8,41 @@ using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.App.ViewModels;
 
-public partial class BlogsViewModel(PhotoWorldApi api) : PagedListViewModel<BlogPostSummaryDto>
+/// <summary>
+/// The Blogs tab (everyone's posts, or the people the reader follows), and, opened with an "authorId", one member's
+/// posts ("More from …" at the end of a post).
+/// </summary>
+public partial class BlogsViewModel(PhotoWorldApi api) : PagedListViewModel<BlogPostSummaryDto>, IQueryAttributable
 {
     /// <summary>Only posts by members the reader follows.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(EmptyMessage))]
     public partial bool Following { get; set; }
 
-    public string EmptyMessage => Following
-        ? "No posts from members you follow yet. Tap an author's name to see their page and follow them."
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Title), nameof(IsAuthorView), nameof(EmptyMessage))]
+    public partial Guid? AuthorId { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Title))]
+    public partial string? AuthorName { get; set; }
+
+    public bool IsAuthorView => AuthorId is not null;
+
+    public string Title => AuthorName is { Length: > 0 } name ? $"{name}'s blog" : "Blogs";
+
+    public string EmptyMessage => IsAuthorView ? "No blog posts yet."
+        : Following ? "No posts from members you follow yet. Tap an author's name to see their page and follow them."
         : "No blog posts yet.";
 
-    protected override Task<PagedResult<BlogPostSummaryDto>> FetchAsync(int page) => api.GetPostsAsync(page, Following);
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("authorId", out var id) && id is Guid authorId) AuthorId = authorId;
+        if (query.TryGetValue("authorName", out var name) && name is string authorName) AuthorName = authorName;
+    }
+
+    protected override Task<PagedResult<BlogPostSummaryDto>> FetchAsync(int page) =>
+        IsAuthorView ? api.GetPostsAsync(page, authorId: AuthorId) : api.GetPostsAsync(page, Following);
 
     [RelayCommand]
     private void ShowFollowing(string which)
@@ -69,6 +92,24 @@ public partial class PostViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
     private Task ReportPostAsync() => ReportAsync(r => api.ReportPostAsync(Post!.Id, null, r));
 
     /// <summary>
+    /// The links <see cref="RenderPage"/> adds around the post: the author's name opens their page, "More from …"
+    /// their posts. False for any other link.
+    /// </summary>
+    public bool TryOpenAppLink(Uri uri)
+    {
+        if (uri.Scheme != AppLinkScheme || Post is null) return false;
+        _ = uri.Host switch
+        {
+            "member" => Routes.OpenMemberAsync(Post.Author.Id),
+            "posts" => Routes.OpenMemberPostsAsync(Post.Author.Id, Post.Author.DisplayName),
+            _ => Task.CompletedTask,
+        };
+        return true;
+    }
+
+    internal const string AppLinkScheme = "photoworld";
+
+    /// <summary>
     /// The post as a small dark page. The body is HTML the API has already sanitized (BlogHtml: basic formatting,
     /// safe links and the author's own photos); the title and name are encoded here.
     /// </summary>
@@ -89,6 +130,8 @@ public partial class PostViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
             "<h2>Attachments</h2><ul class=\"attachments\">" + string.Concat(post.Attachments.Select(a =>
                 $"<li><a href=\"{WebUtility.HtmlEncode(a.Url)}\">{WebUtility.HtmlEncode(a.FileName)}</a> " +
                 $"<span>PDF · {FileSize.Format(a.SizeBytes)}</span></li>")) + "</ul>";
+        var name = WebUtility.HtmlEncode(post.Author.DisplayName);
+        var more = post.Status == BlogPostStatus.Published ? $"<p class=\"more\"><a href=\"{AppLinkScheme}://posts\">More from {name} →</a></p>" : "";
         return $$"""
             <!DOCTYPE html>
             <html><head>
@@ -108,13 +151,17 @@ public partial class PostViewModel(PhotoWorldApi api) : ViewModelBase, IQueryAtt
               .attachments { list-style: none; padding: 0; }
               .attachments li { background: #17191e; border-radius: 10px; padding: 10px 14px; margin: 8px 0; overflow-wrap: anywhere; }
               .attachments span { color: #9a9ca4; font-size: 14px; }
+              .byline a { color: #ecebe7; font-weight: 600; text-decoration: none; }
+              .more { margin: 32px 0 0; font-weight: 600; }
+              .more a { text-decoration: none; }
             </style></head>
             <body>
               <h1>{{WebUtility.HtmlEncode(post.Title)}}</h1>
-              <p class="byline">by {{WebUtility.HtmlEncode(post.Author.DisplayName)}} · {{date}}</p>
+              <p class="byline">by <a href="{{AppLinkScheme}}://member">{{name}}</a> · {{date}}</p>
               {{draft}}
               {{post.BodyHtml}}
               {{attachments}}
+              {{more}}
             </body></html>
             """;
     }

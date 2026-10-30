@@ -409,6 +409,9 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 .post-body blockquote { border-left: 3px solid var(--pw-accent); padding-left: 1rem; color: var(--pw-text-soft); font-style: italic; }
 .post-body figure.pw-photo { margin: 2rem 0; }
 .post-body figure.pw-photo img { display: block; max-width: 100%; height: auto; border-radius: var(--pw-photo-radius); margin: 0 auto; }
+.post-more { margin: 0 0 1.5rem; font-weight: 600; }
+.post-more a { color: var(--pw-accent); text-decoration: none; }
+.post-more a:hover { text-decoration: underline; }
 .post-body figcaption { color: var(--pw-muted); font-size: .88rem; text-align: center; margin-top: .5rem; }
 .attachments { margin: 2rem 0; }
 .attachments h2 { font-family: var(--pw-serif); font-size: 1.4rem; margin-bottom: .75rem; }

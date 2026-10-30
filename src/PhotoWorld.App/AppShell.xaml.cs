@@ -14,6 +14,7 @@ public partial class AppShell : Shell
 
         Routing.RegisterRoute(Routes.Photo, typeof(PhotoDetailPage));
         Routing.RegisterRoute(Routes.Post, typeof(PostPage));
+        Routing.RegisterRoute(Routes.MemberPosts, typeof(BlogsPage));
         Routing.RegisterRoute(Routes.PostComments, typeof(PostCommentsPage));
         Routing.RegisterRoute(Routes.PlaceEditor, typeof(PlaceEditorPage));
         Routing.RegisterRoute(Routes.Member, typeof(MemberPage));

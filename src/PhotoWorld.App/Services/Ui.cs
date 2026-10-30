@@ -13,6 +13,7 @@ public static class Routes
     public const string Settings = "settings";
     public const string Photo = "photo";
     public const string Post = "post";
+    public const string MemberPosts = "member-posts";
     public const string PostComments = "post-comments";
     public const string PlaceEditor = "place-editor";
     public const string Member = "member";
@@ -68,6 +69,10 @@ public static class Routes
 
     public static Task OpenMemberAsync(Guid id) =>
         Shell.Current.GoToAsync(Member, new ShellNavigationQueryParameters { ["id"] = id });
+
+    /// <summary>One member's blog posts (the Blogs list, filtered to them).</summary>
+    public static Task OpenMemberPostsAsync(Guid id, string name) =>
+        Shell.Current.GoToAsync(MemberPosts, new ShellNavigationQueryParameters { ["authorId"] = id, ["authorName"] = name });
 
     public static Task OpenChallengeAsync(Guid id) =>
         Shell.Current.GoToAsync(Challenge, new ShellNavigationQueryParameters { ["id"] = id });

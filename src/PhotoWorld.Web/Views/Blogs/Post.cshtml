@@ -88,6 +88,11 @@
         </section>
     }
 
+    @if (isPublished)
+    {
+        <p class="post-more"><a asp-action="Member" asp-route-id="@p.Author.Id">More from @p.Author.DisplayName →</a></p>
+    }
+
     @if (p.CanReport)
     {
         <p class="report-link"><a asp-action="Report" asp-route-id="@p.Id">Report this post</a></p>
