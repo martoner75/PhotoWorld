@@ -845,6 +845,9 @@ sequenceDiagram
   photos, walks in the coming week (public ones from people they follow, and their clubs' walks), and open
   challenges (site-wide ones and their clubs'). A quiet week sends nothing; the
   period moves on either way, and a failed send is retried. The unsubscribe link switches off both kinds of email.
+- **Welcome email.** On first sign-in (a new account, not a provider linked to an existing one) `AuthController`
+  sends a one-off welcome to the provider's email, in the background so a failing send never blocks sign-in. No
+  subscription is needed and it has no unsubscribe link.
 - Only posts the subscriber could see on the site are sent: published, not hidden by moderation, not their own.
 - No SMTP host configured (development): emails are written as `.eml` files to `src/PhotoWorld.Api/emails/`.
 

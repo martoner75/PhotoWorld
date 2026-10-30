@@ -113,6 +113,17 @@ public class NotificationEmailsTests
         Assert.Contains("https://photoworld.example/Notifications/Confirm?token=tok_en", email.TextBody);
         Assert.Null(email.Headers);
     }
+
+    [Fact]
+    public void Welcome_greets_the_member_and_links_to_getting_started()
+    {
+        var email = _emails.Welcome("me@example.com", "Ana <b>");
+        Assert.Equal("Welcome to PhotoCommunity", email.Subject);
+        Assert.Contains("Ana &lt;b&gt;", email.HtmlBody);
+        Assert.Contains("https://photoworld.example/Photos/Upload", email.HtmlBody);
+        Assert.Contains("https://photoworld.example/Account/Settings#notifications", email.TextBody);
+        Assert.Null(email.Headers);
+    }
 }
 
 public class WeeklySummaryEmailTests

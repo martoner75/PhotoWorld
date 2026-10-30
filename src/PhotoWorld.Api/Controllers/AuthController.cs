@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PhotoWorld.Api.Data;
 using PhotoWorld.Api.Services;
 using PhotoWorld.Api.Services.Identity;
+using PhotoWorld.Api.Services.Notifications;
 using PhotoWorld.Shared;
 using PhotoWorld.Shared.Auth;
 
@@ -14,6 +15,8 @@ public class AuthController(
     IEnumerable<IExternalIdentityVerifier> verifiers,
     JwtTokenService tokens,
     AdminAccess admins,
+    IEmailSender sender,
+    NotificationEmails emails,
     TimeProvider clock,
     ILogger<AuthController> logger) : ControllerBase
 {
@@ -83,11 +86,31 @@ public class AuthController(
         user.LastLoginAt = now;
         await db.SaveChangesAsync(ct);
 
-        if (isNewUser) logger.LogInformation("New PhotoWorld member {UserId} registered via {Provider}", user.Id, provider);
+        if (isNewUser)
+        {
+            logger.LogInformation("New PhotoWorld member {UserId} registered via {Provider}", user.Id, provider);
+            if (user.Email is { } address) SendWelcome(user.Id, emails.Welcome(address, user.DisplayName));
+        }
 
         var (token, expiresAt) = tokens.Issue(user, provider);
         return new AuthResponse(token, expiresAt, isNewUser, user.ToDto() with { IsAdmin = await admins.IsAdminAsync(user.Id, ct) });
     }
+
+    /// <summary>
+    /// Sends in the background: a slow or failing email provider must not delay or break the first sign-in.
+    /// The sender is a singleton, so it outlives this request.
+    /// </summary>
+    private void SendWelcome(Guid userId, EmailMessage message) => _ = Task.Run(async () =>
+    {
+        try
+        {
+            await sender.SendAsync(message, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not send the welcome email to new member {UserId}", userId);
+        }
+    });
 
     /// <summary>
     /// The provider's name; for Apple, the name it sent the website on first sign-in; else the start of the email

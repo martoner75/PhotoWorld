@@ -47,6 +47,38 @@ public sealed class NotificationEmails(string webBaseUrl)
         return new EmailMessage(to, "Confirm your PhotoCommunity notifications", html, text);
     }
 
+    /// <summary>Sent once, when someone first joins. Not a subscription, so no unsubscribe link.</summary>
+    public EmailMessage Welcome(string to, string name)
+    {
+        var html = Layout($"""
+            <h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 12px">Welcome to PhotoCommunity</h1>
+            <p style="margin:0 0 14px">Hi {E(name)},</p>
+            <p style="margin:0 0 14px">Thanks for joining. A few ways to get started:</p>
+            <ul style="margin:0 0 18px;padding-left:20px">
+              <li><a href="{E(UploadUrl)}" style="color:#b86e0a">Share your first photo</a></li>
+              <li><a href="{E(ClubsUrl)}" style="color:#b86e0a">Join a club</a> and meet photographers near you</li>
+              <li><a href="{E(WalksUrl)}" style="color:#b86e0a">Find a photo walk</a> or <a href="{E(ChallengesUrl)}" style="color:#b86e0a">enter a challenge</a></li>
+              <li><a href="{E(ManageUrl)}" style="color:#b86e0a">Choose your emails</a>: new blog posts and a weekly summary</li>
+            </ul>
+            <p style="margin:24px 0 0">{Button(UploadUrl, "Share a photo")}</p>
+            """, footer: $"You're getting this because you just joined PhotoCommunity with {E(to)}. It's a one-off email.");
+        var text = $"""
+            Welcome to PhotoCommunity
+
+            Hi {name},
+
+            Thanks for joining. A few ways to get started:
+            - Share your first photo: {UploadUrl}
+            - Join a club and meet photographers near you: {ClubsUrl}
+            - Find a photo walk: {WalksUrl}
+            - Enter a challenge: {ChallengesUrl}
+            - Choose your emails (new blog posts and a weekly summary): {ManageUrl}
+
+            You're getting this because you just joined PhotoCommunity with {to}. It's a one-off email.
+            """;
+        return new EmailMessage(to, "Welcome to PhotoCommunity", html, text);
+    }
+
     /// <param name="moreCount">Posts beyond <paramref name="posts"/> in this period, summed up with a link.</param>
     public EmailMessage NewPosts(string to, string frequency, IReadOnlyList<PostNotice> posts, int moreCount, string unsubscribeToken)
     {
@@ -157,6 +189,8 @@ public sealed class NotificationEmails(string webBaseUrl)
     private string WalksUrl => $"{_web}Walks";
     private string ChallengesUrl => $"{_web}Challenges";
     private string InsightsUrl => $"{_web}Members/Insights";
+    private string UploadUrl => $"{_web}Photos/Upload";
+    private string ClubsUrl => $"{_web}Clubs";
 
     private static string Count(int n) => n == 1 ? "1 new blog post" : $"{n} new blog posts";
 
