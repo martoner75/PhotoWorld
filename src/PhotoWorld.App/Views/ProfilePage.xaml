@@ -47,6 +47,10 @@
                                 Command="{Binding OpenSettingsCommand}" />
                         <Label Text="Appearance, activity, email notifications, blocked members and your account."
                                Style="{StaticResource MutedText}" FontSize="13" Margin="12,0,12,8" />
+                        <Button Text="Take the tour" Style="{StaticResource LinkButton}" HorizontalOptions="Start"
+                                Command="{Binding TakeTourCommand}" />
+                        <Label Text="A one-minute look at where everything is."
+                               Style="{StaticResource MutedText}" FontSize="13" Margin="12,0,12,8" />
                     </VerticalStackLayout>
                 </Border>
 

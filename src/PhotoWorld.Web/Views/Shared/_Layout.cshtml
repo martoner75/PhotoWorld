@@ -47,7 +47,8 @@
     @await RenderSectionAsync("Head", required: false)
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+@* A brand-new member gets the welcome tour once, straight after their first sign-in (AccountController sets it). *@
+<body data-tour-autostart="@(TempData["Tour"] as string == "start" && User.Identity?.IsAuthenticated == true ? "true" : null)">
     <header>
         <nav class="navbar navbar-expand-lg site-nav">
             <div class="container">
@@ -71,11 +72,12 @@
                         @* Site sections on the left; search, create, activity and the member's own menu on the right.
                            The same groups as the app: Gallery (with Explore), Blogs, Community, Places, and the member's own. *@
                         <ul class="navbar-nav me-auto ms-lg-3 gap-lg-1">
-                            <li class="nav-item"><a class="nav-link @Active("Photos")" aria-current="@Current("Photos")" asp-controller="Photos" asp-action="Index">Gallery</a></li>
-                            <li class="nav-item"><a class="nav-link @Active("Search")" aria-current="@Current("Search")" asp-controller="Search" asp-action="Explore">Explore</a></li>
-                            <li class="nav-item"><a class="nav-link @Active("Blogs")" aria-current="@Current("Blogs")" asp-controller="Blogs" asp-action="Index">Blogs</a></li>
+                            @* data-tour: the parts the welcome tour (js/tour.js) points at. *@
+                            <li class="nav-item"><a class="nav-link @Active("Photos")" aria-current="@Current("Photos")" asp-controller="Photos" asp-action="Index" data-tour="gallery">Gallery</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Search")" aria-current="@Current("Search")" asp-controller="Search" asp-action="Explore" data-tour="explore">Explore</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Blogs")" aria-current="@Current("Blogs")" asp-controller="Blogs" asp-action="Index" data-tour="blogs">Blogs</a></li>
                             <li class="nav-item dropdown">
-                                <button type="button" class="nav-link dropdown-toggle @(inCommunity ? "active" : null)" data-bs-toggle="dropdown"
+                                <button type="button" class="nav-link dropdown-toggle @(inCommunity ? "active" : null)" data-bs-toggle="dropdown" data-tour="community"
                                         aria-expanded="false" aria-current="@(inCommunity ? "page" : null)">Community</button>
                                 <ul class="dropdown-menu community-menu">
                                     <li><a class="dropdown-item @Active("Clubs")" aria-current="@Current("Clubs")" asp-controller="Clubs" asp-action="Index"><partial name="_LineIcon" model="LineIcons.Clubs" />Clubs</a></li>
@@ -84,19 +86,19 @@
                                     <li><a class="dropdown-item @Active("Challenges")" aria-current="@Current("Challenges")" asp-controller="Challenges" asp-action="Index"><partial name="_LineIcon" model="LineIcons.Challenges" />Challenges</a></li>
                                 </ul>
                             </li>
-                            <li class="nav-item"><a class="nav-link @Active("Places")" aria-current="@Current("Places")" asp-controller="Places" asp-action="Index">Places</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Places")" aria-current="@Current("Places")" asp-controller="Places" asp-action="Index" data-tour="places">Places</a></li>
                         </ul>
                         <ul class="navbar-nav align-items-lg-center gap-lg-2">
                             <li class="nav-item">
-                                <form asp-controller="Search" asp-action="Index" method="get" class="nav-search" role="search">
+                                <form asp-controller="Search" asp-action="Index" method="get" class="nav-search" role="search" data-tour="search">
                                     <input name="q" maxlength="100" placeholder="Search" aria-label="Search PhotoCommunity" />
                                 </form>
                             </li>
                             @* Everything a member can start, in one place (the app's ＋ offers the same). *@
                             <li class="nav-item dropdown">
-                                <button type="button" class="btn btn-accent btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">＋ Create</button>
+                                <button type="button" class="btn btn-accent btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-tour="create">＋ Create</button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" asp-controller="Photos" asp-action="Upload">Upload a photo</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Photos" asp-action="Upload" data-tour-upload-link>Upload a photo</a></li>
                                     <li><a class="dropdown-item" asp-controller="Photos" asp-action="UploadMany">Upload several photos</a></li>
                                     <li><a class="dropdown-item" asp-controller="Blogs" asp-action="New">Write a blog post</a></li>
                                     <li><hr class="dropdown-divider" /></li>
@@ -108,7 +110,7 @@
                             </li>
                             <partial name="_GuideLink" />
                             <li class="nav-item">
-                                <a class="nav-link nav-bell" asp-controller="Activity" asp-action="Index" aria-label="Activity" data-activity-bell>
+                                <a class="nav-link nav-bell" asp-controller="Activity" asp-action="Index" aria-label="Activity" data-activity-bell data-tour="activity">
                                     <svg class="nav-bell-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
                                          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M3.5 13.5h4.2l1.6 2.5h5.4l1.6-2.5h4.2" /><path d="M5.6 5.5h12.8l2.1 8v4.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-4.5Z" />
@@ -116,7 +118,7 @@
                                 </a>
                             </li>
                             @* On wide screens a dropdown under the avatar; in the collapsed mobile menu its items are listed in full. *@
-                            <li class="nav-item dropdown nav-account">
+                            <li class="nav-item dropdown nav-account" data-tour="account">
                                 <button type="button" class="nav-link nav-user dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
                                         aria-label="Your account: @User.Identity.Name">
                                     @if (avatar is not null)
@@ -242,6 +244,10 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script src="~/js/tour.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

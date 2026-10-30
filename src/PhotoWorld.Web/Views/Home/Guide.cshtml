@@ -43,6 +43,11 @@
             Everything you can do on PhotoCommunity, on the website and in the app, and where to find it. Most of it needs a
             free member account; this guide is open to everyone.
         </p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <p><button type="button" class="btn btn-accent btn-sm" data-tour-start>Take the tour</button>
+                <span class="text-muted small">A one-minute look at where everything is.</span></p>
+        }
     </header>
 
     <nav class="guide-toc" aria-labelledby="guide-toc-title">

@@ -100,6 +100,9 @@ public partial class ProfileViewModel(AuthService auth, PhotoWorldApi api) : Vie
     private Task OpenSettingsAsync() => Shell.Current.GoToAsync(Routes.Settings);
 
     [RelayCommand]
+    private Task TakeTourAsync() => Views.TourPage.StartAsync();
+
+    [RelayCommand]
     private Task OpenClubsAsync() => Shell.Current.GoToAsync(Routes.Clubs, new ShellNavigationQueryParameters { ["mine"] = true });
 
     [RelayCommand]

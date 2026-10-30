@@ -888,3 +888,19 @@ img.no-save { -webkit-touch-callout: none; -webkit-user-select: none; user-selec
   background: var(--pw-ink-2); color: var(--pw-text); padding: 1.5rem; }
 .cookie-dialog::backdrop { background: rgba(0, 0, 0, .45); }
 .link-button { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+
+/* ----- Welcome tour (js/tour.js): the spotlight's shadow dims the page around the highlighted part ----- */
+.tour-blocker { position: fixed; inset: 0; z-index: 1090; }
+.tour-spot { position: fixed; z-index: 1091; pointer-events: none; border-radius: 10px;
+  box-shadow: 0 0 0 3px var(--pw-accent), 0 0 0 9999px rgba(0, 0, 0, .6); }
+.tour-card { position: fixed; z-index: 1092; background: var(--pw-ink-2); color: var(--pw-text); border: 1px solid var(--pw-line);
+  border-radius: var(--pw-radius); padding: 1.1rem 1.25rem 1rem; box-shadow: 0 12px 32px rgba(0, 0, 0, .25); }
+.tour-count { margin: 0 0 .25rem; font-size: .8rem; color: var(--pw-muted); min-height: 1em; }
+.tour-title { font-family: var(--pw-serif); font-size: 1.25rem; margin: 0 0 .4rem; }
+.tour-text { margin: 0 0 1rem; color: var(--pw-text-soft); line-height: 1.55; }
+.tour-actions { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.tour-buttons { display: flex; gap: .5rem; margin-left: auto; }
+.tour-skip { color: var(--pw-muted); font-size: .85rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .tour-spot, .tour-card { transition: top .25s ease, left .25s ease, width .25s ease, height .25s ease; }
+}

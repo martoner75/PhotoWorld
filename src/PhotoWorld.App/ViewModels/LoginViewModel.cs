@@ -21,6 +21,8 @@ public partial class LoginViewModel(AuthService auth, ILogger<LoginViewModel> lo
         {
             await auth.SignInAsync(provider);
             await Shell.Current.GoToAsync(Routes.Gallery);
+            // A brand-new member gets the welcome tour, once (the website does the same after its first sign-in).
+            if (auth.JoinedJustNow) await Views.TourPage.StartAsync();
         }
         catch (TaskCanceledException)
         {

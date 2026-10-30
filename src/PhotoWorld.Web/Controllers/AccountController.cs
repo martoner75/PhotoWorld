@@ -79,6 +79,8 @@ public class AccountController(
         TempData["Flash"] = session.IsNewUser
             ? $"Welcome to PhotoCommunity, {user.DisplayName}! Your account is ready."
             : $"Welcome back, {user.DisplayName}!";
+        // New members get the welcome tour on the next page (see _Layout and js/tour.js).
+        if (session.IsNewUser) TempData["Tour"] = "start";
 
         return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
     }

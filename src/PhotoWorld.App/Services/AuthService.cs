@@ -27,6 +27,9 @@ public sealed class AuthService(ILogger<AuthService> logger)
 
     public string? AccessToken => IsSignedIn ? _session!.AccessToken : null;
 
+    /// <summary>The last sign-in created the account (read right after <see cref="SignInAsync"/>; a restored session keeps it).</summary>
+    public bool JoinedJustNow => _session?.IsNewUser == true;
+
     /// <summary>Picks up the session saved by an earlier launch, if it's still valid.</summary>
     public async Task<bool> RestoreAsync()
     {
