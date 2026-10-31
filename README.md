@@ -643,6 +643,12 @@ keep the rights to what they share, may view and download others' work for perso
 objectionable content; reports are acted on within 24 hours. App Store guideline 1.2 (user-generated content)
 expects exactly this: terms, reporting, blocking and timely moderation. Have the terms reviewed before going live.
 
+**Admins are emailed about reports.** When an item gets its first open report, and again when it reaches 3 and is
+auto-hidden, every active admin with an email address gets a short message naming the item type, the reason and the
+reporter's note (not one per report, to keep it quiet). It uses the same email setup as
+[Email notifications](#email-notifications), so it only arrives once sending is configured; a failed send is logged
+("Could not email an admin about a report …") and never stops the report from being saved.
+
 Reports are moderated in the Supabase dashboard (suspending a member's account is on the Admin → Users page).
 
 1. **Table Editor → `photoworld` schema → `open_reports` view**: open reports, newest first, with the reported
@@ -662,6 +668,42 @@ update photoworld.reports set status = 'upheld' where blog_post_id = '<post id>'
 
 Upheld photos stay in the bucket until their owner deletes them or their account. Every report and every
 auto-hide is logged in `app_logs` (search for "reported for" and "auto-hidden").
+
+## Search engines
+
+The website is members-only, so search engines can only see a few pages. `/sitemap.xml` lists exactly those: the
+home page, the guide, the privacy policy, the terms and every public portfolio (with its last-changed date; the
+portfolio list is cached for an hour). `/robots.txt` points to the sitemap and asks crawlers to stay out of
+`/Account/`, `/Admin/` and `/Notifications/` (those links carry personal tokens).
+
+Crawlers only read these two files at the **root of a domain**. If the website is an IIS application below a path
+(for example `https://host/APP`), they won't be found there; serve the website from the site root, or add the same
+two files at the root.
+
+## Rate limiting
+
+Both projects limit requests per minute (HTTP 429 with a `Retry-After` header when exceeded). The API limits per
+**signed-in member**, with separate budgets for reads (1,200) and writes, meaning anything but GET (120); the website
+calls the API from its server, so addresses there would all be the website's. The website limits per **visitor
+address**: reads (600) and form posts (60), with files such as CSS, JS and images exempt. Change them in
+configuration; `0` switches a limit off:
+
+```json
+"RateLimiting": { "ReadsPerMinute": 1200, "WritesPerMinute": 120 }   // API
+"RateLimiting": { "ReadsPerMinute": 600,  "PostsPerMinute": 60 }     // Web
+```
+
+Behind a reverse proxy (not plain IIS) the website sees the proxy's address for everyone, so configure forwarded
+headers first or raise the website limits.
+
+## Download my data
+
+**Account settings → Your data → Download my data** (the API route is `GET api/users/me/export`) gives a member a JSON
+file with their profile and linked sign-in providers, photos (with tags, camera details and image links), comments,
+likes and feedback they gave, their blog and posts, collections, portfolio, who they follow and who follows them (by display
+name), blocked members, email notification settings and reports they filed. It never includes sign-in tokens or the
+confirmation and unsubscribe tokens. Not yet included: clubs, walks, workshops, collabs, challenge entries, places and
+chat messages.
 
 ## Run locally
 
@@ -838,16 +880,19 @@ add its SHA-1 to the Maps key, build an `.aab` (`-p:AndroidPackageFormat=aab`), 
 to match the privacy policy.
 
 **Before the App Store:** set `ApplicationId` (bundle id) and the release URLs in `AppConfig.cs`; sign with your
-Apple developer account. Apple also expects: *Sign in with Apple* alongside Google sign-in (guideline 4.8, not
-built yet); a way to block abusive members (1.2; reporting and in-app account deletion are built); and the App
-Privacy answers in App Store Connect to match the privacy policy.
+Apple developer account. Apple also expects the App Privacy answers in App Store Connect to match the privacy policy.
+The other App Store requirements are built: *Sign in with Apple* alongside Google sign-in (guideline 4.8, see
+[Configure Sign in with Apple](#configure-sign-in-with-apple)), and, for user-generated content (1.2), reporting,
+blocking and in-app account deletion.
 
 ## Notes / next steps
 - The privacy policy is at `/Home/Privacy`; its contact address comes from `Site:ContactEmail` in the Web's
   `appsettings.json`. Use that URL for the Google consent screen. Have it reviewed before going live.
 - The footer's Facebook, Instagram and YouTube icons link to `Site:Social:Facebook`, `Instagram` and `YouTube` in the
   Web's `appsettings.json` (full page URLs); each icon is hidden until its URL is set.
-- Possible next steps: an in-app moderation page, email notifications for new reports.
+- `/robots.txt` and `/sitemap.xml` (see [Search engines](#search-engines)), rate limiting (see
+  [Rate limiting](#rate-limiting)) and **Download my data** in account settings are built.
+- Possible next steps: an in-app moderation page.
 
 ## Licence
 

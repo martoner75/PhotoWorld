@@ -30,6 +30,8 @@ public interface IPhotoWorldApiClient
 
     Task<UserProfileDto?> GetCurrentUserAsync(CancellationToken ct = default);
     Task<bool> DeleteAccountAsync(CancellationToken ct = default);
+    /// <summary>The signed-in member's data as a JSON file's bytes, or null if their account is gone.</summary>
+    Task<byte[]?> GetMyDataExportAsync(CancellationToken ct = default);
     Task<MemberProfileDto?> GetMemberAsync(Guid id, CancellationToken ct = default);
     Task<FollowStateDto?> SetFollowAsync(Guid id, bool follow, CancellationToken ct = default);
     /// <summary>False when the member doesn't exist (or is the caller).</summary>
@@ -64,6 +66,8 @@ public interface IPhotoWorldApiClient
 
     /// <summary>A public portfolio; works without signing in. Null if it doesn't exist or isn't public.</summary>
     Task<PublicPortfolioDto?> GetPortfolioAsync(string slug, CancellationToken ct = default);
+    /// <summary>The addresses of all public portfolios (for the sitemap); empty if the API can't be reached.</summary>
+    Task<IReadOnlyList<PortfolioIndexEntryDto>> GetPortfolioIndexAsync(CancellationToken ct = default);
     Task<MyPortfolioDto?> GetMyPortfolioAsync(CancellationToken ct = default);
     Task<ApiResult<MyPortfolioDto>> SavePortfolioAsync(SavePortfolioRequest request, CancellationToken ct = default);
     Task<ApiResult<PhotoDetailDto>> UpdatePhotoAsync(Guid id, UpdatePhotoRequest request, CancellationToken ct = default);

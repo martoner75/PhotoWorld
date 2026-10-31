@@ -42,6 +42,12 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
         return IsSuccess(res);
     }
 
+    public async Task<byte[]?> GetMyDataExportAsync(CancellationToken ct = default)
+    {
+        using var res = await http.GetAsync(ApiRoutes.MyDataExport, ct);
+        return IsSuccess(res) ? await res.Content.ReadAsByteArrayAsync(ct) : null;
+    }
+
     public Task<MemberProfileDto?> GetMemberAsync(Guid id, CancellationToken ct = default) =>
         GetOrNullAsync<MemberProfileDto>(ApiRoutes.Format(ApiRoutes.Member, ("id", id)), ct);
 
@@ -139,6 +145,9 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
 
     public Task<PublicPortfolioDto?> GetPortfolioAsync(string slug, CancellationToken ct = default) =>
         GetOrNullAsync<PublicPortfolioDto>(ApiRoutes.Format(ApiRoutes.PublicPortfolio, ("slug", slug)), ct);
+
+    public async Task<IReadOnlyList<PortfolioIndexEntryDto>> GetPortfolioIndexAsync(CancellationToken ct = default) =>
+        await GetOrNullAsync<List<PortfolioIndexEntryDto>>(ApiRoutes.PublicPortfolioIndex, ct) ?? [];
 
     public Task<MyPortfolioDto?> GetMyPortfolioAsync(CancellationToken ct = default) =>
         GetOrNullAsync<MyPortfolioDto>(ApiRoutes.MyPortfolio, ct);

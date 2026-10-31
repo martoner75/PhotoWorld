@@ -235,6 +235,20 @@ public class AccountController(
         return Redirect(Url.Action(nameof(Settings)) + "#notifications");
     }
 
+    /// <summary>Sends the member's data as a JSON file ("Download my data" on the settings page). Read-only, so a plain GET.</summary>
+    [HttpGet]
+    public async Task<IActionResult> DownloadMyData(CancellationToken ct)
+    {
+        var data = await api.GetMyDataExportAsync(ct);
+        if (data is null)
+        {
+            TempData["Flash"] = "We couldn't prepare your data. Try again in a moment.";
+            return RedirectToAction(nameof(Settings));
+        }
+        logger.LogInformation("User {UserId} downloaded their data", User.FindFirstValue(ClaimTypes.NameIdentifier));
+        return File(data, "application/json", $"photocommunity-my-data-{DateTime.UtcNow:yyyyMMdd}.json");
+    }
+
     /// <summary>Permanently deletes the account. The form requires typing DELETE, checked here too.</summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAccount(string? confirmation, CancellationToken ct)

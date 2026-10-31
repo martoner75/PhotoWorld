@@ -5,6 +5,8 @@ public static class ApiRoutes
 {
     public const string ExternalLogin = "api/auth/external";
     public const string CurrentUser = "api/users/me";
+    /// <summary>GET: everything the signed-in member shared or set, as a JSON download.</summary>
+    public const string MyDataExport = "api/users/me/export";
     public const string Member = "api/users/{id:guid}";
     public const string MemberFollow = "api/users/{id:guid}/follow";
     public const string MemberBlock = "api/users/{id:guid}/block";
@@ -14,6 +16,8 @@ public static class ApiRoutes
     public const string Showcase = "api/showcase";
     /// <summary>A public portfolio, readable without signing in.</summary>
     public const string PublicPortfolio = "api/portfolios/{slug}";
+    /// <summary>The addresses of all public portfolios, readable without signing in (for the website's sitemap).</summary>
+    public const string PublicPortfolioIndex = "api/portfolios";
     /// <summary>GET / PUT the signed-in member's own portfolio settings.</summary>
     public const string MyPortfolio = "api/users/me/portfolio";
     public const string Photos = "api/photos";

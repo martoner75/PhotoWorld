@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Security.Claims;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -100,6 +103,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+// Rate limiting, per signed-in member: the website calls this API from its server, so a client address here would be
+// the website's, shared by everyone. Signed-out calls aren't limited here (the website limits those per visitor).
+// Reads and writes have separate budgets per minute; set a value to 0 under RateLimiting in configuration to switch it off.
+var readsPerMinute = builder.Configuration.GetValue("RateLimiting:ReadsPerMinute", 1200);
+var writesPerMinute = builder.Configuration.GetValue("RateLimiting:WritesPerMinute", 120);
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+    {
+        var member = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ctx.User.FindFirst("sub")?.Value;
+        var write = !HttpMethods.IsGet(ctx.Request.Method) && !HttpMethods.IsHead(ctx.Request.Method)
+                    && !HttpMethods.IsOptions(ctx.Request.Method);
+        var limit = write ? writesPerMinute : readsPerMinute;
+        if (member is null || limit <= 0) return RateLimitPartition.GetNoLimiter("unlimited");
+        return RateLimitPartition.GetFixedWindowLimiter($"{(write ? "w" : "r")}:{member}", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0,
+        });
+    });
+    o.OnRejected = (context, _) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+        return ValueTask.CompletedTask;
+    };
+});
+
 var app = builder.Build();
 
 // Migrations are applied by CI (.github/workflows/ci.yml) or `dotnet ef database update`, never here,
@@ -128,6 +159,7 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 

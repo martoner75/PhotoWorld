@@ -124,6 +124,30 @@ public class NotificationEmailsTests
         Assert.Contains("https://photoworld.example/Account/Settings#notifications", email.TextBody);
         Assert.Null(email.Headers);
     }
+
+    [Fact]
+    public void Report_alert_names_the_item_and_reason_and_encodes_the_note()
+    {
+        var id = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var email = _emails.ReportAlert("admin@example.com", "Photo", "Spam or advertising", "<script>x</script>", 1, false, id);
+
+        Assert.Equal("PhotoCommunity: Photo reported (Spam or advertising)", email.Subject);
+        Assert.Contains("&lt;script&gt;x&lt;/script&gt;", email.HtmlBody);
+        Assert.DoesNotContain("<script>", email.HtmlBody);
+        Assert.Contains(id.ToString(), email.TextBody);
+        Assert.Contains("stays visible", email.TextBody);
+        Assert.Null(email.Headers);
+    }
+
+    [Fact]
+    public void Report_alert_says_when_the_item_was_auto_hidden()
+    {
+        var email = _emails.ReportAlert("admin@example.com", "Blog post", "Harassment or hate", null, 3, true, Guid.NewGuid());
+
+        Assert.Equal("PhotoCommunity: Blog post hidden after 3 reports (Harassment or hate)", email.Subject);
+        Assert.Contains("hidden from everyone except its owner", email.TextBody);
+        Assert.DoesNotContain("Reporter's note", email.TextBody);
+    }
 }
 
 public class WeeklySummaryEmailTests

@@ -47,6 +47,17 @@ public class PortfoliosController(
                 storage.ThumbnailUrl(p.ThumbnailPath), p.Width, p.Height, p.AllowDownload)).ToList());
     }
 
+    /// <summary>Addresses of public portfolios of active members, for the website's sitemap. Capped well under the 50,000 a sitemap allows.</summary>
+    [HttpGet(ApiRoutes.PublicPortfolioIndex)]
+    [AllowAnonymous]
+    public async Task<ActionResult<List<PortfolioIndexEntryDto>>> Index(CancellationToken ct) =>
+        await db.Portfolios.AsNoTracking()
+            .Where(p => p.IsPublic && p.User.SuspendedAt == null)
+            .OrderBy(p => p.Slug)
+            .Take(10_000)
+            .Select(p => new PortfolioIndexEntryDto(p.Slug, p.UpdatedAt))
+            .ToListAsync(ct);
+
     [HttpGet(ApiRoutes.MyPortfolio)]
     public async Task<ActionResult<MyPortfolioDto>> Mine(CancellationToken ct)
     {

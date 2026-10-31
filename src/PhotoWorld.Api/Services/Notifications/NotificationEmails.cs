@@ -79,6 +79,43 @@ public sealed class NotificationEmails(string webBaseUrl)
         return new EmailMessage(to, "Welcome to PhotoCommunity", html, text);
     }
 
+    /// <summary>
+    /// Tells a site admin that something was reported. Sent for the first open report on an item and again when it
+    /// reaches the auto-hide threshold. A service message to admins, so no unsubscribe link. Everything is encoded.
+    /// </summary>
+    public EmailMessage ReportAlert(string to, string kind, string reasonLabel, string? note, int openReports, bool autoHidden, Guid reportId)
+    {
+        var headline = autoHidden ? $"{kind} hidden after {openReports} reports" : $"{kind} reported";
+        var subject = $"PhotoCommunity: {headline} ({reasonLabel})";
+        var hiddenLine = autoHidden
+            ? "It has been hidden from everyone except its owner until a moderator reviews it."
+            : "It stays visible until it has enough open reports or a moderator acts.";
+        var noteText = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+
+        var html = Layout($"""
+            <h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 12px">{E(headline)}</h1>
+            <p style="margin:0 0 14px"><strong>Reason:</strong> {E(reasonLabel)}<br>
+               <strong>Open reports on this item:</strong> {openReports}</p>
+            {(noteText is null ? "" : $"""<p style="margin:0 0 14px;padding:10px 14px;background:#f4f4f1;border-radius:8px"><strong>Reporter's note:</strong><br>{E(noteText)}</p>""")}
+            <p style="margin:0 0 14px">{E(hiddenLine)}</p>
+            <p style="margin:0;color:#6b6d75;font-size:13px">Review it in the database: <code>photoworld.reports</code>, report <code>{reportId}</code>.
+               Set its status to <code>dismissed</code> or <code>upheld</code>.</p>
+            """, footer: "You're getting this because you're a PhotoCommunity admin.");
+        var text = $"""
+            {headline}
+
+            Reason: {reasonLabel}
+            Open reports on this item: {openReports}
+            {(noteText is null ? "" : $"Reporter's note: {noteText}\n")}
+            {hiddenLine}
+
+            Review it in the database: photoworld.reports, report {reportId}. Set its status to dismissed or upheld.
+
+            You're getting this because you're a PhotoCommunity admin.
+            """;
+        return new EmailMessage(to, subject, html, text);
+    }
+
     /// <param name="moreCount">Posts beyond <paramref name="posts"/> in this period, summed up with a link.</param>
     public EmailMessage NewPosts(string to, string frequency, IReadOnlyList<PostNotice> posts, int moreCount, string unsubscribeToken)
     {
