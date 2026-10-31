@@ -30,6 +30,9 @@ public static class ActivityRules
             or ActivityTypes.WalkReminder => settings.Walks,
         ActivityTypes.WorkshopNew or ActivityTypes.WorkshopJoined or ActivityTypes.WorkshopChanged or ActivityTypes.WorkshopCancelled
             or ActivityTypes.WorkshopReminder => settings.Workshops,
+        ActivityTypes.CollabNew or ActivityTypes.CollabReply or ActivityTypes.CollabAccepted or ActivityTypes.CollabChanged
+            or ActivityTypes.CollabCancelled or ActivityTypes.CollabReminder or ActivityTypes.CollabConfirm => settings.Collabs,
+        ActivityTypes.CollabApproved or ActivityTypes.CollabRejected => true, // the answer the poster is waiting for
         ActivityTypes.LightForecast => settings.Forecasts,
         ActivityTypes.ClubRequest or ActivityTypes.ClubAccepted => settings.Clubs,
         ActivityTypes.ClubPhoto => settings.ClubPhotos,
@@ -39,7 +42,8 @@ public static class ActivityRules
 
     /// <summary>Likes and follows are one-per-person: liking again (after an unlike) doesn't notify twice.</summary>
     public static bool IsOncePerActor(string type) =>
-        type is ActivityTypes.Like or ActivityTypes.Follow or ActivityTypes.Feedback or ActivityTypes.ClubRequest;
+        type is ActivityTypes.Like or ActivityTypes.Follow or ActivityTypes.Feedback or ActivityTypes.ClubRequest
+            or ActivityTypes.CollabReply;
 
     public static string? Snippet(string? text)
     {

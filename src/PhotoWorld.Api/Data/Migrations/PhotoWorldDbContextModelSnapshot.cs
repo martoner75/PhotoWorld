@@ -42,6 +42,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("club_id");
 
+                    b.Property<Guid?>("CollabId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("collab_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -101,6 +105,9 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasIndex("ClubId")
                         .HasDatabaseName("ix_activities_club_id");
 
+                    b.HasIndex("CollabId")
+                        .HasDatabaseName("ix_activities_collab_id");
+
                     b.HasIndex("CreatedAt")
                         .HasDatabaseName("ix_activities_created_at");
 
@@ -128,7 +135,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("activities", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo', 'workshop_new', 'workshop_joined', 'workshop_changed', 'workshop_cancelled', 'workshop_reminder')");
+                            t.HasCheckConstraint("ck_activities_type", "type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo', 'workshop_new', 'workshop_joined', 'workshop_changed', 'workshop_cancelled', 'workshop_reminder', 'collab_new', 'collab_reply', 'collab_accepted', 'collab_changed', 'collab_cancelled', 'collab_reminder', 'collab_confirm', 'collab_approved', 'collab_rejected')");
                         });
                 });
 
@@ -153,6 +160,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("clubs");
+
+                    b.Property<bool>("Collabs")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("collabs");
 
                     b.Property<bool>("Comments")
                         .HasColumnType("boolean")
@@ -687,6 +700,268 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasDatabaseName("ix_club_photos_club_id_shared_at");
 
                     b.ToTable("club_photos", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Collab", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Area")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("area");
+
+                    b.Property<double>("AreaLatitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("area_latitude");
+
+                    b.Property<double>("AreaLongitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("area_longitude");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<DateTimeOffset?>("ConfirmRequestSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirm_request_sent_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<double>("MeetingLatitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("meeting_latitude");
+
+                    b.Property<double>("MeetingLongitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("meeting_longitude");
+
+                    b.Property<string>("MeetingPointName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("meeting_point_name");
+
+                    b.Property<Guid>("PosterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("poster_id");
+
+                    b.Property<DateTimeOffset?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reminder_sent_at");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("review_note");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("pending")
+                        .HasColumnName("review_status");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("role");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<string>("Terms")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("terms");
+
+                    b.Property<string>("TermsNote")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("terms_note");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_collabs");
+
+                    b.HasIndex("AreaLatitude")
+                        .HasDatabaseName("ix_collabs_area_latitude");
+
+                    b.HasIndex("PosterId")
+                        .HasDatabaseName("ix_collabs_poster_id");
+
+                    b.HasIndex("ReviewStatus", "StartsAt")
+                        .HasDatabaseName("ix_collabs_review_status_starts_at");
+
+                    b.ToTable("collabs", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_collabs_area", "area_latitude between -90 and 90 and area_longitude between -180 and 180");
+
+                            t.HasCheckConstraint("ck_collabs_meeting_point", "meeting_latitude between -90 and 90 and meeting_longitude between -180 and 180");
+
+                            t.HasCheckConstraint("ck_collabs_review_status", "review_status in ('pending', 'approved', 'rejected')");
+
+                            t.HasCheckConstraint("ck_collabs_role", "role in ('model', 'makeup', 'second_shooter', 'assistant', 'photographer')");
+
+                            t.HasCheckConstraint("ck_collabs_terms", "terms in ('paid', 'trade', 'unpaid')");
+
+                            t.HasCheckConstraint("ck_collabs_times", "ends_at > starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollabMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("body");
+
+                    b.Property<Guid>("CollabId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("collab_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_collab_messages");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_collab_messages_author_id");
+
+                    b.HasIndex("CollabId", "Id")
+                        .HasDatabaseName("ix_collab_messages_collab_id_id");
+
+                    b.ToTable("collab_messages", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollabPhoto", b =>
+                {
+                    b.Property<Guid>("CollabId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("collab_id");
+
+                    b.Property<Guid>("PhotoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("photo_id");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.HasKey("CollabId", "PhotoId")
+                        .HasName("pk_collab_photos");
+
+                    b.HasIndex("PhotoId")
+                        .HasDatabaseName("ix_collab_photos_photo_id");
+
+                    b.ToTable("collab_photos", "photoworld");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollabReply", b =>
+                {
+                    b.Property<Guid>("CollabId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("collab_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("decided_at");
+
+                    b.Property<DateTimeOffset?>("MemberConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("member_confirmed_at");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("message");
+
+                    b.Property<DateTimeOffset?>("PosterConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("poster_confirmed_at");
+
+                    b.Property<bool>("SharePortfolio")
+                        .HasColumnType("boolean")
+                        .HasColumnName("share_portfolio");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("pending")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("CollabId", "UserId")
+                        .HasName("pk_collab_replies");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_collab_replies_user_id");
+
+                    b.ToTable("collab_replies", "photoworld", t =>
+                        {
+                            t.HasCheckConstraint("ck_collab_replies_status", "status in ('pending', 'accepted', 'declined')");
+                        });
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Collection", b =>
@@ -1588,6 +1863,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("club_id");
 
+                    b.Property<Guid?>("CollabId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("collab_id");
+
                     b.Property<Guid?>("CommentId")
                         .HasColumnType("uuid")
                         .HasColumnName("comment_id");
@@ -1630,6 +1909,9 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_reports");
 
+                    b.HasIndex("CollabId")
+                        .HasDatabaseName("ix_reports_collab_id");
+
                     b.HasIndex("BlogCommentId", "Status")
                         .HasDatabaseName("ix_reports_blog_comment_id_status");
 
@@ -1657,6 +1939,10 @@ namespace PhotoWorld.Api.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_reports_reporter_id_club_id");
 
+                    b.HasIndex("ReporterId", "CollabId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reports_reporter_id_collab_id");
+
                     b.HasIndex("ReporterId", "CommentId")
                         .IsUnique()
                         .HasDatabaseName("ix_reports_reporter_id_comment_id");
@@ -1667,7 +1953,7 @@ namespace PhotoWorld.Api.Data.Migrations
 
                     b.ToTable("reports", "photoworld", t =>
                         {
-                            t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id, club_id) = 1");
+                            t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id, club_id, collab_id) = 1");
 
                             t.HasCheckConstraint("ck_reports_reason", "reason in ('spam', 'nudity', 'harassment', 'violence', 'copyright', 'other')");
 
@@ -2000,6 +2286,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_activities_clubs_club_id");
 
+                    b.HasOne("PhotoWorld.Api.Data.Collab", "Collab")
+                        .WithMany()
+                        .HasForeignKey("CollabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_activities_collabs_collab_id");
+
                     b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
                         .WithMany()
                         .HasForeignKey("PhotoId")
@@ -2036,6 +2328,8 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Challenge");
 
                     b.Navigation("Club");
+
+                    b.Navigation("Collab");
 
                     b.Navigation("Photo");
 
@@ -2259,6 +2553,81 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("Club");
 
                     b.Navigation("Photo");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Collab", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Poster")
+                        .WithMany()
+                        .HasForeignKey("PosterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collabs_users_poster_id");
+
+                    b.Navigation("Poster");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollabMessage", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collab_messages_users_author_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Collab", "Collab")
+                        .WithMany("Messages")
+                        .HasForeignKey("CollabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collab_messages_collabs_collab_id");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Collab");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollabPhoto", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Collab", "Collab")
+                        .WithMany("Photos")
+                        .HasForeignKey("CollabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collab_photos_collabs_collab_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.Photo", "Photo")
+                        .WithMany()
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collab_photos_photos_photo_id");
+
+                    b.Navigation("Collab");
+
+                    b.Navigation("Photo");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.CollabReply", b =>
+                {
+                    b.HasOne("PhotoWorld.Api.Data.Collab", "Collab")
+                        .WithMany("Replies")
+                        .HasForeignKey("CollabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collab_replies_collabs_collab_id");
+
+                    b.HasOne("PhotoWorld.Api.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_collab_replies_users_user_id");
+
+                    b.Navigation("Collab");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PhotoWorld.Api.Data.Collection", b =>
@@ -2555,6 +2924,12 @@ namespace PhotoWorld.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_reports_clubs_club_id");
 
+                    b.HasOne("PhotoWorld.Api.Data.Collab", "Collab")
+                        .WithMany("Reports")
+                        .HasForeignKey("CollabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_reports_collabs_collab_id");
+
                     b.HasOne("PhotoWorld.Api.Data.PhotoComment", "Comment")
                         .WithMany("Reports")
                         .HasForeignKey("CommentId")
@@ -2579,6 +2954,8 @@ namespace PhotoWorld.Api.Data.Migrations
                     b.Navigation("BlogPost");
 
                     b.Navigation("Club");
+
+                    b.Navigation("Collab");
 
                     b.Navigation("Comment");
 
@@ -2714,6 +3091,17 @@ namespace PhotoWorld.Api.Data.Migrations
             modelBuilder.Entity("PhotoWorld.Api.Data.Club", b =>
                 {
                     b.Navigation("Members");
+
+                    b.Navigation("Reports");
+                });
+
+            modelBuilder.Entity("PhotoWorld.Api.Data.Collab", b =>
+                {
+                    b.Navigation("Messages");
+
+                    b.Navigation("Photos");
+
+                    b.Navigation("Replies");
 
                     b.Navigation("Reports");
                 });

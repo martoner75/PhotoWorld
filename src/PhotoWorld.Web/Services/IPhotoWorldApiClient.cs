@@ -12,6 +12,7 @@ using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
 using PhotoWorld.Shared.Workshops;
+using PhotoWorld.Shared.Collabs;
 
 namespace PhotoWorld.Web.Services;
 
@@ -130,6 +131,28 @@ public interface IPhotoWorldApiClient
     Task<IReadOnlyList<WorkshopMessageDto>?> GetWorkshopMessagesAsync(Guid id, long? after, CancellationToken ct = default);
     Task<ApiResult<WorkshopMessageDto>> PostWorkshopMessageAsync(Guid id, string body, CancellationToken ct = default);
     Task<bool> DeleteWorkshopMessageAsync(Guid id, long messageId, CancellationToken ct = default);
+
+    /// <summary>The board, or with <paramref name="list"/> = mine the caller's own calls and replies.</summary>
+    Task<PagedResult<CollabSummaryDto>> GetCollabsAsync(string list, string? role, string? terms, string? q, Guid? nearPlace, double? km,
+        int page, CancellationToken ct = default);
+    Task<CollabDto?> GetCollabAsync(Guid id, CancellationToken ct = default);
+    Task<ApiResult<CollabSummaryDto>> CreateCollabAsync(SaveCollabRequest request, CancellationToken ct = default);
+    Task<ApiResult<CollabSummaryDto>> UpdateCollabAsync(Guid id, SaveCollabRequest request, CancellationToken ct = default);
+    Task<bool> CancelCollabAsync(Guid id, CancellationToken ct = default);
+    Task<bool> DeleteCollabAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Null when it worked, else what went wrong.</summary>
+    Task<string?> ReplyToCollabAsync(Guid id, ReplyToCollabRequest request, CancellationToken ct = default);
+    Task<bool> WithdrawCollabReplyAsync(Guid id, CancellationToken ct = default);
+    Task<string?> AcceptCollabReplyAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<string?> DeclineCollabReplyAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<string?> ConfirmCollabAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<IReadOnlyList<CollabMessageDto>?> GetCollabMessagesAsync(Guid id, long? after, CancellationToken ct = default);
+    Task<ApiResult<CollabMessageDto>> PostCollabMessageAsync(Guid id, string body, CancellationToken ct = default);
+    Task<bool> DeleteCollabMessageAsync(Guid id, long messageId, CancellationToken ct = default);
+    Task<ReportOutcome> ReportCollabAsync(Guid id, CreateReportRequest request, CancellationToken ct = default);
+    Task<PagedResult<CollabSummaryDto>?> GetPendingCollabsAsync(int page, CancellationToken ct = default);
+    Task<string?> ApproveCollabAsync(Guid id, CancellationToken ct = default);
+    Task<string?> RejectCollabAsync(Guid id, string? reason, CancellationToken ct = default);
 
     // Collections
     /// <summary>The caller's own collections, or <paramref name="ownerId"/>'s public ones.</summary>

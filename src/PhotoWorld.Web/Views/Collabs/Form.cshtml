@@ -1,0 +1,148 @@
+@model CollabFormViewModel
+@{
+    var isNew = Model.Id is null;
+    ViewData["Title"] = isNew ? "Post a collab call" : "Edit call";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var chosen = Model.PhotoIds.ToHashSet();
+}
+
+<section class="container page narrow">
+    <h1>@ViewData["Title"]</h1>
+    <p class="text-muted">Say who you'd like to shoot with, when, and roughly where. Members see the area; only the people you accept get the exact meeting point.</p>
+
+    @if (Model.Places.Count == 0)
+    {
+        <div class="empty-state">
+            <p>A call needs a meeting point, picked from your places. Add the spot on your Places map first: it stays private.</p>
+            <a class="btn btn-accent" asp-controller="Places" asp-action="Index">Add a place</a>
+        </div>
+    }
+    else
+    {
+        <form asp-action="@(isNew ? "New" : "Edit")" asp-route-id="@Model.Id" method="post" class="form-card" data-workshop-form>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="field">
+                <label asp-for="Title">Title</label>
+                <input asp-for="Title" maxlength="@CollabLimits.TitleMax" placeholder="Golden-hour portraits in the old town" />
+                <span asp-validation-for="Title" class="field-error"></span>
+            </div>
+
+            <fieldset class="field">
+                <legend>Looking for</legend>
+                <div class="collab-chips">
+                    @foreach (var role in CollabRoles.All)
+                    {
+                        <label class="choice-chip">
+                            <input type="radio" name="Role" value="@role" checked="@(Model.Role == role)" />
+                            <span>@CollabRoles.Label(role)</span>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="Role" class="field-error"></span>
+            </fieldset>
+
+            <fieldset class="field">
+                <legend>Terms</legend>
+                <div class="collab-chips">
+                    @foreach (var terms in CollabTerms.All)
+                    {
+                        <label class="choice-chip">
+                            <input type="radio" name="Terms" value="@terms" checked="@(Model.Terms == terms)" />
+                            <span>@CollabTerms.Label(terms)</span>
+                        </label>
+                    }
+                </div>
+                <input asp-for="TermsNote" maxlength="@CollabLimits.TermsNoteMax" aria-label="Details of the terms"
+                       placeholder="Details, e.g. €150 for the day, or 15 edited photos within a week" />
+                <span asp-validation-for="Terms" class="field-error"></span>
+            </fieldset>
+
+            <div class="challenge-dates">
+                <div class="field">
+                    <label for="starts-local">Starts (your time)</label>
+                    <input id="starts-local" name="StartsLocal" type="datetime-local" required
+                           value="@Model.StartsLocal?.ToString("yyyy-MM-ddTHH:mm", inv)" data-starts-utc="@Model.StartsAtUtc?.ToString("O")" />
+                    <span asp-validation-for="StartsLocal" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="DurationMinutes">Lasts</label>
+                    <select asp-for="DurationMinutes" class="field-select">
+                        @foreach (var minutes in new[] { 30, 60, 90, 120, 180, 240, 360, 480, 720 })
+                        {
+                            <option value="@minutes">@(minutes < 120 ? $"{minutes} minutes" : $"{minutes / 60.0:0.#} hours")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="DurationMinutes" class="field-error"></span>
+                </div>
+            </div>
+            <input type="hidden" asp-for="UtcOffsetMinutes" data-utc-offset />
+
+            <div class="field">
+                <label asp-for="Area">Area <span class="text-muted">(what everyone sees)</span></label>
+                <input asp-for="Area" maxlength="@CollabLimits.AreaMax" placeholder="Naples · Centro storico" />
+                <span asp-validation-for="Area" class="field-error"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="PlaceId">Meeting point <span class="text-muted">(from your places, private)</span></label>
+                <select asp-for="PlaceId" class="field-select">
+                    <option value="">Choose a place…</option>
+                    @foreach (var p in Model.Places.OrderBy(p => p.Name))
+                    {
+                        <option value="@p.Id">@p.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="PlaceId" class="field-error"></span>
+                <span class="text-muted small">Only you, the people you accept and site admins see it.
+                    @if (Model.CurrentMeetingPoint is { } current && Model.PlaceId is null)
+                    {
+                        @:Right now it's <strong>@current</strong>; pick it again, or another place.
+                    }
+                </span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Description">The idea <span class="text-muted">(optional)</span></label>
+                <textarea asp-for="Description" rows="5" maxlength="@CollabLimits.DescriptionMax"
+                          placeholder="The look you're after, what to wear or bring, how long it takes, what everyone gets…"></textarea>
+            </div>
+
+            <div class="field">
+                <label>Mood photos <span class="text-muted">(optional, up to @CollabLimits.MaxPhotos of yours)</span></label>
+                <span asp-validation-for="PhotoIds" class="field-error"></span>
+                @if (Model.Candidates.Count == 0)
+                {
+                    <p class="text-muted small">Once your uploads are approved, you can pick some here to show the idea.</p>
+                }
+                else
+                {
+                    <div class="portfolio-picker">
+                        @foreach (var p in Model.Candidates)
+                        {
+                            var isChosen = chosen.Contains(p.Id);
+                            <label class="portfolio-pick @(isChosen ? "is-chosen" : "")">
+                                <img src="@p.ThumbnailUrl" alt="" loading="lazy" />
+                                <span class="portfolio-pick-row">
+                                    <input type="checkbox" name="PhotoIds" value="@p.Id" @(isChosen ? "checked" : "") data-portfolio-pick />
+                                    <span class="portfolio-pick-title">@p.Title</span>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="form-actions">
+                <a class="btn btn-ghost" asp-action="@(isNew ? "Index" : "Details")" asp-route-id="@Model.Id">Cancel</a>
+                <button type="submit" class="btn btn-accent">@(isNew ? "Send for review" : "Save changes")</button>
+            </div>
+            <p class="text-muted small mb-0">New calls appear on the board once an admin approves them, and members who follow you hear about it.
+                The people you accept hear when you change the time or meeting point, and get a reminder the day before.</p>
+        </form>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/workshops.js" asp-append-version="true"></script>
+}

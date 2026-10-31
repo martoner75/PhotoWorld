@@ -1,0 +1,341 @@
+@model CollabPageViewModel
+@{
+    var d = Model.Collab;
+    var c = d.Collab;
+    ViewData["Title"] = c.Title;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var light = SunTimes.For(SunTimes.LocalDate(c.StartsAt, d.AreaLongitude), d.AreaLatitude, d.AreaLongitude);
+    var here = Context.Request.Path + Context.Request.QueryString;
+    var mine = d.MyReply;
+}
+
+<section class="container page">
+    @if (c.IsCancelled)
+    {
+        <div class="alert moderation-banner" role="status"><strong>Cancelled.</strong> This collab isn't happening.</div>
+    }
+    else if (c.IsPoster && c.ReviewStatus == CollabReviewStatus.Pending)
+    {
+        <div class="alert moderation-banner" role="status"><strong>Waiting for approval.</strong> Only you can see this call until an admin has had a look. We'll let you know.</div>
+    }
+    else if (c.IsPoster && c.ReviewStatus == CollabReviewStatus.Rejected)
+    {
+        <div class="alert moderation-banner" role="status"><strong>Not approved.</strong> Only you can see this call.@(d.ReviewNote is { } note ? $" The reason: {note}" : "")</div>
+    }
+    @if (d.CanReview)
+    {
+        <div class="owner-actions">
+            <partial name="_CollabReviewActions" model="new CollabReviewActionsModel(c.Id, c.Title, c.ReviewStatus, here)" />
+        </div>
+    }
+
+    <div class="walk-layout">
+        <div>
+            <p class="hero-eyebrow">Collab call</p>
+            <div class="collab-chips mb-2">
+                <span class="tag-chip is-active">Looking for: @CollabRoles.Label(c.Role)</span>
+                <span class="tag-chip">@CollabTerms.Label(c.Terms)</span>
+            </div>
+            <h1 class="walk-title">@c.Title</h1>
+
+            <div class="collab-facts">
+                <div class="collab-fact">
+                    <p class="collab-fact-label">When</p>
+                    <p><time datetime="@c.StartsAt.ToString("O")" data-local-time="full">@c.StartsAt.ToString("dddd d MMMM, HH:mm") UTC</time>
+                        – <time datetime="@c.EndsAt.ToString("O")" data-local-time="time">@c.EndsAt.ToString("HH:mm")</time></p>
+                </div>
+                <div class="collab-fact">
+                    <p class="collab-fact-label">Where</p>
+                    <p>@c.Area</p>
+                    @if (d.MeetingPoint is null)
+                    {
+                        <p class="text-muted small">The exact meeting point goes only to the people @c.Poster.DisplayName accepts.</p>
+                    }
+                </div>
+                <div class="collab-fact">
+                    <p class="collab-fact-label">Terms</p>
+                    <p>@CollabTerms.Label(c.Terms)</p>
+                    @if (d.TermsNote is { } termsNote)
+                    {
+                        <p class="text-muted small">@termsNote</p>
+                    }
+                </div>
+            </div>
+
+            @if (d.Photos.Count > 0)
+            {
+                <div class="collab-moodboard">
+                    @foreach (var p in d.Photos)
+                    {
+                        <a asp-controller="Photos" asp-action="Details" asp-route-id="@p.Id"><img src="@p.ThumbnailUrl" alt="@p.Title" loading="lazy" /></a>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(d.Description))
+            {
+                <h2 class="section-heading">The idea</h2>
+                <p class="blog-intro walk-plan">@d.Description</p>
+            }
+
+            @if (d.MeetingPoint is { } point)
+            {
+                var lat = point.Latitude.ToString(inv);
+                var lng = point.Longitude.ToString(inv);
+                <section class="collab-meeting" aria-labelledby="meeting-heading">
+                    <h2 class="section-heading" id="meeting-heading">Meeting point</h2>
+                    <p><strong>@point.Name</strong></p>
+                    @* Google Maps' keyless directions link, as on photo walks: the maps service routes from the device's own location. *@
+                    <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener noreferrer"
+                       href="https://www.google.com/maps/dir/?api=1&amp;destination=@lat,@lng&amp;travelmode=walking">Directions</a>
+                    <p class="text-muted small mt-2">Only @(c.IsPoster ? "you and the people you accepted" : $"you, {c.Poster.DisplayName} and the others accepted") can see this.</p>
+                </section>
+            }
+
+            <aside class="collab-safety">
+                <partial name="_LineIcon" model="LineIcons.Collabs" />
+                <p><strong>Shooting safely.</strong> Meet in a public place, tell someone where you're going, and bring a friend if you like.
+                    Agree the terms in the chat before the day. You can report a call or block a member at any time.</p>
+            </aside>
+
+            @if (d.CanEdit)
+            {
+                <div class="owner-actions">
+                    @if (c.IsPoster)
+                    {
+                        <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@c.Id">Edit</a>
+                    }
+                    @if (!c.IsCancelled)
+                    {
+                        <form asp-action="Cancel" asp-route-id="@c.Id" method="post" data-confirm="Cancel this collab? Everyone who replied will be told, and the chat closes.">
+                            <button type="submit" class="btn btn-ghost btn-sm">Cancel collab</button>
+                        </form>
+                    }
+                    <form asp-action="Delete" asp-route-id="@c.Id" method="post" data-confirm="Delete this call for good, with its replies and chat?">
+                        <button type="submit" class="btn btn-danger-ghost btn-sm">Delete</button>
+                    </form>
+                </div>
+            }
+
+            @if (c.IsPoster || d.Replies.Count > 0)
+            {
+                <section class="mt-4" id="replies" aria-labelledby="replies-heading">
+                    <h2 class="section-heading" id="replies-heading">Replies</h2>
+                    @if (d.Replies.Count == 0)
+                    {
+                        <p class="text-muted">No replies yet. Members see your call once it's approved; the people you follow hear about it.</p>
+                    }
+                    <ul class="collab-replies">
+                        @foreach (var r in d.Replies)
+                        {
+                            <li class="collab-reply status-@r.Status">
+                                <div class="collab-reply-head">
+                                    <a asp-controller="Members" asp-action="Details" asp-route-id="@r.Member.Id" class="photo-card-owner">
+                                        <partial name="_Avatar" model="r.Member" /> <strong>@r.Member.DisplayName</strong>
+                                    </a>
+                                    <span class="text-muted small">@(r.ConfirmedCount switch { 0 => "new on Collabs", 1 => "1 confirmed collab", var n => $"{n} confirmed collabs" })</span>
+                                    @if (r.PortfolioSlug is { } slug)
+                                    {
+                                        <a class="small" href="/p/@slug" target="_blank" rel="noopener">Portfolio</a>
+                                    }
+                                    <span class="collab-reply-status">@(r.Status switch
+                                    {
+                                        CollabReplyStatus.Accepted => "Accepted",
+                                        CollabReplyStatus.Declined => "Declined",
+                                        _ => "Waiting for you",
+                                    })</span>
+                                </div>
+                                <p>@r.Message</p>
+                                @if (c.IsPoster && !c.IsCancelled)
+                                {
+                                    <div class="owner-actions">
+                                        @if (r.Status != CollabReplyStatus.Accepted)
+                                        {
+                                            <form asp-action="Accept" asp-route-id="@c.Id" asp-route-userId="@r.Member.Id" method="post"
+                                                  data-confirm="Accept @r.Member.DisplayName? They'll get the meeting point and join the chat.">
+                                                <button type="submit" class="btn btn-accent btn-sm">Accept</button>
+                                            </form>
+                                        }
+                                        @if (r.Status != CollabReplyStatus.Declined)
+                                        {
+                                            <form asp-action="Decline" asp-route-id="@c.Id" asp-route-userId="@r.Member.Id" method="post"
+                                                  data-confirm="@(r.Status == CollabReplyStatus.Accepted ? $"Take {r.Member.DisplayName} off this collab? They lose the meeting point and the chat." : $"Decline {r.Member.DisplayName}'s reply?")">
+                                                <button type="submit" class="btn btn-ghost btn-sm">@(r.Status == CollabReplyStatus.Accepted ? "Remove" : "Decline")</button>
+                                            </form>
+                                        }
+                                        @if (r.Status == CollabReplyStatus.Accepted && d.CanConfirm && !r.PosterConfirmed)
+                                        {
+                                            <form asp-action="Confirm" asp-route-id="@c.Id" asp-route-userId="@r.Member.Id" method="post">
+                                                <button type="submit" class="btn btn-ghost btn-sm">We shot together ✓</button>
+                                            </form>
+                                        }
+                                        @if (r.PosterConfirmed)
+                                        {
+                                            <span class="text-muted small">@(r.MemberConfirmed ? "Confirmed by both of you" : "You confirmed it; waiting for them")</span>
+                                        }
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+
+            @if (!c.IsPoster)
+            {
+                <section class="mt-4" id="reply" aria-labelledby="reply-heading">
+                    @if (mine is not null)
+                    {
+                        <h2 class="section-heading" id="reply-heading">Your reply</h2>
+                        <p class="collab-reply-status">@(mine.Status switch
+                        {
+                            CollabReplyStatus.Accepted => $"You're in! {c.Poster.DisplayName} accepted your reply.",
+                            CollabReplyStatus.Declined => $"{c.Poster.DisplayName} went with someone else this time.",
+                            _ => $"Sent. {c.Poster.DisplayName} hasn't answered yet.",
+                        })</p>
+                        <blockquote class="collab-my-reply">@mine.Message</blockquote>
+                        <div class="owner-actions">
+                            @if (mine.Status == CollabReplyStatus.Accepted && d.CanConfirm)
+                            {
+                                <form asp-action="Confirm" asp-route-id="@c.Id" asp-route-userId="@mine.Member.Id" method="post">
+                                    <button type="submit" class="btn btn-accent btn-sm">We shot together ✓</button>
+                                </form>
+                            }
+                            else if (mine.MemberConfirmed)
+                            {
+                                <span class="text-muted small">@(mine.PosterConfirmed ? "Confirmed by both of you" : $"You confirmed it; waiting for {c.Poster.DisplayName}")</span>
+                            }
+                            @if (!c.IsCancelled)
+                            {
+                                <form asp-action="Withdraw" asp-route-id="@c.Id" method="post"
+                                      data-confirm="@(mine.Status == CollabReplyStatus.Accepted ? "Pull out of this collab? You'll lose the meeting point and the chat." : "Withdraw your reply?")">
+                                    <button type="submit" class="btn btn-ghost btn-sm">@(mine.Status == CollabReplyStatus.Accepted ? "Pull out" : "Withdraw reply")</button>
+                                </form>
+                            }
+                        </div>
+                    }
+                    @if (d.CanReply)
+                    {
+                        <form asp-action="Reply" asp-route-id="@c.Id" method="post" class="form-card collab-reply-form">
+                            <h2 class="section-heading mb-0" id="@(mine is null ? "reply-heading" : null)">@(mine is null ? "Reply to this call" : "Change your reply")</h2>
+                            <div class="field">
+                                <label for="reply-message">Introduce yourself</label>
+                                <textarea id="reply-message" name="message" rows="4" maxlength="@CollabLimits.ReplyMax" required
+                                          placeholder="Hi @c.Poster.DisplayName, I'd love to take part. I'm free that day and…">@mine?.Message</textarea>
+                            </div>
+                            <label class="check-row">
+                                <input type="checkbox" name="sharePortfolio" value="true" checked />
+                                Show @c.Poster.DisplayName my public portfolio, if I have one
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-accent">@(mine is null ? "Send reply" : "Save reply")</button>
+                            </div>
+                            <p class="text-muted small mb-0">Only @c.Poster.DisplayName sees your reply. If you're accepted, you'll both get the meeting point and a private chat.</p>
+                        </form>
+                    }
+                    else if (mine is null && d.CannotReplyReason is { } reason)
+                    {
+                        <p class="text-muted">@reason</p>
+                    }
+                </section>
+            }
+
+            @if (d.CanReadChat)
+            {
+                <section class="comments workshop-chat mt-4" id="chat" aria-labelledby="chat-heading">
+                    <h2 id="chat-heading">Chat</h2>
+                    <p class="text-muted small">Just @(c.IsPoster ? "you and the people you accepted" : $"you, {c.Poster.DisplayName} and the others accepted"). It stays open for a week after the shoot, for sending photos and saying thanks.</p>
+                    <div class="chat-log" data-chat-log aria-live="polite"
+                         data-messages-url="@Url.Action("Messages", new { id = c.Id })"
+                         data-delete-url="@Url.Action("DeleteMessage", new { id = c.Id })"
+                         data-member-url="@Url.Action("Details", "Members", new { id = Guid.Empty })"
+                         data-host-label="poster"
+                         data-refresh-ms="@((int)CollabLimits.ChatRefresh.TotalMilliseconds)"
+                         data-last-id="@(Model.Messages.Count > 0 ? Model.Messages[^1].Id : 0)">
+                        <p class="text-muted chat-empty" data-chat-empty hidden="@(Model.Messages.Count > 0)">No messages yet. Say hello and agree the details.</p>
+                        <ul class="chat-messages" data-chat-messages>
+                            @foreach (var m in Model.Messages)
+                            {
+                                <li class="chat-message @(m.IsPoster ? "is-host" : "")" data-message-id="@m.Id">
+                                    <partial name="_Avatar" model="m.Author" />
+                                    <div class="comment-body">
+                                        <div class="comment-head">
+                                            <a asp-controller="Members" asp-action="Details" asp-route-id="@m.Author.Id">@m.Author.DisplayName</a>
+                                            @if (m.IsPoster) { <span class="chat-host-badge">poster</span> }
+                                            <time datetime="@m.CreatedAt.ToString("O")" data-local-time="full">@m.CreatedAt.ToString("d MMM, HH:mm") UTC</time>
+                                            @if (m.CanDelete)
+                                            {
+                                                <form asp-action="DeleteMessage" asp-route-id="@c.Id" asp-route-messageId="@m.Id" method="post" class="comment-delete" data-chat-delete>
+                                                    <button type="submit" class="btn-link-muted" aria-label="Delete message">Delete</button>
+                                                </form>
+                                            }
+                                        </div>
+                                        <p>@m.Body</p>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                    @if (d.CanChat)
+                    {
+                        <form asp-action="Post" asp-route-id="@c.Id" method="post" class="comment-form" data-chat-form>
+                            <label for="chat-body" class="visually-hidden">Your message</label>
+                            <textarea id="chat-body" name="body" rows="2" maxlength="@CollabLimits.MessageMax" required
+                                      placeholder="What to wear, where exactly to meet, anything to bring…"></textarea>
+                            <span class="field-error" data-chat-error></span>
+                            <button type="submit" class="btn btn-accent btn-sm">Send</button>
+                        </form>
+                    }
+                    else if (d.CannotChatReason is { } chatReason)
+                    {
+                        <p class="text-muted small">@chatReason</p>
+                    }
+                </section>
+            }
+        </div>
+
+        <aside>
+            <div class="collab-poster">
+                <a asp-controller="Members" asp-action="Details" asp-route-id="@c.Poster.Id" class="photo-card-owner">
+                    <partial name="_Avatar" model="c.Poster" /> <strong>@c.Poster.DisplayName</strong>
+                </a>
+                <p class="text-muted small mb-0">@(c.PosterConfirmedCount switch { 0 => "New on Collabs", 1 => "1 confirmed collab", var n => $"{n} confirmed collabs" })</p>
+            </div>
+
+            <partial name="_LightPlanner" model='new LightPlannerModel("collab", "Light on the day", light, SunTimes.Overlaps(light, c.StartsAt, c.EndsAt))' />
+
+            @if (d.Accepted.Count > 0)
+            {
+                <h2 class="section-heading mt-3">Going</h2>
+                <ul class="member-results">
+                    <li class="member-result">
+                        <a asp-controller="Members" asp-action="Details" asp-route-id="@c.Poster.Id" class="photo-card-owner">
+                            <partial name="_Avatar" model="c.Poster" /> <strong>@c.Poster.DisplayName</strong> <span class="text-muted small">poster</span>
+                        </a>
+                    </li>
+                    @foreach (var person in d.Accepted)
+                    {
+                        <li class="member-result">
+                            <a asp-controller="Members" asp-action="Details" asp-route-id="@person.Id" class="photo-card-owner">
+                                <partial name="_Avatar" model="person" /> <strong>@person.DisplayName</strong>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <p class="text-muted small mt-3">
+                Photos from this collab: tag them
+                <a asp-controller="Photos" asp-action="Index" asp-route-tag="@d.Tag" class="walk-tag">#@d.Tag</a>
+            </p>
+            @if (!c.IsPoster)
+            {
+                <p class="report-link"><a asp-action="Report" asp-route-id="@c.Id">Report this call</a></p>
+            }
+        </aside>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/workshops.js" asp-append-version="true"></script>
+}

@@ -113,6 +113,43 @@ public sealed class ScheduledActivitySender(IServiceScopeFactory scopes, TimePro
             await feed.NotifyWorkshopAsync([w.HostId, .. w.Attendees], null, w.HostId, w.Id, ActivityTypes.WorkshopReminder, ct);
         }
 
+        // Collabs within a day with someone accepted: remind the poster and the people going once, the same way.
+        var collabs = await db.Collabs.AsNoTracking()
+            .Where(c => c.CancelledAt == null && c.ReminderSentAt == null && c.StartsAt > now && c.StartsAt <= soon
+                        && c.ReviewStatus == Shared.Collabs.CollabReviewStatus.Approved)
+            .Select(c => new
+            {
+                c.Id, c.PosterId,
+                Going = c.Replies.Where(r => r.Status == Shared.Collabs.CollabReplyStatus.Accepted).Select(r => r.UserId).ToList(),
+            })
+            .ToListAsync(ct);
+        foreach (var c in collabs.Where(c => c.Going.Count > 0))
+        {
+            if (await db.Collabs.Where(x => x.Id == c.Id && x.ReminderSentAt == null)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReminderSentAt, now), ct) != 1) continue;
+            var feed = scope.ServiceProvider.GetRequiredService<ActivityFeed>();
+            await feed.NotifyCollabAsync([c.PosterId, .. c.Going], null, c.PosterId, c.Id, ActivityTypes.CollabReminder, ct);
+        }
+
+        // Collabs that just ended with someone accepted: ask everyone once to confirm it happened.
+        var ended = await db.Collabs.AsNoTracking()
+            .Where(c => c.CancelledAt == null && c.ConfirmRequestSentAt == null && c.EndsAt <= now
+                        && c.EndsAt > now - Shared.Collabs.CollabLimits.ConfirmWithin)
+            .Select(c => new
+            {
+                c.Id, c.PosterId,
+                Going = c.Replies.Where(r => r.Status == Shared.Collabs.CollabReplyStatus.Accepted).Select(r => r.UserId).ToList(),
+            })
+            .ToListAsync(ct);
+        foreach (var c in ended)
+        {
+            if (await db.Collabs.Where(x => x.Id == c.Id && x.ConfirmRequestSentAt == null)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.ConfirmRequestSentAt, now), ct) != 1) continue;
+            if (c.Going.Count == 0) continue; // nobody to confirm with: just mark it done
+            var feed = scope.ServiceProvider.GetRequiredService<ActivityFeed>();
+            await feed.NotifyCollabAsync([c.PosterId, .. c.Going], null, c.PosterId, c.Id, ActivityTypes.CollabConfirm, ct);
+        }
+
         var purged = await db.Activities.Where(a => a.CreatedAt < now - ActivityRules.KeepFor).ExecuteDeleteAsync(ct);
         if (purged > 0) logger.LogInformation("Deleted {Count} old activity items", purged);
     }

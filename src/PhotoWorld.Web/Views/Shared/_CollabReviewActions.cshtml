@@ -1,0 +1,19 @@
+@model CollabReviewActionsModel
+@* Approve / Reject for a call waiting for approval, or Take down for a live one: on the admin queue and the call's page. *@
+@if (Model.ReviewStatus == CollabReviewStatus.Pending)
+{
+    <form asp-controller="Admin" asp-action="ApproveCollab" asp-route-id="@Model.CollabId" method="post"
+          data-confirm="Approve “@Model.Title”? It goes on the Collabs board.">
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <button type="submit" class="btn btn-accent btn-sm">Approve</button>
+    </form>
+}
+<details class="suspend-menu">
+    <summary class="btn btn-danger-ghost btn-sm">@(Model.ReviewStatus == CollabReviewStatus.Pending ? "Reject" : "Take down")</summary>
+    <form asp-controller="Admin" asp-action="RejectCollab" asp-route-id="@Model.CollabId" method="post" class="suspend-form">
+        <label for="collab-reason-@Model.CollabId">Reason <span class="text-muted">(shown to the poster)</span></label>
+        <input id="collab-reason-@Model.CollabId" name="reason" maxlength="500" placeholder="e.g. please state the terms clearly" />
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <button type="submit" class="btn btn-danger btn-sm">@(Model.ReviewStatus == CollabReviewStatus.Pending ? "Reject the call" : "Take the call down")</button>
+    </form>
+</details>

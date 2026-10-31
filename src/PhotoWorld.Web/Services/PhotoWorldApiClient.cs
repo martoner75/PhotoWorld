@@ -16,6 +16,7 @@ using PhotoWorld.Shared.Portfolios;
 using PhotoWorld.Shared.Users;
 using PhotoWorld.Shared.Walks;
 using PhotoWorld.Shared.Workshops;
+using PhotoWorld.Shared.Collabs;
 
 namespace PhotoWorld.Web.Services;
 
@@ -429,6 +430,116 @@ public sealed class PhotoWorldApiClient(HttpClient http, ILogger<PhotoWorldApiCl
     {
         using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.WorkshopMessage, ("id", id), ("messageId", messageId)), ct);
         return IsSuccess(res);
+    }
+
+    public async Task<PagedResult<CollabSummaryDto>> GetCollabsAsync(string list, string? role, string? terms, string? q, Guid? nearPlace,
+        double? km, int page, CancellationToken ct = default)
+    {
+        var query = new List<string> { $"list={Uri.EscapeDataString(list)}", $"page={page}" };
+        if (!string.IsNullOrEmpty(role)) query.Add($"role={Uri.EscapeDataString(role)}");
+        if (!string.IsNullOrEmpty(terms)) query.Add($"terms={Uri.EscapeDataString(terms)}");
+        if (!string.IsNullOrWhiteSpace(q)) query.Add($"q={Uri.EscapeDataString(q)}");
+        if (nearPlace is { } place) query.Add($"nearPlace={place}");
+        if (km is { } radius) query.Add($"km={radius.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        return await GetOrNullAsync<PagedResult<CollabSummaryDto>>($"{ApiRoutes.Collabs}?{string.Join('&', query)}", ct)
+               ?? new PagedResult<CollabSummaryDto>([], page, 24, 0);
+    }
+
+    public Task<CollabDto?> GetCollabAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<CollabDto>(ApiRoutes.Format(ApiRoutes.Collab, ("id", id)), ct);
+
+    public async Task<ApiResult<CollabSummaryDto>> CreateCollabAsync(SaveCollabRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Collabs, request, ct);
+        return await ReadResultAsync<CollabSummaryDto>(res, ct, "We couldn't post that call.");
+    }
+
+    public async Task<ApiResult<CollabSummaryDto>> UpdateCollabAsync(Guid id, SaveCollabRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.Collab, ("id", id)), request, ct);
+        return await ReadResultAsync<CollabSummaryDto>(res, ct, "That call no longer exists, or you can't change it.");
+    }
+
+    public async Task<bool> CancelCollabAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.CollabCancel, ("id", id)), null, ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<bool> DeleteCollabAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.Collab, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public async Task<string?> ReplyToCollabAsync(Guid id, ReplyToCollabRequest request, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsJsonAsync(ApiRoutes.Format(ApiRoutes.CollabReply, ("id", id)), request, ct);
+        if (res.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That call is no longer available.";
+    }
+
+    public async Task<bool> WithdrawCollabReplyAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.CollabReply, ("id", id)), ct);
+        return IsSuccess(res);
+    }
+
+    public Task<string?> AcceptCollabReplyAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        PostForProblemAsync(ApiRoutes.Format(ApiRoutes.CollabReplyAccept, ("id", id), ("userId", userId)), "That reply is no longer there.", ct);
+
+    public Task<string?> DeclineCollabReplyAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        PostForProblemAsync(ApiRoutes.Format(ApiRoutes.CollabReplyDecline, ("id", id), ("userId", userId)), "That reply is no longer there.", ct);
+
+    public async Task<string?> ConfirmCollabAsync(Guid id, Guid userId, CancellationToken ct = default)
+    {
+        using var res = await http.PutAsync(ApiRoutes.Format(ApiRoutes.CollabReplyConfirmation, ("id", id), ("userId", userId)), null, ct);
+        if (res.StatusCode == HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That collab is no longer available.";
+    }
+
+    public Task<IReadOnlyList<CollabMessageDto>?> GetCollabMessagesAsync(Guid id, long? after, CancellationToken ct = default) =>
+        GetOrNullAsync<IReadOnlyList<CollabMessageDto>>(
+            ApiRoutes.Format(ApiRoutes.CollabMessages, ("id", id)) + (after is { } since ? $"?after={since}" : ""), ct);
+
+    public async Task<ApiResult<CollabMessageDto>> PostCollabMessageAsync(Guid id, string body, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.CollabMessages, ("id", id)), new PostCollabMessageRequest(body), ct);
+        return await ReadResultAsync<CollabMessageDto>(res, ct, "That collab is no longer available.");
+    }
+
+    public async Task<bool> DeleteCollabMessageAsync(Guid id, long messageId, CancellationToken ct = default)
+    {
+        using var res = await http.DeleteAsync(ApiRoutes.Format(ApiRoutes.CollabMessage, ("id", id), ("messageId", messageId)), ct);
+        return IsSuccess(res);
+    }
+
+    public Task<ReportOutcome> ReportCollabAsync(Guid id, CreateReportRequest request, CancellationToken ct = default) =>
+        SendReportAsync(ApiRoutes.Format(ApiRoutes.CollabReports, ("id", id)), request, ct);
+
+    public Task<PagedResult<CollabSummaryDto>?> GetPendingCollabsAsync(int page, CancellationToken ct = default) =>
+        GetOrNullAsync<PagedResult<CollabSummaryDto>>($"{ApiRoutes.AdminPendingCollabs}?page={page}", ct);
+
+    public async Task<string?> ApproveCollabAsync(Guid id, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsync(ApiRoutes.Format(ApiRoutes.AdminCollabApproval, ("id", id)), null, ct);
+        if (res.StatusCode == HttpStatusCode.Conflict) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That call no longer exists, or you're not an admin.";
+    }
+
+    public async Task<string?> RejectCollabAsync(Guid id, string? reason, CancellationToken ct = default)
+    {
+        using var res = await http.PostAsJsonAsync(ApiRoutes.Format(ApiRoutes.AdminCollabRejection, ("id", id)), new RejectCollabRequest(reason), ct);
+        if (res.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.BadRequest) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : "That call no longer exists, or you're not an admin.";
+    }
+
+    /// <summary>POSTs with no body; null when it worked, the API's reason for a 400 or 409, else <paramref name="fallback"/>.</summary>
+    private async Task<string?> PostForProblemAsync(string url, string fallback, CancellationToken ct)
+    {
+        using var res = await http.PostAsync(url, null, ct);
+        if (res.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict) return await ProblemDetailAsync(res, ct);
+        return IsSuccess(res) ? null : fallback;
     }
 
     public async Task<IReadOnlyList<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>

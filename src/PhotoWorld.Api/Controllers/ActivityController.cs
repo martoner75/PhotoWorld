@@ -32,7 +32,7 @@ public class ActivityController(PhotoWorldDbContext db, ActivityFeed feed, Supab
             .Skip((page - 1) * PageSize).Take(PageSize)
             .Select(a => new
             {
-                a.Id, a.Type, a.PhotoId, a.PostId, a.ChallengeId, a.WalkId, a.ClubId, a.WorkshopId, a.Place, a.Snippet, a.CreatedAt, a.ReadAt,
+                a.Id, a.Type, a.PhotoId, a.PostId, a.ChallengeId, a.WalkId, a.ClubId, a.WorkshopId, a.CollabId, a.Place, a.Snippet, a.CreatedAt, a.ReadAt,
                 Actor = a.Actor == null ? null : new UserSummaryDto(a.Actor.Id, a.Actor.DisplayName, a.Actor.AvatarUrl),
                 PhotoTitle = a.Photo == null ? null : a.Photo.Title,
                 Thumbnail = a.Photo == null ? null : a.Photo.ThumbnailPath,
@@ -41,13 +41,14 @@ public class ActivityController(PhotoWorldDbContext db, ActivityFeed feed, Supab
                 WalkTitle = a.Walk == null ? null : a.Walk.Title,
                 ClubName = a.Club == null ? null : a.Club.Name,
                 WorkshopTitle = a.Workshop == null ? null : a.Workshop.Title,
+                CollabTitle = a.Collab == null ? null : a.Collab.Title,
             })
             .ToListAsync(ct);
 
         var items = rows.Select(r => new ActivityDto(r.Id, r.Type, r.Actor, r.PhotoId, r.PhotoTitle,
             r.Thumbnail is null ? null : storage.ThumbnailUrl(r.Thumbnail), r.PostId, r.PostTitle, r.ChallengeId, r.ChallengeTitle,
             r.Place, r.Snippet, r.CreatedAt, r.ReadAt is not null, r.WalkId, r.WalkTitle, r.ClubId, r.ClubName,
-            r.WorkshopId, r.WorkshopTitle)).ToList();
+            r.WorkshopId, r.WorkshopTitle, r.CollabId, r.CollabTitle)).ToList();
         return new PagedResult<ActivityDto>(items, page, PageSize, total);
     }
 
@@ -80,9 +81,9 @@ public class ActivityController(PhotoWorldDbContext db, ActivityFeed feed, Supab
         var settings = await db.ActivitySettings.FindAsync([me], ct);
         if (settings is null) db.ActivitySettings.Add(settings = new ActivitySettings { UserId = me });
         (settings.Likes, settings.Comments, settings.Follows, settings.FollowedPosts, settings.Challenges, settings.Push, settings.Walks,
-            settings.Forecasts, settings.Clubs, settings.ClubPhotos, settings.Workshops) =
+            settings.Forecasts, settings.Clubs, settings.ClubPhotos, settings.Workshops, settings.Collabs) =
             (request.Likes, request.Comments, request.Follows, request.FollowedPosts, request.Challenges, request.Push, request.Walks,
-            request.Forecasts, request.Clubs, request.ClubPhotos, request.Workshops);
+            request.Forecasts, request.Clubs, request.ClubPhotos, request.Workshops, request.Collabs);
         await db.SaveChangesAsync(ct);
         return await feed.SettingsAsync(me, ct);
     }

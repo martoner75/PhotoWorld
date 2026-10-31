@@ -707,7 +707,7 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   photo-of-the-day notice, and `ForecastSender` light forecasts. Rows in `activities` cascade with their recipient,
   actor, photo, post, challenge, walk, workshop or club; reading filters them through the same visibility rule, so
   hidden or blocked content never shows. `activity_settings` has a switch per kind (likes, comments, follows, followed
-  posts, challenges, walks, workshops, light forecasts, clubs, club photos, push).
+  posts, challenges, walks, workshops, collabs, light forecasts, clubs, club photos, push).
 - **Collections** (`collections`, `collection_photos`) hold any visible photos; `Moderation.CollectionVisibleTo`
   shows a member their own and others' public ones (not suspended or blocked owners), and photos inside go through
   `PhotoVisibleTo`. **Spots**: `photos.place_id` links a photo to one of its owner's places (see Places and maps).
@@ -745,6 +745,22 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   attendees `workshop_changed`/`workshop_cancelled`, and `ScheduledActivitySender` sends `workshop_reminder` within
   24 h of the start. A workshop with `club_id` is a **club workshop**, kept to the club's active members exactly like
   a club walk (`ClubRules.CannotHostWorkshop`).
+- **Collabs.** `collabs` (poster, title, role, terms and note, time, area text with a position rounded to ~1 km,
+  meeting point copied from one of the poster's places, `review_status`, `cancelled_at`), `collab_photos` (≤ 6 of the
+  poster's own, ordered), `collab_replies` (one per member: message, status pending/accepted/declined, portfolio
+  opt-in, `poster_confirmed_at`, `member_confirmed_at`) and `collab_messages`. `Moderation.CollabVisibleTo` is the
+  club rule (approved, not report-hidden, poster not suspended or blocked by the viewer; reviewers also see pending);
+  `CollabsController.Visible` adds blocks the other way. `CollabRules` (pure, tested) holds the checks: 5 open calls,
+  ≤ 12 h, replies until the start, up to 10 accepted until the end, chat for the poster and accepted until a week
+  after, confirmations from the start to 30 days after. `GET api/collabs` lists the board (approved, not cancelled,
+  not started), filtered by role, terms and text and, near a place or location, measured in memory after a latitude
+  box like the club directory; `list=mine` is the caller's calls and replies. The meeting point, the accepted list and
+  the chat go only to the poster, the people accepted and site admins; replies only to the poster (and admins). A
+  confirmed collab is an accepted reply both sides confirmed; counts are computed on read. Followers get `collab_new`
+  when a call is approved (`collab_approved`/`collab_rejected` to the poster), the poster `collab_reply` (once per
+  replier), the replier `collab_accepted`, the people accepted `collab_changed` and `collab_reminder`, everyone who
+  replied `collab_cancelled`, and `ScheduledActivitySender` sends `collab_confirm` once after the end. Reports have a
+  `collab_id`. The website reuses the workshop chat script; the app comes in a second phase.
 - **Clubs.** `clubs` (owner, name, city, optional area, `join_policy` open or approval, `review_status`) and
   `club_members` (role owner, admin or member; status active or pending). `ClubRules` (pure, tested) holds who may do
   what: the owner and admins edit, let people in and remove members; only the owner changes roles, hands over
@@ -782,7 +798,7 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   returns the last 30 days and the 30 before (views, likes, new followers, comments), per-day views and likes, the
   top 5 photos and the top 8 tags by likes. The website draws two SVG column charts (one measure each, never two
   scales on one plot); the app draws the same with `GraphicsView`.
-- **Navigation** follows the same groups on both clients: Photos (Gallery, Explore), Blogs, Community (Clubs, Walks,
+- **Navigation** follows the same groups on both clients: Photos (Gallery, Explore), Blogs, Community (Clubs, Collabs, Walks,
   Workshops, Challenges), Places, Create and the member's own things. The website has Gallery · Explore · Blogs · Community ▾ ·
   Places, a **＋ Create ▾** menu and the avatar menu; the app has five tabs (Gallery · Blogs · Community · Places ·
   Me, iOS's limit) with creating behind **＋** on the Gallery and Community toolbars (`Routes.CreateAsync`), and
@@ -963,6 +979,9 @@ production, a git-ignored `Local.props` for the app.
 | Light forecasts from Open-Meteo, with rounded coordinates, through the API | The weather does need a service: the API sends only ~1 km coordinates (never names or members), caches them hourly, and keeps clients free of a second weather integration. |
 | Club photos stay public; club walks are members-only | Photos are already public, and a club only groups them. A meeting point at a set time is personal, so a club walk is hidden from non-members by the visibility rule. |
 | Workshop chat polls every 5 seconds instead of using WebSockets or Supabase Realtime | No extra service, connection handling or IIS setup for a chat of tens of people; a growing message id makes each poll one indexed query, and a 5-second delay is fine for a conversation. |
+| Collab meeting points private until accepted; areas rounded to ~1 km | A shoot with a stranger is personal: the board needs only a rough area to sort by distance, and the exact spot goes to the people the poster chose. |
+| Collab calls approved by an admin first, like clubs | Calls lead to members meeting people they don't know, so each gets a first look; edits after approval are covered by reports. |
+| Confirmed collabs need both sides | One person can't inflate their own count: a collab counts only when the poster and the person accepted both say it happened. |
 | Club photo alerts grouped to one a day per club | A busy club would otherwise flood its members; the feed shows everything, the alert just says there's something new. |
 | Image transforms behind a setting, off by default | Supabase's Free plan has none; with it on, uploads store one image and every stored path stays valid if it's switched off again. |
 | A before image sends an approved photo back for approval | It's a new image: approving the photo shouldn't approve whatever is added later. |

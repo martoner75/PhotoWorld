@@ -2319,3 +2319,238 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.reports DROP CONSTRAINT ck_reports_one_target;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.activities DROP CONSTRAINT ck_activities_type;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.reports ADD collab_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.activity_settings ADD collabs boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.activities ADD collab_id uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE TABLE photoworld.collabs (
+        id uuid NOT NULL,
+        poster_id uuid NOT NULL,
+        title character varying(100) NOT NULL,
+        role character varying(24) NOT NULL,
+        terms character varying(16) NOT NULL,
+        terms_note character varying(200),
+        description character varying(2000),
+        starts_at timestamp with time zone NOT NULL,
+        ends_at timestamp with time zone NOT NULL,
+        area character varying(80) NOT NULL,
+        area_latitude double precision NOT NULL,
+        area_longitude double precision NOT NULL,
+        meeting_point_name character varying(150) NOT NULL,
+        meeting_latitude double precision NOT NULL,
+        meeting_longitude double precision NOT NULL,
+        review_status character varying(16) NOT NULL DEFAULT 'pending',
+        reviewed_at timestamp with time zone,
+        review_note character varying(500),
+        cancelled_at timestamp with time zone,
+        reminder_sent_at timestamp with time zone,
+        confirm_request_sent_at timestamp with time zone,
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_collabs PRIMARY KEY (id),
+        CONSTRAINT ck_collabs_area CHECK (area_latitude between -90 and 90 and area_longitude between -180 and 180),
+        CONSTRAINT ck_collabs_meeting_point CHECK (meeting_latitude between -90 and 90 and meeting_longitude between -180 and 180),
+        CONSTRAINT ck_collabs_review_status CHECK (review_status in ('pending', 'approved', 'rejected')),
+        CONSTRAINT ck_collabs_role CHECK (role in ('model', 'makeup', 'second_shooter', 'assistant', 'photographer')),
+        CONSTRAINT ck_collabs_terms CHECK (terms in ('paid', 'trade', 'unpaid')),
+        CONSTRAINT ck_collabs_times CHECK (ends_at > starts_at),
+        CONSTRAINT fk_collabs_users_poster_id FOREIGN KEY (poster_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE TABLE photoworld.collab_messages (
+        id bigint GENERATED ALWAYS AS IDENTITY,
+        collab_id uuid NOT NULL,
+        author_id uuid NOT NULL,
+        body character varying(1000) NOT NULL,
+        created_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_collab_messages PRIMARY KEY (id),
+        CONSTRAINT fk_collab_messages_collabs_collab_id FOREIGN KEY (collab_id) REFERENCES photoworld.collabs (id) ON DELETE CASCADE,
+        CONSTRAINT fk_collab_messages_users_author_id FOREIGN KEY (author_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE TABLE photoworld.collab_photos (
+        collab_id uuid NOT NULL,
+        photo_id uuid NOT NULL,
+        position integer NOT NULL,
+        CONSTRAINT pk_collab_photos PRIMARY KEY (collab_id, photo_id),
+        CONSTRAINT fk_collab_photos_collabs_collab_id FOREIGN KEY (collab_id) REFERENCES photoworld.collabs (id) ON DELETE CASCADE,
+        CONSTRAINT fk_collab_photos_photos_photo_id FOREIGN KEY (photo_id) REFERENCES photoworld.photos (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE TABLE photoworld.collab_replies (
+        collab_id uuid NOT NULL,
+        user_id uuid NOT NULL,
+        message character varying(1000) NOT NULL,
+        status character varying(16) NOT NULL DEFAULT 'pending',
+        share_portfolio boolean NOT NULL,
+        created_at timestamp with time zone NOT NULL,
+        updated_at timestamp with time zone NOT NULL,
+        decided_at timestamp with time zone,
+        poster_confirmed_at timestamp with time zone,
+        member_confirmed_at timestamp with time zone,
+        CONSTRAINT pk_collab_replies PRIMARY KEY (collab_id, user_id),
+        CONSTRAINT ck_collab_replies_status CHECK (status in ('pending', 'accepted', 'declined')),
+        CONSTRAINT fk_collab_replies_collabs_collab_id FOREIGN KEY (collab_id) REFERENCES photoworld.collabs (id) ON DELETE CASCADE,
+        CONSTRAINT fk_collab_replies_users_user_id FOREIGN KEY (user_id) REFERENCES photoworld.users (id) ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_reports_collab_id ON photoworld.reports (collab_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE UNIQUE INDEX ix_reports_reporter_id_collab_id ON photoworld.reports (reporter_id, collab_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.reports ADD CONSTRAINT ck_reports_one_target CHECK (num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id, club_id, collab_id) = 1);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_activities_collab_id ON photoworld.activities (collab_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT ck_activities_type CHECK (type in ('like', 'comment', 'post_comment', 'follow', 'new_photo', 'new_post', 'challenge_open', 'challenge_ending', 'challenge_result', 'photo_of_the_day', 'feedback', 'walk_new', 'walk_joined', 'walk_changed', 'walk_cancelled', 'walk_reminder', 'post_approved', 'post_rejected', 'photo_approved', 'photo_rejected', 'light_forecast', 'club_request', 'club_accepted', 'club_approved', 'club_rejected', 'club_photo', 'workshop_new', 'workshop_joined', 'workshop_changed', 'workshop_cancelled', 'workshop_reminder', 'collab_new', 'collab_reply', 'collab_accepted', 'collab_changed', 'collab_cancelled', 'collab_reminder', 'collab_confirm', 'collab_approved', 'collab_rejected'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_collab_messages_author_id ON photoworld.collab_messages (author_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_collab_messages_collab_id_id ON photoworld.collab_messages (collab_id, id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_collab_photos_photo_id ON photoworld.collab_photos (photo_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_collab_replies_user_id ON photoworld.collab_replies (user_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_collabs_area_latitude ON photoworld.collabs (area_latitude);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_collabs_poster_id ON photoworld.collabs (poster_id);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    CREATE INDEX ix_collabs_review_status_starts_at ON photoworld.collabs (review_status, starts_at);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.activities ADD CONSTRAINT fk_activities_collabs_collab_id FOREIGN KEY (collab_id) REFERENCES photoworld.collabs (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    ALTER TABLE photoworld.reports ADD CONSTRAINT fk_reports_collabs_collab_id FOREIGN KEY (collab_id) REFERENCES photoworld.collabs (id) ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM photoworld.__ef_migrations_history WHERE "migration_id" = '20261031065228_AddCollabs') THEN
+    INSERT INTO photoworld.__ef_migrations_history (migration_id, product_version)
+    VALUES ('20261031065228_AddCollabs', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

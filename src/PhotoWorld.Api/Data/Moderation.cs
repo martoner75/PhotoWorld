@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Clubs;
+using PhotoWorld.Shared.Collabs;
 using PhotoWorld.Shared.Photos;
 
 namespace PhotoWorld.Api.Data;
@@ -70,6 +71,20 @@ public static class Moderation
                  || c.Reports.Count(r => r.Status == ReportStatus.Open) >= ReportRules.AutoHideThreshold)
             && c.Owner.SuspendedAt == null
             && !c.Owner.BlockedBy.Any(b => b.BlockerId == userId));
+
+    /// <summary>
+    /// A collab call: approved and not hidden by moderation (reports, or a suspended or blocked poster); posters always
+    /// see their own calls. A <paramref name="reviewer"/> (a site admin) also sees calls waiting for approval. Calls by
+    /// members who blocked the viewer are left out by the controller, which can see the blocks table.
+    /// </summary>
+    public static Expression<Func<Collab, bool>> CollabVisibleTo(Guid? userId, bool reviewer = false) => c =>
+        c.PosterId == userId
+        || (c.Poster.SuspendedAt == null
+            && !c.Poster.BlockedBy.Any(b => b.BlockerId == userId)
+            && ((reviewer && c.ReviewStatus == CollabReviewStatus.Pending)
+                || (c.ReviewStatus == CollabReviewStatus.Approved
+                    && !(c.Reports.Any(r => r.Status == ReportStatus.Upheld)
+                         || c.Reports.Count(r => r.Status == ReportStatus.Open) >= ReportRules.AutoHideThreshold))));
 
     /// <summary>The state shown to a content owner, from the same two facts the visibility rule uses.</summary>
     public static ModerationState State(bool anyUpheld, int openReports) =>

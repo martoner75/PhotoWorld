@@ -60,6 +60,7 @@ All data lives in a Supabase Postgres database, in a dedicated **`photoworld`** 
 | `photoworld.photos_of_the_day` | API (EF Core) | The admins' photo of the day, one per UTC date |
 | `photoworld.photo_feedback` | API (EF Core) | Members' ratings and comments on photos that ask for feedback (private to the owner) |
 | `photoworld.workshops`, `workshop_attendees`, `workshop_messages` | API (EF Core) | Online workshops, who's going, and their chat messages |
+| `photoworld.collabs`, `collab_photos`, `collab_replies`, `collab_messages` | API (EF Core) | Collab calls, their mood photos, replies (with confirmations) and chat messages |
 | `photoworld.devices` | API (EF Core) | Phones registered for push notifications (APNs / FCM tokens) |
 | `photoworld.challenges`, `challenge_entries` | You (Supabase dashboard) / API | Photo challenge themes and dates, and the photos entered in each |
 | `photoworld.reports`, view `open_reports` | API (EF Core) | Members' reports about photos, comments, blog posts and blog comments, and the moderation queue |
@@ -369,6 +370,36 @@ on screen; there's no WebSocket. Authors delete their own messages, and the host
 Messages by suspended members, or members the viewer blocked, are left out. The video link is shown only to the
 host and people going.
 
+## Collabs
+
+**Collabs** (Community in the menu) is a board where members post **calls** for people to shoot with: a model, a
+makeup artist, a second shooter, an assistant or another photographer. A call has a title, who it's looking for, its
+**terms** (paid, trade for photos or unpaid, plus an optional note), a start and length (up to 12 hours), an **area**
+in the poster's words ("Naples · Centro storico"), a **meeting point** picked from the poster's own places, an
+optional description and up to 6 of the poster's photos as a mood board. A member can have 5 open calls at once.
+
+- **Review.** New calls wait for a site admin (Admin → **Collabs to review**), like clubs; an admin's own are approved
+  straight away. Once approved the poster hears about it and their followers get `collab_new`. Edits to an approved
+  call aren't reviewed again; reports (one per member, 3 open ones hide it) still cover it.
+- **Where.** Everyone sees the area. Its position is the meeting point rounded to about 1 km (`ClubRules.Area`), used to
+  list calls **near** one of the member's places (website) or their rounded location (app), within 10–150 km
+  (default 50), and for the golden hour on the call's page. The exact meeting point is copied from the place when the
+  call is saved and goes only to the poster, the people they accepted and site admins, with a directions link.
+- **Replies.** Members reply once per call, with a short introduction and, if they choose, their public portfolio,
+  until the shoot starts. Only the poster sees the replies; each one shows the replier's confirmed collabs. The poster
+  **accepts** (up to 10 people, until the end) or **declines**; accepted members get `collab_accepted`, the meeting
+  point and the chat, and can pull out. Cancelling tells everyone who replied (`collab_cancelled`); changing the time
+  or meeting point tells the people accepted (`collab_changed`), who also get `collab_reminder` within the last day.
+- **Chat.** The poster and the people accepted share a chat, the same as a workshop's (`collab_messages`, polled every
+  5 seconds by `workshops.js`), open until a week after the shoot.
+- **Confirmed collabs.** From the start until 30 days after the end, the poster and each person accepted can say
+  **we shot together**; `ScheduledActivitySender` asks them once after the end (`collab_confirm`). A reply both sides
+  confirmed counts as a confirmed collab for both, shown on their calls and replies so newcomers know who they're
+  dealing with. Photos join a collab with its tag, `collab-` plus the first 8 hex characters of its id.
+
+All of it follows the member's **Collabs** activity switch, except the review's answer. Calls by suspended members,
+or between members where either blocked the other, don't show. `CollabRules` holds the checks and is tested.
+
 ## Camera clubs
 
 **Clubs** (Community in the website's menu, and the app's Community tab) are local camera clubs run by members.
@@ -479,6 +510,7 @@ Admins see **Admin** in the website's account menu, under their avatar (after si
   at a public address: the approval controls where PhotoCommunity shows it.
 - **Clubs to review**: members' new clubs waiting for approval, longest-waiting first, with **Approve** and
   **Reject** (optional reason, shown to the owner). See Camera clubs above.
+- **Collabs to review**: members' new collab calls waiting for approval, the same way. See Collabs above.
 - **Posts to review**: members' blog posts waiting for approval, longest-waiting first (see Blogs above), with
   **Approve** and **Reject** (optional reason, shown to the author). The same buttons appear at the top of a
   pending post when an admin opens it.
@@ -592,7 +624,7 @@ in production. **Without an SMTP host** the API writes each email as an `.eml` f
 
 ## Reports and moderation
 
-Members can report a photo, a photo comment, a blog post or a blog comment (spam, nudity, harassment, violence,
+Members can report a photo, a photo comment, a blog post, a blog comment, a club or a collab call (spam, nudity, harassment, violence,
 copyright, other), once per item, but not their own. Content is **hidden** from everyone except its owner when:
 
 - it has **3 or more open reports** from different members (pending review), or

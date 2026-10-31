@@ -5,6 +5,7 @@ using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Admin;
 using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Clubs;
+using PhotoWorld.Shared.Collabs;
 using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Photos;
 using PhotoWorld.Shared.Notifications;
@@ -48,6 +49,10 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
     public DbSet<Workshop> Workshops => Set<Workshop>();
     public DbSet<WorkshopAttendee> WorkshopAttendees => Set<WorkshopAttendee>();
     public DbSet<WorkshopMessage> WorkshopMessages => Set<WorkshopMessage>();
+    public DbSet<Collab> Collabs => Set<Collab>();
+    public DbSet<CollabPhoto> CollabPhotos => Set<CollabPhoto>();
+    public DbSet<CollabReply> CollabReplies => Set<CollabReply>();
+    public DbSet<CollabMessage> CollabMessages => Set<CollabMessage>();
     public DbSet<CollectionPhoto> CollectionPhotos => Set<CollectionPhoto>();
     public DbSet<ActivitySettings> ActivitySettings => Set<ActivitySettings>();
     public DbSet<DeviceRegistration> Devices => Set<DeviceRegistration>();
@@ -165,7 +170,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
         {
             e.ToTable(t =>
             {
-                t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id, club_id) = 1");
+                t.HasCheckConstraint("ck_reports_one_target", "num_nonnulls(photo_id, comment_id, blog_post_id, blog_comment_id, club_id, collab_id) = 1");
                 t.HasCheckConstraint("ck_reports_status",
                     $"status in ('{ReportStatus.Open}', '{ReportStatus.Dismissed}', '{ReportStatus.Upheld}')");
                 t.HasCheckConstraint("ck_reports_reason",
@@ -187,6 +192,8 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(r => new { r.ReporterId, r.BlogCommentId }).IsUnique();
             e.HasOne(r => r.Club).WithMany(c => c.Reports).HasForeignKey(r => r.ClubId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(r => new { r.ReporterId, r.ClubId }).IsUnique();
+            e.HasOne(r => r.Collab).WithMany(c => c.Reports).HasForeignKey(r => r.CollabId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(r => new { r.ReporterId, r.CollabId }).IsUnique();
             e.HasIndex(r => new { r.PhotoId, r.Status });
             e.HasIndex(r => new { r.CommentId, r.Status });
             e.HasIndex(r => new { r.BlogPostId, r.Status });
@@ -403,6 +410,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasOne(a => a.Walk).WithMany().HasForeignKey(a => a.WalkId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Club).WithMany().HasForeignKey(a => a.ClubId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(a => a.Workshop).WithMany().HasForeignKey(a => a.WorkshopId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Collab).WithMany().HasForeignKey(a => a.CollabId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(a => new { a.RecipientId, a.CreatedAt }).IsDescending(false, true);
             e.HasIndex(a => new { a.RecipientId, a.ReadAt });
             e.HasIndex(a => a.CreatedAt);
@@ -469,6 +477,63 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.HasIndex(m => m.AuthorId);
         });
 
+        modelBuilder.Entity<Collab>(e =>
+        {
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_collabs_times", "ends_at > starts_at");
+                t.HasCheckConstraint("ck_collabs_role", $"role in ({Quoted(CollabRoles.All)})");
+                t.HasCheckConstraint("ck_collabs_terms", $"terms in ({Quoted(CollabTerms.All)})");
+                t.HasCheckConstraint("ck_collabs_review_status", $"review_status in ({Quoted(CollabReviewStatus.All)})");
+                t.HasCheckConstraint("ck_collabs_area", "area_latitude between -90 and 90 and area_longitude between -180 and 180");
+                t.HasCheckConstraint("ck_collabs_meeting_point",
+                    "meeting_latitude between -90 and 90 and meeting_longitude between -180 and 180");
+            });
+            e.Property(c => c.Title).HasMaxLength(CollabLimits.TitleMax);
+            e.Property(c => c.Role).HasMaxLength(24);
+            e.Property(c => c.Terms).HasMaxLength(16);
+            e.Property(c => c.TermsNote).HasMaxLength(CollabLimits.TermsNoteMax);
+            e.Property(c => c.Description).HasMaxLength(CollabLimits.DescriptionMax);
+            e.Property(c => c.Area).HasMaxLength(CollabLimits.AreaMax);
+            e.Property(c => c.MeetingPointName).HasMaxLength(PlaceLimits.NameMax);
+            e.Property(c => c.ReviewStatus).HasMaxLength(16).HasDefaultValue(CollabReviewStatus.Pending);
+            e.Property(c => c.ReviewNote).HasMaxLength(500);
+            e.HasOne(c => c.Poster).WithMany().HasForeignKey(c => c.PosterId);
+            e.HasIndex(c => c.PosterId);
+            // The board: approved calls still to come, by date; the box on latitude narrows "near me".
+            e.HasIndex(c => new { c.ReviewStatus, c.StartsAt });
+            e.HasIndex(c => c.AreaLatitude);
+        });
+
+        modelBuilder.Entity<CollabPhoto>(e =>
+        {
+            e.HasKey(p => new { p.CollabId, p.PhotoId });
+            e.HasOne(p => p.Collab).WithMany(c => c.Photos).HasForeignKey(p => p.CollabId);
+            e.HasOne(p => p.Photo).WithMany().HasForeignKey(p => p.PhotoId);
+            e.HasIndex(p => p.PhotoId);
+        });
+
+        modelBuilder.Entity<CollabReply>(e =>
+        {
+            e.ToTable(t => t.HasCheckConstraint("ck_collab_replies_status", $"status in ({Quoted(CollabReplyStatus.All)})"));
+            e.HasKey(r => new { r.CollabId, r.UserId });
+            e.Property(r => r.Message).HasMaxLength(CollabLimits.ReplyMax);
+            e.Property(r => r.Status).HasMaxLength(16).HasDefaultValue(CollabReplyStatus.Pending);
+            e.HasOne(r => r.Collab).WithMany(c => c.Replies).HasForeignKey(r => r.CollabId);
+            e.HasOne(r => r.User).WithMany().HasForeignKey(r => r.UserId);
+            e.HasIndex(r => r.UserId);
+        });
+
+        modelBuilder.Entity<CollabMessage>(e =>
+        {
+            e.Property(m => m.Id).UseIdentityAlwaysColumn();
+            e.Property(m => m.Body).HasMaxLength(CollabLimits.MessageMax);
+            e.HasOne(m => m.Collab).WithMany(c => c.Messages).HasForeignKey(m => m.CollabId);
+            e.HasOne(m => m.Author).WithMany().HasForeignKey(m => m.AuthorId);
+            e.HasIndex(m => new { m.CollabId, m.Id });
+            e.HasIndex(m => m.AuthorId);
+        });
+
         modelBuilder.Entity<Collection>(e =>
         {
             e.Property(c => c.Title).HasMaxLength(CollectionLimits.TitleMax);
@@ -507,6 +572,7 @@ public class PhotoWorldDbContext(DbContextOptions<PhotoWorldDbContext> options) 
             e.Property(s => s.Clubs).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.ClubPhotos).HasDefaultValue(true).HasSentinel(true);
             e.Property(s => s.Workshops).HasDefaultValue(true).HasSentinel(true);
+            e.Property(s => s.Collabs).HasDefaultValue(true).HasSentinel(true);
             e.HasOne(s => s.User).WithOne().HasForeignKey<ActivitySettings>(s => s.UserId);
         });
 

@@ -120,6 +120,24 @@ public static class ApiRoutes
     /// <summary>DELETE: its author, the host or a site admin takes a message down.</summary>
     public const string WorkshopMessage = "api/workshops/{id:guid}/messages/{messageId:long}";
 
+    public const string Collabs = "api/collabs";
+    public const string Collab = "api/collabs/{id:guid}";
+    public const string CollabCancel = "api/collabs/{id:guid}/cancel";
+    /// <summary>PUT: reply to a call (or change your reply); DELETE: withdraw it.</summary>
+    public const string CollabReply = "api/collabs/{id:guid}/reply";
+    /// <summary>POST: the poster accepts or declines someone's reply.</summary>
+    public const string CollabReplyAccept = "api/collabs/{id:guid}/replies/{userId:guid}/accept";
+    public const string CollabReplyDecline = "api/collabs/{id:guid}/replies/{userId:guid}/decline";
+    /// <summary>PUT: the poster or that member says the shoot happened.</summary>
+    public const string CollabReplyConfirmation = "api/collabs/{id:guid}/replies/{userId:guid}/confirmation";
+    /// <summary>GET the chat (?after=id for the newer ones); POST a message.</summary>
+    public const string CollabMessages = "api/collabs/{id:guid}/messages";
+    public const string CollabMessage = "api/collabs/{id:guid}/messages/{messageId:long}";
+    public const string CollabReports = "api/collabs/{id:guid}/reports";
+    public const string AdminPendingCollabs = "api/admin/collabs/pending";
+    public const string AdminCollabApproval = "api/admin/collabs/{id:guid}/approve";
+    public const string AdminCollabRejection = "api/admin/collabs/{id:guid}/reject";
+
     public const string Challenges = "api/challenges";
     public const string Challenge = "api/challenges/{id:guid}";
     public const string ChallengeEntries = "api/challenges/{id:guid}/entries";

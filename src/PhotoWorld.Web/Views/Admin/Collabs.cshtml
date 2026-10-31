@@ -1,0 +1,51 @@
+@model PagedResult<CollabSummaryDto>
+@{
+    ViewData["Title"] = "Collab calls to review";
+    var here = Context.Request.Path + Context.Request.QueryString;
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <h1>Admin</h1>
+            <p class="text-muted">
+                @(Model.TotalCount == 0 ? "No calls" : Model.TotalCount == 1 ? "1 call" : $"{Model.TotalCount} calls") waiting for approval.
+                Members' collab calls go on the board only once an admin approves them. Check the terms are clear and nothing looks unsafe.
+            </p>
+        </div>
+    </header>
+
+    <partial name="_AdminNav" model='"collabs"' />
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="empty-state"><p>All caught up: no calls are waiting for approval.</p></div>
+    }
+    else
+    {
+        <div class="manage-table-wrap">
+            <table class="manage-table">
+                <thead>
+                    <tr><th>Call</th><th>Looking for</th><th>Terms</th><th>When</th><th>Where</th><th>By</th><th><span class="visually-hidden">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Items)
+                    {
+                        <tr>
+                            <td><a asp-controller="Collabs" asp-action="Details" asp-route-id="@c.Id"><strong>@c.Title</strong></a></td>
+                            <td>@CollabRoles.Label(c.Role)</td>
+                            <td>@CollabTerms.Label(c.Terms)</td>
+                            <td><time datetime="@c.StartsAt.ToString("O")" data-local-time="full">@c.StartsAt.ToString("d MMM, HH:mm") UTC</time></td>
+                            <td>@c.Area</td>
+                            <td><a asp-controller="Members" asp-action="Details" asp-route-id="@c.Poster.Id">@c.Poster.DisplayName</a></td>
+                            <td class="manage-actions">
+                                <partial name="_CollabReviewActions" model="new CollabReviewActionsModel(c.Id, c.Title, c.ReviewStatus, here)" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="new PagerViewModel(Model.Page, Model.TotalPages)" />
+    }
+</section>

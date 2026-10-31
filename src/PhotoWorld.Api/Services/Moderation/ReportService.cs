@@ -6,13 +6,14 @@ namespace PhotoWorld.Api.Services.Moderation;
 
 /// <summary>What a report is about. Exactly one id is set, matching the reports table's check constraint.</summary>
 public sealed record ReportTarget(string Kind, Guid Id, Guid? PhotoId = null, Guid? CommentId = null,
-    Guid? BlogPostId = null, Guid? BlogCommentId = null, Guid? ClubId = null)
+    Guid? BlogPostId = null, Guid? BlogCommentId = null, Guid? ClubId = null, Guid? CollabId = null)
 {
     public static ReportTarget Photo(Guid id) => new("Photo", id, PhotoId: id);
     public static ReportTarget PhotoComment(Guid id) => new("Comment", id, CommentId: id);
     public static ReportTarget BlogPost(Guid id) => new("Blog post", id, BlogPostId: id);
     public static ReportTarget BlogComment(Guid id) => new("Blog comment", id, BlogCommentId: id);
     public static ReportTarget Club(Guid id) => new("Club", id, ClubId: id);
+    public static ReportTarget Collab(Guid id) => new("Collab", id, CollabId: id);
 }
 
 public enum ReportResult { Saved, InvalidReason, AlreadyReported }
@@ -25,7 +26,8 @@ public sealed class ReportService(PhotoWorldDbContext db, TimeProvider clock, IL
         if (!ReportRules.Reasons.ContainsKey(request.Reason)) return ReportResult.InvalidReason;
 
         var onTarget = db.Reports.Where(r => r.PhotoId == target.PhotoId && r.CommentId == target.CommentId
-            && r.BlogPostId == target.BlogPostId && r.BlogCommentId == target.BlogCommentId && r.ClubId == target.ClubId);
+            && r.BlogPostId == target.BlogPostId && r.BlogCommentId == target.BlogCommentId && r.ClubId == target.ClubId
+            && r.CollabId == target.CollabId);
         if (await onTarget.AnyAsync(r => r.ReporterId == reporterId, ct)) return ReportResult.AlreadyReported;
 
         db.Reports.Add(new Report
@@ -35,6 +37,7 @@ public sealed class ReportService(PhotoWorldDbContext db, TimeProvider clock, IL
             BlogPostId = target.BlogPostId,
             BlogCommentId = target.BlogCommentId,
             ClubId = target.ClubId,
+            CollabId = target.CollabId,
             ReporterId = reporterId,
             Reason = request.Reason,
             Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim(),

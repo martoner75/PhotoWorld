@@ -1,4 +1,4 @@
-// Online workshops: the live chat on a workshop's page, and the form's local times. The chat's forms work without
+// Online workshops and collabs: the live chat on a workshop's or collab's page, and the forms' local times. The chat's forms work without
 // JavaScript (each send reloads the page); this adds new messages as they come and sends without a reload.
 (() => {
   const log = document.querySelector("[data-chat-log]");
@@ -17,7 +17,9 @@
     // Built with textContent only, so a message can never become markup.
     const render = (m) => {
       const li = document.createElement("li");
-      li.className = "chat-message" + (m.isHost ? " is-host" : "");
+      // A workshop's host or a collab's poster: the person who runs it.
+      const runsIt = m.isHost || m.isPoster;
+      li.className = "chat-message" + (runsIt ? " is-host" : "");
       li.dataset.messageId = String(m.id);
 
       let avatar;
@@ -38,9 +40,9 @@
       name.href = log.dataset.memberUrl.replace("00000000-0000-0000-0000-000000000000", m.author.id);
       name.textContent = m.author.displayName;
       head.append(name);
-      if (m.isHost) {
+      if (runsIt) {
         const badge = document.createElement("span");
-        badge.className = "chat-host-badge"; badge.textContent = "host";
+        badge.className = "chat-host-badge"; badge.textContent = log.dataset.hostLabel || "host";
         head.append(badge);
       }
       const time = document.createElement("time");

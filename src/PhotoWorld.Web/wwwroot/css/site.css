@@ -814,6 +814,54 @@ fieldset.field legend { font-size: 1rem; font-weight: 500; margin-bottom: .35rem
 /* ---------- Online workshops ---------- */
 .workshop-cover-empty { display: grid; place-items: center; color: var(--pw-accent); }
 .workshop-cover-empty .line-icon { width: 56px; height: 56px; stroke-width: 1.4; }
+
+/* Collabs: the board's filters, cards, and a call's page. */
+.collab-filters { display: grid; gap: .6rem; margin-bottom: 1rem; }
+.collab-filters .club-search { margin-bottom: .2rem; }
+.collab-chips { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.collab-chips-label { color: var(--pw-muted); font-size: .85rem; margin-right: .2rem; min-width: 5.5rem; }
+.tag-chip.is-active { background: var(--pw-accent); border-color: var(--pw-accent); color: var(--pw-accent-ink); }
+.tag-chip.is-active:hover { color: var(--pw-accent-ink); }
+.choice-chip { position: relative; display: inline-flex; cursor: pointer; }
+.choice-chip input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.choice-chip span { padding: .45rem .9rem; border-radius: 99px; border: 1px solid var(--pw-line); background: var(--pw-ink); font-size: .92rem; }
+.choice-chip input:checked + span { background: var(--pw-accent); border-color: var(--pw-accent); color: var(--pw-accent-ink); font-weight: 500; }
+.choice-chip input:focus-visible + span { outline: 2px solid var(--pw-accent); outline-offset: 2px; }
+.collab-cover .collab-role, .collab-cover .collab-terms { position: absolute; bottom: .6rem; z-index: 1; padding: .2rem .65rem; border-radius: 99px;
+  font-size: .78rem; font-weight: 600; }
+.collab-cover .collab-role { left: .6rem; background: rgba(23, 24, 27, .82); color: #fff; }
+.collab-cover .collab-terms { right: .6rem; background: var(--pw-ink); color: var(--pw-text); }
+.collab-card.is-cancelled .post-card-cover { opacity: .55; }
+.collab-card .line-icon { vertical-align: -3px; width: 15px; height: 15px; }
+.collab-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .75rem; margin: 1rem 0 1.5rem; }
+.collab-fact { background: var(--pw-raised); border-radius: var(--pw-radius); padding: .85rem 1rem; }
+.collab-fact p { margin: 0; }
+.collab-fact .collab-fact-label { color: var(--pw-muted); font-size: .82rem; margin-bottom: .2rem; }
+.collab-fact .small { margin-top: .3rem; }
+.collab-moodboard { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1.5rem; }
+.collab-moodboard img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--pw-photo-radius); display: block; }
+.collab-moodboard a:first-child { grid-column: span 2; grid-row: span 2; }
+.collab-moodboard a:only-child { grid-column: span 3; }
+.collab-moodboard a:only-child img { aspect-ratio: 3 / 2; }
+.collab-meeting { border: 1px solid var(--pw-accent-line); border-radius: var(--pw-radius); padding: 1rem 1.1rem; margin: 1.5rem 0; }
+.collab-meeting p { margin-bottom: .5rem; }
+.collab-safety { display: flex; gap: .8rem; align-items: flex-start; border: 1px solid var(--pw-line); border-radius: var(--pw-radius);
+  padding: .9rem 1.1rem; margin: 1.5rem 0; font-size: .92rem; color: var(--pw-text-soft); }
+.collab-safety p { margin: 0; }
+.collab-safety strong { color: var(--pw-text); }
+.collab-safety .line-icon { flex: none; color: var(--pw-accent); width: 22px; height: 22px; margin-top: 2px; }
+.collab-replies { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; }
+.collab-reply { border: 1px solid var(--pw-line); border-radius: var(--pw-radius); padding: .9rem 1rem; background: var(--pw-ink-2); }
+.collab-reply.status-accepted { border-color: var(--pw-accent-line); }
+.collab-reply.status-declined { opacity: .7; }
+.collab-reply-head { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .8rem; margin-bottom: .4rem; }
+.collab-reply-status { font-weight: 500; }
+.collab-reply-head .collab-reply-status { margin-left: auto; font-size: .85rem; color: var(--pw-muted); }
+.collab-reply.status-accepted .collab-reply-status { color: var(--pw-link); }
+.collab-reply p { margin-bottom: .5rem; white-space: pre-line; }
+.collab-my-reply { border-left: 3px solid var(--pw-line); padding: .2rem 0 .2rem .9rem; color: var(--pw-text-soft); white-space: pre-line; }
+.collab-reply-form { margin-top: 0; }
+.collab-poster { border: 1px solid var(--pw-line); border-radius: var(--pw-radius); padding: 1rem; margin-bottom: 1rem; }
 .chat-log { max-height: 460px; overflow-y: auto; padding: .25rem .25rem .5rem; overscroll-behavior: contain; }
 .chat-messages { list-style: none; padding: 0; margin: 0; display: grid; gap: .9rem; }
 .chat-message { display: flex; gap: .65rem; }

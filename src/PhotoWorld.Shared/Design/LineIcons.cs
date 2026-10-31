@@ -27,6 +27,13 @@ public static class LineIcons
         "M8 9H16V12.5H11L9 14.2V12.5H8Z " +
         "M9 20H15 M12 16.5V20";
 
+    /// <summary>A camera beside a person: collabs, finding someone to shoot with.</summary>
+    public const string Collabs =
+        "M2.5 9.5H5.5L7 7.5H10.5L12 9.5H14V17.5H2.5Z " +
+        "M5.75 13.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0Z " +
+        "M16.5 8.5a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0Z " +
+        "M15.5 17.5C15.5 14.8 17 13 18.7 13S21.9 14.8 21.9 17.5";
+
     /// <summary>A map pin: a place, a meeting point, a club's city.</summary>
     public const string Pin =
         "M12 21S5.5 15.4 5.5 10a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21Z " +

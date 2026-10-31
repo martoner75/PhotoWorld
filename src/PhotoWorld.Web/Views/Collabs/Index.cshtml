@@ -1,0 +1,101 @@
+@model CollabsPageViewModel
+@{
+    ViewData["Title"] = "Collabs";
+    var f = Model.Filters;
+    var isOpen = f.List == CollabLists.Open;
+    var near = Model.Places.FirstOrDefault(p => p.Id == f.NearPlace);
+}
+
+<section class="container page">
+    <header class="page-header">
+        <div>
+            <p class="hero-eyebrow">Community · Collabs</p>
+            <h1>Find people to shoot with</h1>
+            <p class="text-muted">Models, makeup artists, assistants and other photographers looking to make pictures near you.
+                Every call is reviewed before it appears, and only the people the poster accepts get the exact meeting point.</p>
+        </div>
+        <a class="btn btn-accent" asp-action="New">Post a call</a>
+    </header>
+
+    <nav class="feed-tabs" aria-label="Which calls">
+        <a asp-action="Index" class="@(isOpen ? "active" : "")" aria-current="@(isOpen ? "page" : null)">Open calls</a>
+        <a asp-action="Index" asp-route-list="@CollabLists.Mine" class="@(!isOpen ? "active" : "")" aria-current="@(!isOpen ? "page" : null)">My calls &amp; replies</a>
+    </nav>
+
+    @if (isOpen)
+    {
+        <div class="collab-filters">
+            <form asp-action="Index" method="get" class="club-search" role="search">
+                @if (f.Role is not null) { <input type="hidden" name="role" value="@f.Role" /> }
+                @if (f.Terms is not null) { <input type="hidden" name="terms" value="@f.Terms" /> }
+                <input type="search" name="q" value="@f.Q" maxlength="100" placeholder="Search: portrait, street, wedding…" aria-label="Search calls" />
+                @if (Model.Places.Count > 0)
+                {
+                    <select name="nearPlace" class="field-select" aria-label="Near one of your places">
+                        <option value="">Anywhere</option>
+                        @foreach (var p in Model.Places.OrderBy(p => p.Name))
+                        {
+                            <option value="@p.Id" selected="@(p.Id == f.NearPlace)">Near @p.Name</option>
+                        }
+                    </select>
+                    <select name="km" class="field-select" aria-label="Within">
+                        @foreach (var km in CollabFilters.Distances)
+                        {
+                            <option value="@km" selected="@(km == f.Km)">within @km km</option>
+                        }
+                    </select>
+                }
+                <button type="submit" class="btn btn-ghost">Search</button>
+            </form>
+
+            <div class="collab-chips" role="group" aria-label="Looking for">
+                <span class="collab-chips-label">Looking for</span>
+                <a class="tag-chip @(f.Role is null ? "is-active" : "")" asp-action="Index" asp-all-route-data="f.With(clearRole: true)"
+                   aria-current="@(f.Role is null ? "true" : null)">All</a>
+                @foreach (var role in CollabRoles.All)
+                {
+                    <a class="tag-chip @(f.Role == role ? "is-active" : "")" asp-action="Index" asp-all-route-data="f.With(role: role)"
+                       aria-current="@(f.Role == role ? "true" : null)">@CollabRoles.PluralLabel(role)</a>
+                }
+            </div>
+            <div class="collab-chips" role="group" aria-label="Terms">
+                <span class="collab-chips-label">Terms</span>
+                <a class="tag-chip @(f.Terms is null ? "is-active" : "")" asp-action="Index" asp-all-route-data="f.With(clearTerms: true)"
+                   aria-current="@(f.Terms is null ? "true" : null)">Any</a>
+                @foreach (var terms in CollabTerms.All)
+                {
+                    <a class="tag-chip @(f.Terms == terms ? "is-active" : "")" asp-action="Index" asp-all-route-data="f.With(terms: terms)"
+                       aria-current="@(f.Terms == terms ? "true" : null)">@CollabTerms.Label(terms)</a>
+                }
+            </div>
+        </div>
+
+        <p class="text-muted small">
+            @(Model.Collabs.TotalCount == 1 ? "1 open call" : $"{Model.Collabs.TotalCount} open calls")@(near is null ? "" : $" within {f.Km} km of {near.Name}")
+            @if (Model.Places.Count == 0)
+            {
+                @:· <a asp-controller="Places" asp-action="Index">Add a place</a> to see calls near you
+            }
+        </p>
+    }
+
+    @if (Model.Collabs.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <p>@(isOpen
+                ? near is null ? "No open calls match. Why not post the first one?" : $"No open calls within {f.Km} km of {near.Name} yet. Try further away, or post the first one."
+                : "You haven't posted or replied to any calls yet.")</p>
+            <a class="btn btn-accent" asp-action="New">Post a call</a>
+        </div>
+    }
+    else
+    {
+        <div class="post-grid">
+            @foreach (var c in Model.Collabs.Items)
+            {
+                <partial name="_CollabCard" model="c" />
+            }
+        </div>
+        <partial name="_Pager" model="new PagerViewModel(Model.Collabs.Page, Model.Collabs.TotalPages)" />
+    }
+</section>

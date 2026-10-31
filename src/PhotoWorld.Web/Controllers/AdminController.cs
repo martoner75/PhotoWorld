@@ -96,6 +96,30 @@ public class AdminController(IPhotoWorldApiClient api) : Controller
         return BackTo(returnUrl, nameof(Clubs));
     }
 
+    /// <summary>Collab calls waiting for approval, longest-waiting first.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Collabs(int page = 1, CancellationToken ct = default)
+    {
+        var collabs = await api.GetPendingCollabsAsync(page, ct);
+        return collabs is null ? Forbid() : View(collabs);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveCollab(Guid id, string? returnUrl, CancellationToken ct)
+    {
+        TempData["Flash"] = await api.ApproveCollabAsync(id, ct) ?? "Call approved. It's on the board, and its poster has been told.";
+        return BackTo(returnUrl, nameof(Collabs));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectCollab(Guid id, string? reason, string? returnUrl, CancellationToken ct)
+    {
+        if (reason?.Length > 500) reason = reason[..500];
+        TempData["Flash"] = await api.RejectCollabAsync(id, reason, ct)
+            ?? "Call turned down. Only its poster can see it now, with your reason.";
+        return BackTo(returnUrl, nameof(Collabs));
+    }
+
     /// <summary>Uploaded photos waiting for approval, longest-waiting first.</summary>
     [HttpGet]
     public async Task<IActionResult> Photos(int page = 1, CancellationToken ct = default)

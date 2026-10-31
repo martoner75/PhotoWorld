@@ -43,12 +43,25 @@ public static class ActivityTypes
     public const string ClubRejected = "club_rejected";
     /// <summary>A member shared a photo to a club the recipient is in (at most one a day per club, see ActivityRules).</summary>
     public const string ClubPhoto = "club_photo";
+    /// <summary>Collabs: a call by someone the recipient follows, a reply to theirs, their reply accepted, and news for people going.</summary>
+    public const string CollabNew = "collab_new";
+    public const string CollabReply = "collab_reply";
+    public const string CollabAccepted = "collab_accepted";
+    public const string CollabChanged = "collab_changed";
+    public const string CollabCancelled = "collab_cancelled";
+    public const string CollabReminder = "collab_reminder";
+    /// <summary>After the shoot: asks the poster and the people accepted to confirm it happened.</summary>
+    public const string CollabConfirm = "collab_confirm";
+    /// <summary>A site admin approved the recipient's call, or turned it down (the snippet is their reason).</summary>
+    public const string CollabApproved = "collab_approved";
+    public const string CollabRejected = "collab_rejected";
 
     public static readonly IReadOnlyList<string> All =
         [Like, Comment, PostComment, Follow, NewPhoto, NewPost, ChallengeOpen, ChallengeEnding, ChallengeResult, PhotoOfTheDay, Feedback,
          WalkNew, WalkJoined, WalkChanged, WalkCancelled, WalkReminder, PostApproved, PostRejected, PhotoApproved, PhotoRejected, LightForecast,
          ClubRequest, ClubAccepted, ClubApproved, ClubRejected, ClubPhoto,
-         WorkshopNew, WorkshopJoined, WorkshopChanged, WorkshopCancelled, WorkshopReminder];
+         WorkshopNew, WorkshopJoined, WorkshopChanged, WorkshopCancelled, WorkshopReminder,
+         CollabNew, CollabReply, CollabAccepted, CollabChanged, CollabCancelled, CollabReminder, CollabConfirm, CollabApproved, CollabRejected];
 }
 
 /// <summary>
@@ -75,14 +88,17 @@ public sealed record ActivityDto(
     Guid? ClubId = null,
     string? ClubName = null,
     Guid? WorkshopId = null,
-    string? WorkshopTitle = null);
+    string? WorkshopTitle = null,
+    Guid? CollabId = null,
+    string? CollabTitle = null);
 
 /// <summary>Which kinds of activity a member wants. Everything is on until they change it.</summary>
 /// <param name="Push">Also send them to the member's phones (where the app is allowed to show notifications).</param>
 public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows, bool FollowedPosts, bool Challenges, bool Push = true,
-    bool Walks = true, bool Forecasts = true, bool Clubs = true, bool ClubPhotos = true, bool Workshops = true)
+    bool Walks = true, bool Forecasts = true, bool Clubs = true, bool ClubPhotos = true, bool Workshops = true,
+    bool Collabs = true)
 {
-    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true, true, true);
+    public static readonly ActivitySettingsDto AllOn = new(true, true, true, true, true, true, true, true, true, true, true, true);
 
     /// <summary>One switch by its name (see <see cref="ActivityText.SettingGroups"/>), so forms can list them in order.</summary>
     public bool Get(string name) => name switch
@@ -90,6 +106,7 @@ public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows
         nameof(Likes) => Likes, nameof(Comments) => Comments, nameof(Follows) => Follows, nameof(FollowedPosts) => FollowedPosts,
         nameof(Challenges) => Challenges, nameof(Push) => Push, nameof(Walks) => Walks, nameof(Forecasts) => Forecasts,
         nameof(Clubs) => Clubs, nameof(ClubPhotos) => ClubPhotos, nameof(Workshops) => Workshops,
+        nameof(Collabs) => Collabs,
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Not an activity setting."),
     };
 
@@ -102,6 +119,7 @@ public sealed record ActivitySettingsDto(bool Likes, bool Comments, bool Follows
         nameof(Walks) => this with { Walks = on }, nameof(Forecasts) => this with { Forecasts = on },
         nameof(Clubs) => this with { Clubs = on }, nameof(ClubPhotos) => this with { ClubPhotos = on },
         nameof(Workshops) => this with { Workshops = on },
+        nameof(Collabs) => this with { Collabs = on },
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Not an activity setting."),
     };
 }

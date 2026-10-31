@@ -1,0 +1,46 @@
+@model CollabSummaryDto
+@{
+    var badge = Model switch
+    {
+        { IsCancelled: true } => "Cancelled",
+        { IsPoster: true, ReviewStatus: CollabReviewStatus.Pending } => "Waiting for approval",
+        { IsPoster: true, ReviewStatus: CollabReviewStatus.Rejected } => "Not approved",
+        { IsPoster: true } => "Your call",
+        { MyReplyStatus: CollabReplyStatus.Accepted } => "You're in",
+        { MyReplyStatus: CollabReplyStatus.Pending } => "Replied",
+        { MyReplyStatus: CollabReplyStatus.Declined } => "Declined",
+        _ => null,
+    };
+}
+<article class="post-card collab-card @(Model.IsCancelled ? "is-cancelled" : "")">
+    <a asp-controller="Collabs" asp-action="Details" asp-route-id="@Model.Id" class="post-card-cover collab-cover" tabindex="-1" aria-hidden="true">
+        @if (Model.CoverUrl is { } cover)
+        {
+            <img src="@cover" alt="" loading="lazy" />
+        }
+        else
+        {
+            <span class="post-card-cover-empty workshop-cover-empty"><partial name="_LineIcon" model="LineIcons.Collabs" /></span>
+        }
+        <span class="collab-role">@CollabRoles.Label(Model.Role)</span>
+        <span class="collab-terms">@CollabTerms.Label(Model.Terms)</span>
+        @if (badge is not null)
+        {
+            <span class="moderation-badge photo-card-badge @(Model.IsCancelled || Model.MyReplyStatus == CollabReplyStatus.Declined ? "" : "draft-badge")">@badge</span>
+        }
+    </a>
+    <div class="post-card-body">
+        <p class="walk-when"><time datetime="@Model.StartsAt.ToString("O")" data-local-time="full">@Model.StartsAt.ToString("ddd d MMM, HH:mm") UTC</time></p>
+        <h3><a asp-controller="Collabs" asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></h3>
+        <p class="text-muted small mb-0">
+            <partial name="_LineIcon" model="LineIcons.Pin" /> @Model.Area@(Model.DistanceKm is { } km ? $" · {km:0.#} km" : "")
+        </p>
+        <div class="post-card-meta">
+            <span class="photo-card-owner">
+                <partial name="_Avatar" model="Model.Poster" /> @Model.Poster.DisplayName
+                <span class="text-muted">· @(Model.PosterConfirmedCount switch { 0 => "new on Collabs", 1 => "1 collab", var n => $"{n} collabs" })</span>
+            </span>
+            <span>@(Model.ReplyCount == 1 ? "1 reply" : $"{Model.ReplyCount} replies")</span>
+        </div>
+    </div>
+</article>
