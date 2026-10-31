@@ -760,7 +760,10 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   when a call is approved (`collab_approved`/`collab_rejected` to the poster), the poster `collab_reply` (once per
   replier), the replier `collab_accepted`, the people accepted `collab_changed` and `collab_reminder`, everyone who
   replied `collab_cancelled`, and `ScheduledActivitySender` sends `collab_confirm` once after the end. Reports have a
-  `collab_id`. The website reuses the workshop chat script; the app comes in a second phase.
+  `collab_id`. The website reuses the workshop chat script. In the app, `CollabsViewModel` lists the board near the phone
+  (rounded like the club directory, asked only once location is allowed), `CollabViewModel` runs the call page and its
+  chat with the same `IDispatcherTimer` polling as a workshop, and `CollabEditorViewModel` picks the meeting point from
+  the member's places.
 - **Clubs.** `clubs` (owner, name, city, optional area, `join_policy` open or approval, `review_status`) and
   `club_members` (role owner, admin or member; status active or pending). `ClubRules` (pure, tested) holds who may do
   what: the owner and admins edit, let people in and remove members; only the owner changes roles, hands over
@@ -812,7 +815,8 @@ approximate location, rounded the same way (app), and lists clubs within 150 km.
   editor (name, description, public), portfolio settings with a share link, golden hour on photos with a place
   (`LightText` over `SunTimes`) and approval badges on their tiles (`ReviewBadgeConverter`). Editors announce changes
   with `PhotoChangedMessage` / `CollectionChangedMessage`, so open pages and lists refresh. Clubs (directory with
-  Near me, club page with walks, workshops, challenges, photos and members, the club editor), online workshops (list,
+  Near me, club page with walks, workshops, challenges, photos and members, the club editor), collabs (board, call page
+  with replies and chat, call editor), online workshops (list,
   workshop page with its chat, editor), sharing photos to clubs from the upload and photo editor screens, and the
   light forecast on a place are in the app too. Writing blog posts,
   creating challenges and the admin pages stay on the website.

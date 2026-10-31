@@ -372,7 +372,7 @@ host and people going.
 
 ## Collabs
 
-**Collabs** (Community in the menu) is a board where members post **calls** for people to shoot with: a model, a
+**Collabs** (Community in the menu; the app's Community tab) is a board where members post **calls** for people to shoot with: a model, a
 makeup artist, a second shooter, an assistant or another photographer. A call has a title, who it's looking for, its
 **terms** (paid, trade for photos or unpaid, plus an optional note), a start and length (up to 12 hours), an **area**
 in the poster's words ("Naples · Centro storico"), a **meeting point** picked from the poster's own places, an
