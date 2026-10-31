@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             x:Class="PhotoWorld.App.Views.CollabEditorPage"
+             x:DataType="vm:CollabEditorViewModel"
+             Title="{Binding PageTitle}">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="18" Spacing="10" MaximumWidthRequest="640">
+                <Label Text="Members see the area; only the people you accept get the exact meeting point."
+                       Style="{StaticResource MutedText}" FontSize="14" />
+                <Label Text="Title" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}"><Entry Text="{Binding Title}" Placeholder="Golden-hour portraits in the old town" MaxLength="100" /></Border>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Looking for" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}">
+                            <Picker ItemsSource="{Binding RoleOptions}" SelectedIndex="{Binding RoleIndex}" Title="Looking for" TextColor="{DynamicResource Text}" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="Terms" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}">
+                            <Picker ItemsSource="{Binding TermsOptions}" SelectedIndex="{Binding TermsIndex}" Title="Terms" TextColor="{DynamicResource Text}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+                <Border Style="{StaticResource Field}">
+                    <Entry Text="{Binding TermsNote}" Placeholder="Details, e.g. 15 edited photos within a week" MaxLength="200" />
+                </Border>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Date" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}"><DatePicker Date="{Binding Date}" MinimumDate="{Binding MinDate}" /></Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="Starts" Style="{StaticResource Strong}" />
+                        <Border Style="{StaticResource Field}"><TimePicker Time="{Binding Time}" TextColor="{DynamicResource Text}" /></Border>
+                    </VerticalStackLayout>
+                </Grid>
+                <Label Text="Lasts" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Picker ItemsSource="{Binding DurationOptions}" SelectedIndex="{Binding DurationIndex}" Title="How long" TextColor="{DynamicResource Text}" />
+                </Border>
+
+                <Label Text="Area (what everyone sees)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}"><Entry Text="{Binding Area}" Placeholder="Naples · Centro storico" MaxLength="80" /></Border>
+
+                <Label Text="Meeting point (from your places, private)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}" IsVisible="{Binding HasPlaces}">
+                    <Picker ItemsSource="{Binding PlaceOptions}" SelectedIndex="{Binding PlaceIndex}" Title="Choose a place" TextColor="{DynamicResource Text}" />
+                </Border>
+                <Label Text="A call needs a meeting point from your places. Add the spot first: it stays private."
+                       Style="{StaticResource MutedText}" FontSize="13" IsVisible="{Binding NoPlaces}" />
+                <Button Text="Add a place" Style="{StaticResource GhostButton}" Command="{Binding AddPlaceCommand}" HorizontalOptions="Start" />
+
+                <Label Text="The idea (optional)" Style="{StaticResource Strong}" />
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Description}" Placeholder="The look you're after, what to wear or bring, what everyone gets…"
+                            AutoSize="TextChanges" MinimumHeightRequest="90" MaxLength="2000" />
+                </Border>
+
+                <Label Text="Mood photos (optional, up to 6 of yours)" Style="{StaticResource Strong}" />
+                <Label Text="Once your uploads are approved, you can pick some here to show the idea."
+                       Style="{StaticResource MutedText}" FontSize="13" IsVisible="{Binding HasCandidates, Converter={StaticResource Not}}" />
+                <FlexLayout BindableLayout.ItemsSource="{Binding Picks}" Wrap="Wrap" JustifyContent="Start">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CollabPhotoPick">
+                            <Border Style="{StaticResource PhotoFrame}" WidthRequest="96" HeightRequest="96" Margin="0,0,6,6">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding TogglePickCommand, Source={RelativeSource AncestorType={x:Type vm:CollabEditorViewModel}}, x:DataType=vm:CollabEditorViewModel}" />
+                                </Border.GestureRecognizers>
+                                <Grid>
+                                    <Image Source="{Binding Photo.ThumbnailUrl}" Aspect="AspectFill" SemanticProperties.Description="{Binding Photo.Title}">
+                                        <Image.Triggers>
+                                            <DataTrigger TargetType="Image" Binding="{Binding IsChosen}" Value="False">
+                                                <Setter Property="Opacity" Value="0.55" />
+                                            </DataTrigger>
+                                        </Image.Triggers>
+                                    </Image>
+                                    <Border Style="{StaticResource TileBadge}" BackgroundColor="{DynamicResource Accent}" IsVisible="{Binding IsChosen}">
+                                        <Label Text="{Binding Badge}" FontSize="13" Style="{StaticResource OnPhoto}" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+
+                <Button Text="{Binding SaveText}" Command="{Binding SaveCommand}" Margin="0,8,0,0" />
+                <Label Text="New calls go on the board once an admin approves them, and your followers hear about it. The people you accept hear about changes and get a reminder the day before."
+                       Style="{StaticResource MutedText}" />
+            </VerticalStackLayout>
+        </ScrollView>
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

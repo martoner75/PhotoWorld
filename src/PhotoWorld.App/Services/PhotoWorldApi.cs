@@ -8,6 +8,7 @@ using PhotoWorld.Shared.Activities;
 using PhotoWorld.Shared.Blogs;
 using PhotoWorld.Shared.Challenges;
 using PhotoWorld.Shared.Clubs;
+using PhotoWorld.Shared.Collabs;
 using PhotoWorld.Shared.Collections;
 using PhotoWorld.Shared.Notifications;
 using PhotoWorld.Shared.Photos;
@@ -233,6 +234,63 @@ public sealed class PhotoWorldApi(HttpClient http)
 
     public Task DeleteWorkshopMessageAsync(Guid id, long messageId, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Delete, ApiRoutes.Format(ApiRoutes.WorkshopMessage, ("id", id), ("messageId", messageId)), null, ct);
+
+    // ----- Collabs -----
+    /// <summary>
+    /// The board (<see cref="CollabLists.Open"/>; with <paramref name="near"/>, calls within <paramref name="km"/>, nearest
+    /// first) or the member's own calls and replies (<see cref="CollabLists.Mine"/>).
+    /// </summary>
+    public Task<PagedResult<CollabSummaryDto>> GetCollabsAsync(string list, string? role, string? terms, Location? near, double km, int page,
+        CancellationToken ct = default)
+    {
+        var url = $"{ApiRoutes.Collabs}?list={list}&page={page}";
+        if (role is not null) url += $"&role={role}";
+        if (terms is not null) url += $"&terms={terms}";
+        // Rounded to about 1 km, like the club directory: enough to sort calls by distance.
+        if (near is not null)
+            url += string.Create(CultureInfo.InvariantCulture, $"&lat={Math.Round(near.Latitude, 2)}&lon={Math.Round(near.Longitude, 2)}&km={km}");
+        return GetAsync<PagedResult<CollabSummaryDto>>(url, ct);
+    }
+
+    public Task<CollabDto> GetCollabAsync(Guid id, CancellationToken ct = default) => GetAsync<CollabDto>(WithId(ApiRoutes.Collab, id), ct);
+
+    public Task<CollabSummaryDto> CreateCollabAsync(SaveCollabRequest request, CancellationToken ct = default) =>
+        SendAsync<CollabSummaryDto>(HttpMethod.Post, ApiRoutes.Collabs, JsonContent.Create(request, options: Json), ct);
+
+    public Task<CollabSummaryDto> UpdateCollabAsync(Guid id, SaveCollabRequest request, CancellationToken ct = default) =>
+        SendAsync<CollabSummaryDto>(HttpMethod.Put, WithId(ApiRoutes.Collab, id), JsonContent.Create(request, options: Json), ct);
+
+    public Task CancelCollabAsync(Guid id, CancellationToken ct = default) => SendAsync(HttpMethod.Post, WithId(ApiRoutes.CollabCancel, id), null, ct);
+
+    public Task DeleteCollabAsync(Guid id, CancellationToken ct = default) => SendAsync(HttpMethod.Delete, WithId(ApiRoutes.Collab, id), null, ct);
+
+    public Task ReplyToCollabAsync(Guid id, ReplyToCollabRequest request, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Put, WithId(ApiRoutes.CollabReply, id), JsonContent.Create(request, options: Json), ct);
+
+    public Task WithdrawCollabReplyAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, WithId(ApiRoutes.CollabReply, id), null, ct);
+
+    public Task AcceptCollabReplyAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Post, ApiRoutes.Format(ApiRoutes.CollabReplyAccept, ("id", id), ("userId", userId)), null, ct);
+
+    public Task DeclineCollabReplyAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Post, ApiRoutes.Format(ApiRoutes.CollabReplyDecline, ("id", id), ("userId", userId)), null, ct);
+
+    public Task ConfirmCollabAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Put, ApiRoutes.Format(ApiRoutes.CollabReplyConfirmation, ("id", id), ("userId", userId)), null, ct);
+
+    public Task<List<CollabMessageDto>> GetCollabMessagesAsync(Guid id, long? after = null, CancellationToken ct = default) =>
+        GetAsync<List<CollabMessageDto>>(WithId(ApiRoutes.CollabMessages, id) + (after is { } since ? $"?after={since}" : ""), ct);
+
+    public Task<CollabMessageDto> PostCollabMessageAsync(Guid id, string body, CancellationToken ct = default) =>
+        SendAsync<CollabMessageDto>(HttpMethod.Post, WithId(ApiRoutes.CollabMessages, id),
+            JsonContent.Create(new PostCollabMessageRequest(body), options: Json), ct);
+
+    public Task DeleteCollabMessageAsync(Guid id, long messageId, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Delete, ApiRoutes.Format(ApiRoutes.CollabMessage, ("id", id), ("messageId", messageId)), null, ct);
+
+    public Task ReportCollabAsync(Guid id, CreateReportRequest request, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Post, WithId(ApiRoutes.CollabReports, id), JsonContent.Create(request, options: Json), ct);
 
     // ----- Collections -----
     public Task<List<CollectionSummaryDto>> GetCollectionsAsync(Guid? ownerId = null, CancellationToken ct = default) =>

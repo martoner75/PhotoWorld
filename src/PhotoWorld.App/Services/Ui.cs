@@ -33,6 +33,9 @@ public static class Routes
     public const string Workshops = "workshops";
     public const string Workshop = "workshop";
     public const string WorkshopEditor = "workshop-editor";
+    public const string Collabs = "collabs";
+    public const string Collab = "collab";
+    public const string CollabEditor = "collab-editor";
     public const string Insights = "insights";
     public const string PhotoEditor = "photo-editor";
     public const string CollectionEditor = "collection-editor";
@@ -44,13 +47,14 @@ public static class Routes
     /// <summary>The ＋ in the Gallery and Community toolbars: what a member can start, like the website's Create menu.</summary>
     public static async Task CreateAsync()
     {
-        const string photos = "Upload photos", walk = "Organise a photo walk", workshop = "Host an online workshop", club = "Start a club",
-            collection = "New collection";
-        var route = await Shell.Current.DisplayActionSheetAsync("Create", "Cancel", null, photos, walk, workshop, club, collection) switch
+        const string photos = "Upload photos", walk = "Organise a photo walk", workshop = "Host an online workshop",
+            collab = "Post a collab call", club = "Start a club", collection = "New collection";
+        var route = await Shell.Current.DisplayActionSheetAsync("Create", "Cancel", null, photos, walk, workshop, collab, club, collection) switch
         {
             photos => Upload,
             walk => WalkEditor,
             workshop => WorkshopEditor,
+            collab => CollabEditor,
             club => ClubEditor,
             collection => CollectionEditor,
             _ => null,
@@ -66,6 +70,9 @@ public static class Routes
 
     public static Task OpenWorkshopAsync(Guid id) =>
         Shell.Current.GoToAsync(Workshop, new ShellNavigationQueryParameters { ["id"] = id });
+
+    public static Task OpenCollabAsync(Guid id) =>
+        Shell.Current.GoToAsync(Collab, new ShellNavigationQueryParameters { ["id"] = id });
 
     public static Task OpenMemberAsync(Guid id) =>
         Shell.Current.GoToAsync(Member, new ShellNavigationQueryParameters { ["id"] = id });

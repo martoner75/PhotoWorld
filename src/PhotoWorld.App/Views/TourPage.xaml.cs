@@ -15,7 +15,7 @@ public partial class TourPage : ContentPage
         new(null, "Welcome to PhotoCommunity", "A quick tour of the app. It takes under a minute."),
         new("gallery", "Gallery", "Photos shared by members, newest first. At the top: search opens Explore, ＋ lets you upload or create, and the inbox shows your Activity."),
         new("blogs", "Blogs", "Stories, trips and workshop write-ups from members. Following shows posts from the people you follow."),
-        new("community", "Community", "Camera clubs, photo walks, online workshops and challenges: the places to meet other photographers and take part."),
+        new("community", "Community", "Camera clubs, collabs to find people to shoot with, photo walks, online workshops and challenges: the places to meet other photographers and take part."),
         new("places", "Places", "Save your favourite spots and check the light before you go: sunrise, sunset and the weather."),
         new("me", "Me", "Your profile, collections, clubs, portfolio and insights, and Settings for your emails and light or dark mode. You can take this tour again from here."),
         new(null, "You're all set", "Why not start by sharing your first photo?"),

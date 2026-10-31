@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:services="clr-namespace:PhotoWorld.App.Services"
+             xmlns:views="clr-namespace:PhotoWorld.App.Views"
+             xmlns:dto="clr-namespace:PhotoWorld.Shared.Photos"
+             x:Class="PhotoWorld.App.Views.CollabPage"
+             x:DataType="vm:CollabViewModel"
+             Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem x:Name="EditItem" Text="Edit" Command="{Binding EditCommand}" />
+    </ContentPage.ToolbarItems>
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView x:Name="Scroller">
+            <VerticalStackLayout Padding="18,12" Spacing="10" MaximumWidthRequest="640">
+                <Border Padding="12,8" BackgroundColor="{DynamicResource DangerSoft}" Stroke="{DynamicResource DangerLine}"
+                        IsVisible="{Binding Banner, Converter={StaticResource HasValue}}">
+                    <Label Text="{Binding Banner}" FontSize="14" />
+                </Border>
+                <Label Text="{Binding Role}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" />
+                <Label Text="{Binding Title}" Style="{StaticResource Heading}" />
+                <views:IconText Icon="{x:Static services:LineIconShapes.Collabs}" Text="{Binding Terms}" FontSize="15" ColorKey="Text" />
+                <Label Text="{Binding When}" FontSize="15" />
+                <views:IconText Icon="{x:Static services:LineIconShapes.Pin}" Text="{Binding Collab.Collab.Area}" FontSize="15" ColorKey="Text" />
+                <Label Text="{Binding Poster}" Style="{StaticResource MutedText}" FontSize="14">
+                    <Label.GestureRecognizers><TapGestureRecognizer Command="{Binding OpenPosterCommand}" /></Label.GestureRecognizers>
+                </Label>
+
+                <CollectionView ItemsSource="{Binding Photos}" HeightRequest="132" IsVisible="{Binding HasPhotos}" SelectionMode="None">
+                    <CollectionView.ItemsLayout><LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" /></CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dto:PhotoSummaryDto">
+                            <Border Style="{StaticResource PhotoFrame}" WidthRequest="132" HeightRequest="132">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding .}"
+                                        Command="{Binding OpenPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:CollabViewModel}}, x:DataType=vm:CollabViewModel}" />
+                                </Border.GestureRecognizers>
+                                <Image Source="{Binding ThumbnailUrl}" Aspect="AspectFill" SemanticProperties.Description="{Binding Title}" />
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Label Text="{Binding Collab.Description}" FontSize="16" IsVisible="{Binding Collab.Description, Converter={StaticResource HasValue}}" />
+
+                <Border Padding="14,12" Stroke="{DynamicResource AccentLine}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Meeting point" Style="{StaticResource Subheading}" FontSize="16" />
+                        <Label Text="{Binding MeetingPoint}" Style="{StaticResource Strong}" />
+                        <Label Text="{Binding MeetingHint}" Style="{StaticResource MutedText}" FontSize="13" />
+                        <Button Text="Directions" Style="{StaticResource GhostButton}" Command="{Binding DirectionsCommand}"
+                                IsVisible="{Binding HasMeetingPoint}" HorizontalOptions="Start" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="Light on the day" Style="{StaticResource Subheading}" Margin="0,4,0,0" />
+                <Label Text="{Binding Light}" FontSize="14" LineHeight="1.3" />
+
+                <Border Padding="12,10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Path Data="{x:Static services:LineIconShapes.Collabs}" Style="{StaticResource LineIcon}" VerticalOptions="Start" />
+                        <Label Grid.Column="1" FontSize="13" Style="{StaticResource MutedText}"
+                               Text="Shooting safely: meet in a public place, tell someone where you're going, and bring a friend if you like. Agree the terms in the chat before the day. You can report a call or block a member at any time." />
+                    </Grid>
+                </Border>
+
+                <Button Text="Cancel collab" Style="{StaticResource DangerButton}" Command="{Binding CancelCollabCommand}" IsVisible="{Binding CanCancel}" />
+
+                <!-- The poster: everyone who replied. Tap one to accept, decline or confirm. -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding IsPoster}">
+                    <Label Text="Replies" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <Label Text="{Binding RepliesHint}" Style="{StaticResource MutedText}" IsVisible="{Binding RepliesHint, Converter={StaticResource HasValue}}" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Replies}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:CollabReplyItem">
+                                <Border Padding="12,10">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsAccepted}" Value="True">
+                                            <Setter Property="Stroke" Value="{DynamicResource Accent}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                            Command="{Binding ReplyOptionsCommand, Source={RelativeSource AncestorType={x:Type vm:CollabViewModel}}, x:DataType=vm:CollabViewModel}" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="3">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Label Text="{Binding Name}" Style="{StaticResource Strong}" />
+                                            <Label Grid.Column="1" Text="{Binding Status}" TextColor="{DynamicResource Accent}" FontSize="12" />
+                                        </Grid>
+                                        <Label Text="{Binding Details}" Style="{StaticResource MutedText}" FontSize="12" />
+                                        <Label Text="{Binding Reply.Message}" FontSize="15" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Everyone else: their reply, or the form to send one. -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasMyReply}">
+                    <Label Text="Your reply" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <Label Text="{Binding MyReplyStatus}" Style="{StaticResource Strong}" />
+                    <Button Text="We shot together ✓" Command="{Binding ConfirmMineCommand}" IsVisible="{Binding CanConfirmMine}" />
+                    <Button Text="{Binding WithdrawText}" Style="{StaticResource GhostButton}" Command="{Binding WithdrawCommand}" IsVisible="{Binding CanWithdraw}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowReplyForm}">
+                    <Label Text="Introduce yourself" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <Border Style="{StaticResource Field}">
+                        <Editor Text="{Binding ReplyText}" Placeholder="Hi, I'd love to take part. I'm free that day and…" AutoSize="TextChanges"
+                                MinimumHeightRequest="90" MaxLength="1000" />
+                    </Border>
+                    <HorizontalStackLayout Spacing="6">
+                        <CheckBox IsChecked="{Binding SharePortfolio}" Color="{DynamicResource Accent}" VerticalOptions="Center" />
+                        <Label Text="Show the poster my public portfolio, if I have one" FontSize="14" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Button Text="{Binding ReplyButton}" Command="{Binding ReplyCommand}" />
+                    <Label Text="Only the poster sees your reply. If you're accepted, you'll both get the meeting point and a private chat."
+                           Style="{StaticResource MutedText}" FontSize="13" />
+                </VerticalStackLayout>
+                <Label Text="{Binding CannotReplyReason}" Style="{StaticResource MutedText}" IsVisible="{Binding CannotReplyReason, Converter={StaticResource HasValue}}" />
+
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasGoing}">
+                    <Label Text="Going" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <FlexLayout BindableLayout.ItemsSource="{Binding Going}" Wrap="Wrap">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="dto:UserSummaryDto">
+                                <Button Text="{Binding DisplayName}" Style="{StaticResource ChipButton}" CommandParameter="{Binding .}"
+                                        Command="{Binding OpenMemberCommand, Source={RelativeSource AncestorType={x:Type vm:CollabViewModel}}, x:DataType=vm:CollabViewModel}" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding CanReadChat}">
+                    <Label Text="Chat" Style="{StaticResource Subheading}" Margin="0,8,0,0" />
+                    <Label Text="Just the poster and the people accepted. It stays open for a week after the shoot."
+                           Style="{StaticResource MutedText}" FontSize="13" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Messages}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:CollabMessageItem">
+                                <Border Padding="12,8">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Message.IsPoster}" Value="True">
+                                            <Setter Property="Stroke" Value="{DynamicResource Accent}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                            Command="{Binding MessageOptionsCommand, Source={RelativeSource AncestorType={x:Type vm:CollabViewModel}}, x:DataType=vm:CollabViewModel}" />
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="2">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Label Text="{Binding Author}" Style="{StaticResource Strong}" FontSize="13" />
+                                            <Label Grid.Column="1" Text="{Binding When}" Style="{StaticResource MutedText}" FontSize="12" />
+                                        </Grid>
+                                        <Label Text="{Binding Message.Body}" FontSize="15" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Label Text="{Binding ChatHint}" Style="{StaticResource MutedText}" IsVisible="{Binding ChatHint, Converter={StaticResource HasValue}}" />
+                </VerticalStackLayout>
+
+                <Label Text="{Binding TagHint}" Style="{StaticResource MutedText}" FontSize="13" Margin="0,8,0,0" />
+                <Button Text="Report this call" Style="{StaticResource GhostButton}" Command="{Binding ReportCommand}" IsVisible="{Binding CanReport}"
+                        HorizontalOptions="Start" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="1" StrokeShape="Rectangle" StrokeThickness="0" Padding="14,10" IsVisible="{Binding CanChat}">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <Border Style="{StaticResource Field}">
+                    <Editor Text="{Binding Draft}" Placeholder="What to wear, where exactly to meet…" AutoSize="TextChanges"
+                            MaxLength="1000" MinimumHeightRequest="44" />
+                </Border>
+                <Button Grid.Column="1" Text="Send" Command="{Binding SendCommand}" VerticalOptions="End" />
+            </Grid>
+        </Border>
+        <ActivityIndicator Grid.RowSpan="2" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

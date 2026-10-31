@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PhotoWorld.App.ViewModels"
+             xmlns:services="clr-namespace:PhotoWorld.App.Services"
+             xmlns:views="clr-namespace:PhotoWorld.App.Views"
+             x:Class="PhotoWorld.App.Views.CollabsPage"
+             x:DataType="vm:CollabsViewModel"
+             Title="Collabs">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Post" Command="{Binding NewCommand}" />
+    </ContentPage.ToolbarItems>
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+        <CollectionView ItemsSource="{Binding Items}" SelectionMode="None" Margin="12,8"
+                        RemainingItemsThreshold="4" RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="8" Padding="0,0,0,8">
+                    <Label Text="Find models, makeup artists, assistants and other photographers to shoot with. Only the people a poster accepts get the exact meeting point."
+                           Style="{StaticResource MutedText}" FontSize="14" />
+                    <Border Padding="3" StrokeShape="RoundRectangle 10">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                            <Button Text="Open calls" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="open">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding Mine}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="1" Text="My calls &amp; replies" Style="{StaticResource SegmentButton}" Command="{Binding ShowCommand}" CommandParameter="mine">
+                                <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding Mine}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource Line}" /><Setter Property="TextColor" Value="{DynamicResource Text}" />
+                                </DataTrigger></Button.Triggers>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsOpen}">
+                        <Border Style="{StaticResource Field}">
+                            <Picker ItemsSource="{Binding RoleOptions}" SelectedIndex="{Binding RoleIndex}" Title="Looking for" TextColor="{DynamicResource Text}" />
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource Field}">
+                            <Picker ItemsSource="{Binding TermsOptions}" SelectedIndex="{Binding TermsIndex}" Title="Terms" TextColor="{DynamicResource Text}" />
+                        </Border>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding IsOpen}">
+                        <Button Text="{Binding NearLabel}" Style="{StaticResource GhostButton}" Command="{Binding NearMeCommand}" />
+                        <Border Grid.Column="1" Style="{StaticResource Field}" IsVisible="{Binding IsNear}">
+                            <Picker ItemsSource="{Binding DistanceOptions}" SelectedIndex="{Binding DistanceIndex}" Title="Distance" TextColor="{DynamicResource Text}" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.EmptyView>
+                <Label Text="{Binding EmptyMessage}" Style="{StaticResource MutedText}" FontSize="15" HorizontalTextAlignment="Center"
+                       Margin="32,60" IsVisible="{Binding IsEmpty}" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:CollabItem">
+                    <Border Padding="8">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                Command="{Binding OpenCommand, Source={RelativeSource AncestorType={x:Type vm:CollabsViewModel}}, x:DataType=vm:CollabsViewModel}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="96,*" ColumnSpacing="12">
+                            <Border Style="{StaticResource PhotoFrame}" WidthRequest="96" HeightRequest="108" VerticalOptions="Start">
+                                <Grid BackgroundColor="{DynamicResource PhotoBackground}">
+                                    <Path Data="{x:Static services:LineIconShapes.Collabs}" Style="{StaticResource LineIcon}"
+                                          HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding HasCover, Converter={StaticResource Not}}" />
+                                    <Image Source="{Binding Collab.CoverUrl}" Aspect="AspectFill" IsVisible="{Binding HasCover}" />
+                                </Grid>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="3" Padding="0,2">
+                                <FlexLayout Wrap="Wrap">
+                                    <Border Style="{StaticResource TileBadge}" BackgroundColor="{DynamicResource Text}" Margin="0,0,6,4"
+                                            HorizontalOptions="Start" VerticalOptions="Start">
+                                        <Label Text="{Binding Role}" FontSize="11" TextColor="{DynamicResource Ink}" Style="{StaticResource Strong}" />
+                                    </Border>
+                                    <Border Style="{StaticResource TileBadge}" BackgroundColor="{DynamicResource Line}" Margin="0,0,6,4"
+                                            HorizontalOptions="Start" VerticalOptions="Start">
+                                        <Label Text="{Binding Terms}" FontSize="11" TextColor="{DynamicResource Text}" Style="{StaticResource Strong}" />
+                                    </Border>
+                                </FlexLayout>
+                                <Label Text="{Binding Collab.Title}" Style="{StaticResource Subheading}" FontSize="16" MaxLines="2" LineBreakMode="TailTruncation" />
+                                <Label Text="{Binding When}" TextColor="{DynamicResource Accent}" Style="{StaticResource Strong}" FontSize="12" />
+                                <views:IconText Icon="{x:Static services:LineIconShapes.Pin}" Text="{Binding Where}" FontSize="12" />
+                                <Label Text="{Binding Poster}" Style="{StaticResource MutedText}" FontSize="12" />
+                                <Label Text="{Binding Badge}" Style="{StaticResource Strong}" FontSize="12" TextColor="{DynamicResource Accent}"
+                                       IsVisible="{Binding Badge, Converter={StaticResource HasValue}}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>
